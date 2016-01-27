@@ -1,0 +1,32 @@
+{
+  "author": {
+    "name": "Sergi Alvarez"
+  },
+  "dependencies": {
+    "simple-plist": "*",
+    "rimraf": "*",
+    "fs-walk": "*",
+    "fs-extra": "*",
+    "minimist": "*",
+    "colors": "*"
+  },
+  "description": "API to resign IPA files",
+  "homepage": "https://www.nowsecure.com",
+  "keywords": [
+    "binary",
+    "codesign",
+    "ios",
+    "osx"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "maintainers": [
+    {
+      "name": "Sergi Alvarez",
+      "email": "pancake@nowsecure.com"
+    }
+  ],
+  "name": "codesign",
+  "scripts": {},
+  "version": "0.0.1"
+}
