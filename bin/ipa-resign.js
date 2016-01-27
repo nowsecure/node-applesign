@@ -5,7 +5,7 @@ const Codesign = require('../');
 const conf = require('minimist')(process.argv.slice(2));
 
 var options = {
-	file: conf._[0] || undefined,
+	file: conf._[0] || 'undefined',
 	outfile: conf.output,
 	entitlement: conf.entitlement,
 	bundleid: conf.bundleid,
@@ -27,22 +27,23 @@ if (conf.identities) {
 		}
 	});
 } else if (conf.help || conf._.length === 0) {
+	const cmd = process.argv[1].split('/').pop();
 	console.error(
-`Usage: codesign [--output new.ipa] [--identities] [--identity id]
-                [--mobileprovision file] [--bundleid id]
-                [input-ipafile]
+`Usage: ${cmd} [--output new.ipa] [--identities]
+        [--identity id] [--mobileprovision file]
+        [--bundleid id] [input-ipafile]
 
 List local codesign identities:
 
-  codesign --identities
+  ${cmd} --identities
 
 Resign an IPA with a specific identity:
 
-  codesign --identity 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
+  ${cmd} --identity 1C4D1A... foo.ipa
 
 Change bundleid:
 
-  codesign --bundleid org.nowsecure.testapp path/to/ipa
+  ${cmd} --bundleid org.nowsecure.testapp path/to/ipa
 
 List mobile provisioning profiles:
 
@@ -55,7 +56,7 @@ Install mobileprovisioning in device:
 
 Define output IPA filename and install in device:
 
-  codesign --output test.ipa
+  ${cmd} --output test.ipa
   ios-deploy -b test.ipa
 `);
 } else {
