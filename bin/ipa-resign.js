@@ -5,12 +5,12 @@ const Codesign = require('../');
 const conf = require('minimist')(process.argv.slice(2));
 
 var options = {
-	file: conf._[0] || 'tmp/iGoat.ipa',
+	file: conf._[0] || undefined,
 	outfile: conf.output,
 	entitlement: conf.entitlement,
 	bundleid: conf.bundleid,
 	certificate: conf.certificate,
-	identity: 'pancake',
+	identity: conf.identity,
 	mobileprovision: conf.mobileprovision
 }
 
