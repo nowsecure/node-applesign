@@ -291,7 +291,10 @@ codesign.signIPA = function(config, cb) {
 					if (error) {
 						msg(ERR, res);
 					}
-					cb (error, res);
+					codesign.cleanup (config, () => {
+						log(MSG, 'Removing temporary directory');
+						cb (error, res);
+					});
 				});
 			});
 		});

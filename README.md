@@ -14,42 +14,63 @@ Dependencies
 * zip      - re-create IPA
 * unzip    - decompress IPA
 * codesign - sign and verify binary with new entitlements and identity
-
-	codesign -v appPath
-
 * security - get entitlements from mobileprovision
-
-	security cms -D -i provisionPath
 
 Future
 ------
+
 * Use zip.js instead of system `zip` and `unzip` executables
 * Reimplement the Apple code signing thing in pure Javascript
 * Support xcarchives
 * Use event model instead of callbacks
-	Codesign.signIPA('ipafile').on('error', error_handle).on('ready', finished).start()
+  - `Codesign.signIPA('ipafile').on('error', error_handle).on('ready', finished).start()`
 * Run that thing in the browser
 * Profit
 
+Usage
+-----
 
-Provisionings
--------------
+	$ bin/ipa-resign.js
+	Usage:
 
-In device:
+	  ipa-resign.js [--output new.ipa] [--identities] [--identity id] \
+	    [--mobileprovision file] [--bundleid id] [input-ipafile]
 
-	ideviceprovision list
-	ideviceprovision install /path/to/provision
+	List local codesign identities:
 
-In System
+	  ipa-resign.js --identities
+	  security find-identity -v -p codesigning
 
-	ls ~/Library/MobileDevice/Provisioning\ Profiles
-	security find-identity -v -p codesigning
+	Resign an IPA with a specific identity:
 
-Show provisioning profile contents:
+	  ipa-resign.js --identity 1C4D1A.. foo.ipa
 
-	security cms -D -i embedded.mobileprovision
+	Resign an IPA:
 
+	  ipa-resign.js --output my-foo.ipa --identity $IOS_CERTID \
+	    --mobileprovision embedded.mobileprovision \
+	    --bundleid com.nowsecure.TestApp ./foo.ipa
+
+	Change bundleid:
+
+	  ipa-resign.js --bundleid org.nowsecure.testapp path/to/ipa
+
+	List mobile provisioning profiles:
+
+	  ls ~/Library/MobileDevice/Provisioning\ Profiles
+	  security cms -D -i embedded.mobileprovision   # Display its contents
+
+	Install mobileprovisioning in device:
+
+	  ideviceprovision list
+	  ideviceprovision install /path/to.mobileprovision
+
+	Define output IPA filename and install in device:
+
+	  ipa-resign.js --output test.ipa
+	  ios-deploy -b test.ipa
 
 Further reading
 ---------------
+https://github.com/maciekish/iReSign
 http://dev.mlsdigital.net/posts/how-to-resign-an-ios-app-from-external-developers/
