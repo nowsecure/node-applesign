@@ -1,9 +1,9 @@
 'use strict';
 
 const fs = require('fs-extra');
+const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const plist = require('simple-plist');
-const walk = require('fs-walk');
 const colors = require('colors/safe');
 const execFile = require('child_process').execFile;
 
@@ -67,9 +67,9 @@ function unzip(file, config, cb) {
 		err('Invalid output directory');
 		return false;
 	}
-	log(MSG, ['rimraf', config.outdir].join(' '));
+	log(BIG, ['[$] rimraf', config.outdir].join(' '));
 	rimraf(config.outdir, function() {
-		console.log(colors.warn (config.unzip + ' ' + args.join(' ')));
+		log(BIG, '[$] ' + config.unzip + ' ' + args.join(' '));
 		execFile (config.unzip, args, (rc, out, err) => {
 			if (rc) {
 				/* remove outdir created by unzip */
@@ -85,7 +85,7 @@ function unzip(file, config, cb) {
 
 codesign.fixPlist = function(file, config, cb) {
 	if (!file || !config.bundleid || !config.appdir) {
-		log ('Skip bundle-id');
+		log (MSG, '[-] Skip bundle-id');
 		return cb (false);
 	}
 	const pl_path = [config.appdir, file].join ('/');
@@ -122,7 +122,7 @@ codesign.checkProvision = function(file, config, cb) {
 }
 
 codesign.fixEntitlements = function(file, config, cb) {
-	log(MSG, 'Generating entitlements');
+	log(BIG, '[*] Generating entitlements');
 	if (!config.security || !config.mobileprovision) {
 		return cb (false);
 	}
@@ -146,16 +146,16 @@ codesign.signFile = function(file, config, cb) {
 	if (config.identity !== undefined) {
 		args.push ('-fs', config.identity);
 	} else {
-		cb (true,'Certificate not specified');
+		cb (true, '--identity is required to sign');
 	}
 	if (config.entitlement !== undefined) {
 		args.push ('--entitlements=' + config.entitlement);
 	}
-	log(BIG, 'Sign', file);
+	log(BIG, '[-] Sign', file);
 	args.push (file);
 	execFile (config.codesign, args, function (error, stdout, stderr) {
 		const args = ['-v', file];
-		log(BIG, 'Verify', file);
+		log(BIG, '[-] Verify', file);
 		execFile (config.codesign, args, function (error, stdout, stderr) {
 			cb (error, stdout || stderr);
 		});
@@ -206,7 +206,7 @@ codesign.signAppDirectory = function(path, config, cb) {
 			cb(true, 'Invalid IPA');
 		});
 	}
-	log(MSG, '[OK] Payload found');
+	log(BIG, '[*] Payload found');
 	const files = fs.readdirSync(config.outdir + '/Payload').filter((x) => {
 		return x.indexOf('.app') != -1;
 	});
@@ -292,7 +292,7 @@ codesign.signIPA = function(config, cb) {
 						msg(ERR, res);
 					}
 					codesign.cleanup (config, () => {
-						log(MSG, 'Removing temporary directory');
+						log(BIG, '[-] Removing temporary directory');
 						cb (error, res);
 					});
 				});
