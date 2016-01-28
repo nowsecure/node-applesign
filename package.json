@@ -2,6 +2,9 @@
   "author": {
     "name": "Sergi Alvarez"
   },
+  "bin": {
+    "ipa-resign": "bin/ipa-resign.js"
+  },
   "dependencies": {
     "simple-plist": "*",
     "rimraf": "*",
