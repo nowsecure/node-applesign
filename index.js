@@ -6,6 +6,8 @@ const rimraf = require('rimraf');
 const plist = require('simple-plist');
 const colors = require('colors/safe');
 const execFile = require('child_process').execFile;
+const fatmacho = require('fatmacho');
+const macho = require('macho');
 
 colors.setTheme({
   error: 'red',
@@ -29,6 +31,32 @@ function log() {
   } else {
     console.error(colors.error('[ERROR] ' + args.join(' ').trim()));
   }
+}
+
+function isBinaryEncrypted(path) {
+  const data = fs.readFileSync(path);
+  try {
+    const exec = macho.parse(data);
+    console.log(exec);
+  } catch (e) {
+    try {
+      const fat = fatmacho.parse(data);
+      for (let bin of fat) {
+        const exec = macho.parse(bin.data);
+        for (let cmd of exec.cmds) {
+          if (cmd.type === 'encryption_info') {
+            console.log(cmd);
+            if (cmd.id) {
+              return true;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(path, e);
+    }
+  }
+  return false;
 }
 
 function getResignedFilename(path) {
@@ -216,8 +244,12 @@ codesign.signAppDirectory = function(path, config, cb) {
   const binname = files[0].replace('.app','');
   config.appdir = [ config.outdir, 'Payload', files[0] ].join('/');
   const binpath = [ config.appdir, binname ].join('/');
-  /* Warning: xmas tree ahead */
   if (fs.lstatSync(binpath).isFile()) {
+    const isEncrypted = isBinaryEncrypted(binpath);
+    if (isEncrypted) {
+      return cb (isEncrypted, 'encrypted');
+    }
+    log(MSG, '[*] Executable is not encrypted');
     codesign.fixPlist ('Info.plist', config, (err, msg) => {
       codesign.checkProvision (config.mobileprovision, config, (err) => {
         codesign.fixEntitlements (binpath, config, (err) => {

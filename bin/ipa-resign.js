@@ -5,30 +5,30 @@ const Codesign = require('../');
 const conf = require('minimist')(process.argv.slice(2));
 
 var options = {
-	file: conf._[0] || 'undefined',
-	outfile: conf.output,
-	entitlement: conf.entitlement,
-	bundleid: conf.bundleid,
-	certificate: conf.certificate,
-	identity: conf.identity,
-	mobileprovision: conf.mobileprovision
+  file: conf._[0] || 'undefined',
+  outfile: conf.output,
+  entitlement: conf.entitlement,
+  bundleid: conf.bundleid,
+  certificate: conf.certificate,
+  identity: conf.identity,
+  mobileprovision: conf.mobileprovision
 }
 
 const cs = new Codesign(options);
 
 if (conf.identities) {
-	cs.getIdentities((err, ids) => {
-		if (err) {
-			cs.logError (err, ids);
-		} else {
-			ids.forEach((id) => {
-				console.log(id.hash, id.name);
-			});
-		}
-	});
+  cs.getIdentities((err, ids) => {
+    if (err) {
+      cs.logError (err, ids);
+    } else {
+      ids.forEach((id) => {
+        console.log(id.hash, id.name);
+      });
+    }
+  });
 } else if (conf.h || conf.help || conf._.length === 0) {
-	const cmd = process.argv[1].split('/').pop();
-	console.error(
+  const cmd = process.argv[1].split('/').pop();
+  console.error(
 `Usage:
 
   ${cmd} [--output new.ipa] [--identities] [--identity id] \\
@@ -69,11 +69,11 @@ Define output IPA filename and install in device:
   ios-deploy -b test.ipa
 `);
 } else {
-	cs.signIPA((err, data) => {
-		if (err) {
-			cs.logError(data);
-			process.exit (1);
-		}
-		console.log("IPA is now signed.");
-	});
+  cs.signIPA((err, data) => {
+    if (err) {
+      cs.logError(data);
+      process.exit (1);
+    }
+    console.log("IPA is now signed.");
+  });
 }

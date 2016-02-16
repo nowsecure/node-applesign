@@ -11,6 +11,8 @@
     "fs-walk": "*",
     "fs-extra": "*",
     "minimist": "*",
+    "macho": "^0.4.0",
+    "@viaforensics/fatmacho": "*",
     "colors": "*"
   },
   "description": "API to resign IPA files",
@@ -29,7 +31,7 @@
       "email": "pancake@nowsecure.com"
     }
   ],
-  "name": "codesign",
+  "name": "applesign",
   "scripts": {},
   "version": "0.1.0"
 }
