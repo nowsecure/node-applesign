@@ -247,7 +247,7 @@ codesign.signAppDirectory = function(path, config, cb) {
   if (fs.lstatSync(binpath).isFile()) {
     const isEncrypted = isBinaryEncrypted(binpath);
     if (isEncrypted) {
-      return cb (isEncrypted, 'encrypted');
+      return cb (new Error('ipa is encrypted'));
     }
     log(MSG, '[*] Executable is not encrypted');
     codesign.fixPlist ('Info.plist', config, (err, msg) => {
@@ -321,7 +321,7 @@ codesign.signIPA = function(config, cb) {
         }
         codesign.ipafyDirectory (config, (error, res) => {
           if (error) {
-            msg(ERR, res);
+            cb(error, res);
           }
           codesign.cleanup (config, () => {
             log(BIG, '[-] Removing temporary directory');
