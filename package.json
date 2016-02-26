@@ -23,6 +23,10 @@
   },
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nowsecure/node-applesign.git"
+  },
   "keywords": [
     "binary",
     "iphone",
@@ -39,5 +43,5 @@
     }
   ],
   "name": "applesign",
-  "version": "0.2.0"
+  "version": "0.2.1"
 }
