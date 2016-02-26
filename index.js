@@ -5,7 +5,7 @@ const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const plist = require('simple-plist');
 const colors = require('colors/safe');
-const execFile = require('child_process').execFile;
+const childproc = require('child_process');
 const fatmacho = require('fatmacho');
 const macho = require('macho');
 
@@ -20,6 +20,12 @@ const MSG = colors.warn;
 const ERR = colors.error;
 
 var codesign = {};
+
+function execProgram(bin, arg, cb) {
+  return childproc.execFile (bin, arg, {
+    maxBuffer: 1024 * 1024
+  }, cb);
+}
 
 function log() {
   var args = [];
@@ -98,14 +104,14 @@ function unzip(file, config, cb) {
   log(BIG, ['[$] rimraf', config.outdir].join(' '));
   rimraf(config.outdir, function() {
     log(BIG, '[$] ' + config.unzip + ' ' + args.join(' '));
-    execFile (config.unzip, args, (rc, out, err) => {
+    execProgram (config.unzip, args, (rc, out, err) => {
       if (rc) {
         /* remove outdir created by unzip */
         rimraf(config.outdir, function() {
-          cb (rc, out, err);
+          cb (rc, out, err || rc);
         });
       } else {
-        cb (rc, out, err);
+        cb (rc, out||rc, err || rc);
       }
     });
   });
@@ -155,7 +161,7 @@ codesign.fixEntitlements = function(file, config, cb) {
     return cb (false);
   }
   const args = ['cms', '-D', '-i', config.mobileprovision]
-  execFile (config.security, args, (error, stdout, stderr) => {
+  execProgram (config.security, args, (error, stdout, stderr) => {
     const data = plist.parse(stdout);
     const newEntitlements = data['Entitlements'];
     console.log(newEntitlements);
@@ -181,10 +187,11 @@ codesign.signFile = function(file, config, cb) {
   }
   log(BIG, '[-] Sign', file);
   args.push (file);
-  execFile (config.codesign, args, function (error, stdout, stderr) {
-    const args = ['-v', file];
+  execProgram (config.codesign, args, function (error, stdout, stderr) {
+    /* use the --no-strict to avoid the "resource envelope is obsolete" error */
+    const args = ['-v', '--no-strict', file];
     log(BIG, '[-] Verify', file);
-    execFile (config.codesign, args, function (error, stdout, stderr) {
+    execProgram (config.codesign, args, (error, stdout, stderr) => {
       cb (error, stdout || stderr);
     });
   });
@@ -276,7 +283,7 @@ codesign.cleanup = function (config, cb) {
 codesign.ipafyDirectory = function (config, cb) {
   const zipfile = relativeUpperDirectory(config.outfile);
   const args = [ '-qry', zipfile, 'Payload' ];
-  execFile (config.zip, args, { cwd:config.outdir }, (error, stdout, stderr) => {
+  execProgram (config.zip, args, { cwd:config.outdir }, (error, stdout, stderr) => {
     cb(error, stdout || stderr);
   });
 }
@@ -284,7 +291,7 @@ codesign.ipafyDirectory = function (config, cb) {
 codesign.getIdentities = function(config, cb) {
   const zipfile = relativeUpperDirectory(config.outfile);
   const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
-  execFile (config.security, args, (error, stdout, stderr) => {
+  execProgram (config.security, args, (error, stdout, stderr) => {
     if (error) {
       cb (error, stderr);
     } else {
