@@ -4,7 +4,7 @@
 const Codesign = require('../');
 const conf = require('minimist')(process.argv.slice(2));
 
-var options = {
+const options = {
   file: conf._[0] || 'undefined',
   outfile: conf.output,
   entitlement: conf.entitlement,
@@ -12,14 +12,14 @@ var options = {
   certificate: conf.certificate,
   identity: conf.identity,
   mobileprovision: conf.mobileprovision
-}
+};
 
 const cs = new Codesign(options);
 
 if (conf.identities) {
   cs.getIdentities((err, ids) => {
     if (err) {
-      cs.logError (err, ids);
+      cs.logError(err, ids);
     } else {
       ids.forEach((id) => {
         console.log(id.hash, id.name);
@@ -72,8 +72,8 @@ Define output IPA filename and install in device:
   cs.signIPA((err, data) => {
     if (err) {
       cs.logError(data);
-      process.exit (1);
+      process.exit(1);
     }
-    console.log("IPA is now signed.");
+    console.log('IPA is now signed.');
   });
 }

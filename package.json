@@ -5,6 +5,12 @@
   "bin": {
     "ipa-resign": "bin/ipa-resign.js"
   },
+  "scripts": {
+    "semi": "$(npm bin)/semistandard"
+  },
+  "devDependencies": {
+    "semistandard": "7.0.5"
+  },
   "dependencies": {
     "simple-plist": "0.0.4",
     "rimraf": "2.5.1",
@@ -19,6 +25,7 @@
   "homepage": "https://www.nowsecure.com",
   "keywords": [
     "binary",
+    "iphone",
     "codesign",
     "ios",
     "osx"
@@ -32,6 +39,5 @@
     }
   ],
   "name": "applesign",
-  "scripts": {},
   "version": "0.2.0"
 }

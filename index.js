@@ -1,13 +1,13 @@
 'use strict';
 
 const fs = require('fs-extra');
+const macho = require('macho');
 const walk = require('fs-walk');
 const rimraf = require('rimraf');
+const fatmacho = require('fatmacho');
 const plist = require('simple-plist');
 const colors = require('colors/safe');
 const childproc = require('child_process');
-const fatmacho = require('fatmacho');
-const macho = require('macho');
 
 colors.setTheme({
   error: 'red',
