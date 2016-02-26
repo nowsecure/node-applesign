@@ -197,17 +197,27 @@ codesign.signFile = function (file, config, cb) {
   });
 };
 
-codesign.signLibraries = function (path, config, cb) {
-  let signs = 0;
-  function signDone () {
-    signs--;
-    if (signs === 0) {
-      log(MSG, 'Everything is signed now');
-      cb(false);
+function isMacho (buffer) {
+  const magics = [
+    [0xca, 0xfe, 0xba, 0xbe], // fat
+    [0xca, 0xfe, 0xba, 0xbe], // fat
+    [0xce, 0xfa, 0xed, 0xfe], // 32bit
+    [0xcf, 0xfa, 0xed, 0xfe], // 64bit
+    [0xfe, 0xed, 0xfa, 0xce]  // big-endian
+  ];
+  for (let a of magics) {
+    if (!buffer.compare(Buffer(a))) {
+      return true;
     }
   }
+  return false;
+}
+
+codesign.signLibraries = function (path, config, cb) {
+  let signs = 0;
   log(MSG, 'Signing libraries and frameworks');
-  walk.walkSync(path, function (basedir, filename, stat, next) {
+  let found = false;
+  walk.walkSync(path, (basedir, filename, stat, next) => {
     const file = [ basedir, filename ].join('/');
     if (!fs.lstatSync(file).isFile()) {
       return;
@@ -216,15 +226,25 @@ codesign.signLibraries = function (path, config, cb) {
       const fd = fs.openSync(file, 'r');
       let buffer = new Buffer(4);
       fs.readSync(fd, buffer, 0, 4);
-      if (!buffer.compare(Buffer([0xca, 0xfe, 0xba, 0xbe]))) {
+      if (isMacho(buffer)) {
+        found = true;
         signs++;
-        codesign.signFile(file, config, signDone);
+        codesign.signFile(file, config, () => {
+          signs--;
+          if (signs === 0) {
+            log(MSG, 'Everything is signed now');
+            cb(false);
+          }
+        });
       }
       fs.close(fd);
     } catch (e) {
       console.error(basedir, filename, e);
     }
   });
+  if (!found) {
+    cb(true, 'Cannot find any MACH0 binary to sign');
+  }
 };
 
 codesign.signAppDirectory = function (path, config, cb) {
