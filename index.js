@@ -254,7 +254,7 @@ codesign.signAppDirectory = function (path, config, cb) {
   }
   try {
     if (!fs.lstatSync(config.outdir + '/Payload').isDirectory()) {
-      throw new ('Invalid IPA');
+      throw new Error('Invalid IPA');
     }
   } catch (e) {
     return codesign.cleanup(config, () => {
