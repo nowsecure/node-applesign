@@ -280,8 +280,8 @@ codesign.signAppDirectory = function (path, config, cb) {
   if (files.length !== 1) {
     return cb(true, 'Invalid IPA');
   }
-  const binname = codesign.getExecutable(config, files[0].replace('.app', ''));
   config.appdir = [ config.outdir, 'Payload', files[0] ].join('/');
+  const binname = codesign.getExecutable(config, files[0].replace('.app', ''));
   const binpath = [ config.appdir, binname ].join('/');
   if (fs.lstatSync(binpath).isFile()) {
     const isEncrypted = isBinaryEncrypted(binpath);
