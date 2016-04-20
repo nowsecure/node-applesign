@@ -117,6 +117,18 @@ function unzip (file, config, cb) {
   });
 }
 
+codesign.getExecutable = function (config, exename) {
+  if (config.appdir) {
+    const plistPath = [ config.appdir, 'Info.plist' ].join('/');
+    const plistData = plist.readFileSync(plistPath);
+    const cfBundleExecutable = plistData['CFBundleExecutable'];
+    if (cfBundleExecutable) {
+      return cfBundleExecutable;
+    }
+  }
+  return exename;
+};
+
 codesign.fixPlist = function (file, config, cb) {
   if (!file || !config.bundleid || !config.appdir) {
     log(MSG, '[-] Skip bundle-id');
@@ -268,7 +280,7 @@ codesign.signAppDirectory = function (path, config, cb) {
   if (files.length !== 1) {
     return cb(true, 'Invalid IPA');
   }
-  const binname = files[0].replace('.app', '');
+  const binname = codesign.getExecutable(config, files[0].replace('.app', ''));
   config.appdir = [ config.outdir, 'Payload', files[0] ].join('/');
   const binpath = [ config.appdir, binname ].join('/');
   if (fs.lstatSync(binpath).isFile()) {
