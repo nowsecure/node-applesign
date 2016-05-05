@@ -21,10 +21,12 @@ const ERR = colors.error;
 
 var codesign = {};
 
-function execProgram (bin, arg, cb) {
-  return childproc.execFile(bin, arg, {
-    maxBuffer: 1024 * 1024
-  }, cb);
+function execProgram (bin, arg, opt, cb) {
+  if (opt === null) {
+    opt = {};
+  }
+  opt.maxBuffer = 1024 * 1024;
+  return childproc.execFile(bin, arg, opt, cb);
 }
 
 function log () {
@@ -104,7 +106,7 @@ function unzip (file, config, cb) {
   log(BIG, ['[$] rimraf', config.outdir].join(' '));
   rimraf(config.outdir, function () {
     log(BIG, '[$] ' + config.unzip + ' ' + args.join(' '));
-    execProgram(config.unzip, args, (rc, out, err) => {
+    execProgram(config.unzip, args, null, (rc, out, err) => {
       if (rc) {
         /* remove outdir created by unzip */
         rimraf(config.outdir, function () {
@@ -172,7 +174,7 @@ codesign.fixEntitlements = function (file, config, cb) {
     return cb(false);
   }
   const args = [ 'cms', '-D', '-i', config.mobileprovision ];
-  execProgram(config.security, args, (error, stdout, stderr) => {
+  execProgram(config.security, args, null, (error, stdout, stderr) => {
     const data = plist.parse(stdout);
     const newEntitlements = data[ 'Entitlements' ];
     console.log(newEntitlements);
@@ -198,12 +200,12 @@ codesign.signFile = function (file, config, cb) {
   }
   log(BIG, '[-] Sign', file);
   args.push(file);
-  execProgram(config.codesign, args, function (error, stdout, stderr) {
+  execProgram(config.codesign, args, null, function (error, stdout, stderr) {
     /* use the --no-strict to avoid the "resource envelope is obsolete" error */
     if (error) return cb(error, stdout || stderr);
     const args = ['-v', '--no-strict', file];
     log(BIG, '[-] Verify', file);
-    execProgram(config.codesign, args, (error, stdout, stderr) => {
+    execProgram(config.codesign, args, null, (error, stdout, stderr) => {
       cb(error, stdout || stderr);
     });
   });
@@ -226,6 +228,7 @@ function isMacho (buffer) {
 
 codesign.signLibraries = function (path, config, cb) {
   let signs = 0;
+  let errors = 0;
   log(MSG, 'Signing libraries and frameworks');
   let found = false;
   walk.walkSync(path, (basedir, filename, stat, next) => {
@@ -240,11 +243,19 @@ codesign.signLibraries = function (path, config, cb) {
       if (isMacho(buffer)) {
         found = true;
         signs++;
-        codesign.signFile(file, config, () => {
+        codesign.signFile(file, config, (err) => {
           signs--;
+          if (err) {
+            console.error('[E] ' + err.toString());
+            errors++;
+          }
           if (signs === 0) {
-            log(MSG, 'Everything is signed now');
-            cb(false);
+            if (errors > 0) {
+              log(MSG, 'Some ('+errors+') errors happened durning the signature verification');
+            } else {
+              log(MSG, 'Everything seems signed now');
+            }
+            cb(null);
           }
         });
       }
@@ -317,6 +328,7 @@ codesign.cleanup = function (config, cb) {
 codesign.ipafyDirectory = function (config, cb) {
   const zipfile = relativeUpperDirectory(config.outfile);
   const args = [ '-qry', zipfile, 'Payload' ];
+  log(MSG, '[*] Zipifying the resigned IPA...');
   execProgram(config.zip, args, { cwd: config.outdir }, (error, stdout, stderr) => {
     cb(error, stdout || stderr);
   });
@@ -324,7 +336,7 @@ codesign.ipafyDirectory = function (config, cb) {
 
 codesign.getIdentities = function (config, cb) {
   const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
-  execProgram(config.security, args, (error, stdout, stderr) => {
+  execProgram(config.security, args, null, (error, stdout, stderr) => {
     if (error) {
       cb(error, stderr);
     } else {
