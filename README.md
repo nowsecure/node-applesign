@@ -85,6 +85,53 @@ Show provisioning profile contents:
 
 	security cms -D -i embedded.mobileprovision
 
+API usage
+---------
+
+Here's a simple program that resigns an IPA:
+
+```
+const Applesign = require('node-applesign');
+const as = new Applesign({
+  file: '/path/to/app.ipa',
+  identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
+  mobileprovision: '/path/to/dev.mobileprovision'
+});
+as.signIPA((err, data) => {
+  if (err) {
+    console.log(data);
+  }
+  console.log('ios-deploy -b /path/to/app-resigned.ipa');
+});
+```
+
+To list the developer identities available in the system:
+
+```
+as.getIdentities((err, ids) => {
+  if (err) {
+    console.error(err, ids);
+  } else {
+    ids.forEach((id) => {
+      console.log(id.hash, id.name);
+    });
+  }
+});
+```
+
+Bear in mind that the Applesign object can tuned to use different
+configuration options:
+
+```
+const options = {
+  file: '/path/to/app.ipa',
+  outfile: '/path/to/app-resigned.ipa',
+  entitlement: '/path/to/entitlement',
+  bundleid: 'app.company.bundleid',
+  identity: 'hash id of the developer',
+  mobileprovision: '/path/to/mobileprovision file'
+};
+```
 
 Further reading
 ---------------

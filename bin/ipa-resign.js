@@ -9,7 +9,6 @@ const options = {
   outfile: conf.output,
   entitlement: conf.entitlement,
   bundleid: conf.bundleid,
-  certificate: conf.certificate,
   identity: conf.identity,
   mobileprovision: conf.mobileprovision
 };
