@@ -231,8 +231,13 @@ codesign.signLibraries = function (path, config, cb) {
   let errors = 0;
   log(MSG, 'Signing libraries and frameworks');
   let found = false;
+  const exe = '/' + codesign.getExecutable(config);
   walk.walkSync(path, (basedir, filename, stat, next) => {
     const file = [ basedir, filename ].join('/');
+    if (file.endsWith (exe)) {
+      found = true;
+      return;
+    }
     if (!fs.lstatSync(file).isFile()) {
       return;
     }
