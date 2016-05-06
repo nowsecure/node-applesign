@@ -74,15 +74,14 @@ Here's a simple program that resigns an IPA:
 ```js
 const Applesign = require('node-applesign');
 const as = new Applesign({
-  file: '/path/to/app.ipa',
   identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
   mobileprovision: '/path/to/dev.mobileprovision'
 });
-as.signIPA((err, data) => {
+as.signIPA('/path/to/app.ipa', (err, data) => {
   if (err) {
-    console.log(data);
+    console.error(data);
   }
-  console.log('ios-deploy -b /path/to/app-resigned.ipa');
+  console.log('ios-deploy -b', as.config.outfile);
 });
 ```
 

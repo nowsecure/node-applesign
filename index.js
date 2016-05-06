@@ -68,6 +68,7 @@ function isBinaryEncrypted (path) {
 }
 
 function getResignedFilename (path) {
+  if (!path) return null;
   const newPath = path.replace('.ipa', '-resigned.ipa');
   const pos = newPath.lastIndexOf('/');
   if (pos !== -1) return newPath.substring(pos + 1);
@@ -75,11 +76,12 @@ function getResignedFilename (path) {
 }
 
 codesign.withConfig = function (options) {
-  if (!options || !options.file) {
+  if (!options) {
     log(ERR, '[$] No config file specified');
     return false;
   }
-  var config = { file: options.file };
+  var config = { };
+  config.file = options.file || undefined;
   config.outdir = options.outdir || options.file + '.d';
   config.outfile = options.outfile || getResignedFilename(config.file);
   config.zip = options.zip || '/usr/bin/zip';
@@ -341,7 +343,7 @@ codesign.cleanup = function (config, cb) {
 
 codesign.ipafyDirectory = function (config, cb) {
   const ipa_in = config.file;
-  const ipa_out = upperDirectory(config.outdir) + config.outfile; // getResignedFilename(config.outfile);
+  const ipa_out = upperDirectory(config.outdir) + config.outfile;
   const args = [ '-qry', ipa_out, 'Payload' ];
   log(MSG, '[*] Zipifying into ' + ipa_out + ' ...');
   execProgram(config.zip, args, { cwd: config.outdir }, (error, stdout, stderr) => {
@@ -383,13 +385,7 @@ codesign.getIdentities = function (config, cb) {
   });
 };
 
-codesign.signIPA = function (config, ipafile, cb) {
-  if (typeof ipafile === 'function') {
-    cb = ipafile;
-    ipafile = null;
-  } else {
-    config.file = ipafile;
-  }
+codesign.signIPA = function (config, cb) {
   rimraf(config.outdir, () => {
     unzip(config.file, config, (error, stdout, stderr) => {
       if (error) {
@@ -416,7 +412,14 @@ codesign.signIPA = function (config, ipafile, cb) {
 module.exports = function (options) {
   const self = this;
   this.config = codesign.withConfig(options);
-  this.signIPA = function (cb) {
+  this.signIPA = function (file, cb) {
+    if (cb) {
+      this.config.file = file;
+      if (!this.config.outfile) {
+        this.config.outdir = file + '.d';
+        this.config.outfile = getResignedFilename(file);
+      }
+    }
     codesign.signIPA(self.config, cb);
   };
   this.cleanup = function (cb) {
