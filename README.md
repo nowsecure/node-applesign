@@ -1,7 +1,7 @@
 node-applesign
 ===============
 
-AppleSigner is a NodeJS API for re-signing iOS applications.
+NodeJS module and commandline utility for re-signing iOS applications (IPA files).
 
 Author
 ------
@@ -14,59 +14,40 @@ Dependencies
 * zip      - re-create IPA
 * unzip    - decompress IPA
 * codesign - sign and verify binary with new entitlements and identity
-
-	codesign -v appPath
-
 * security - get entitlements from mobileprovision
-
-	security cms -D -i provisionPath
-
-Future
-------
-
-* Use zip.js instead of system `zip` and `unzip` executables
-* Reimplement the Apple code signing thing in pure Javascript
-* Support xcarchives
-* Use event model instead of callbacks
-
-	Codesign.signIPA('ipafile').on('error', error_handle).on('ready', finished).start()
-
-* Run that thing in the browser
-* Profit
 
 Usage
 -----
 
 	$ bin/ipa-resign.js
 	Usage: codesign [--output new.ipa] [--identities] [--identity id]
-		[--mobileprovision file] [--bundleid id]
-		[input-ipafile]
+		[--mobileprovision file] [--bundleid id] [--replace] [input-ipafile]
 
 List local codesign identities:
 
-	bin/ipa-resign --identities
+	$ bin/ipa-resign --identities
 
 Resign an IPA with a specific identity:
 
-	bin/ipa-resign --identity 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
+	$ bin/ipa-resign --identity 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
 
 Change bundleid:
 
-	bin/ipa-resign --bundleid org.nowsecure.testapp path/to/ipa
+	$ bin/ipa-resign --bundleid org.nowsecure.testapp path/to/ipa
 
 List mobile provisioning profiles:
 
-	ls ~/Library/MobileDevice/Provisioning\ Profiles
-	security cms -D -i embedded.mobileprovision   # Display its contents
+	$ ls ~/Library/MobileDevice/Provisioning\ Profiles
+	$ security cms -D -i embedded.mobileprovision   # Display its contents
 
 Install mobileprovisioning in device:
 
-	ideviceprovision install /path/to.mobileprovision
+	$ ideviceprovision install /path/to.mobileprovision
 
 Define output IPA filename and install in device:
 
-	bin/ipa-resign.js --output test.ipa
-	ios-deploy -b test.ipa
+	$ bin/ipa-resign.js --output test.ipa
+	$ ios-deploy -b test.ipa
 
 Provisionings
 -------------
@@ -90,7 +71,7 @@ API usage
 
 Here's a simple program that resigns an IPA:
 
-```
+```js
 const Applesign = require('node-applesign');
 const as = new Applesign({
   file: '/path/to/app.ipa',
@@ -107,7 +88,7 @@ as.signIPA((err, data) => {
 
 To list the developer identities available in the system:
 
-```
+```js
 as.getIdentities((err, ids) => {
   if (err) {
     console.error(err, ids);
@@ -122,7 +103,7 @@ as.getIdentities((err, ids) => {
 Bear in mind that the Applesign object can tuned to use different
 configuration options:
 
-```
+```js
 const options = {
   file: '/path/to/app.ipa',
   outfile: '/path/to/app-resigned.ipa',
@@ -136,5 +117,12 @@ const options = {
 Further reading
 ---------------
 
-https://github.com/maciekish/iReSign
-http://dev.mlsdigital.net/posts/how-to-resign-an-ios-app-from-external-developers/
+See the Wiki: https://github.com/nowsecure/node-applesign/wiki
+
+* https://github.com/maciekish/iReSign
+* https://github.com/saucelabs/isign
+* https://github.com/phonegap/ios-deploy
+
+Pre iOS9 devices will require a developer account:
+
+* http://dev.mlsdigital.net/posts/how-to-resign-an-ios-app-from-external-developers/
