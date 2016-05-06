@@ -45,7 +45,7 @@ function isBinaryEncrypted (path) {
   const data = fs.readFileSync(path);
   try {
     const exec = macho.parse(data);
-    console.log(exec);
+    log(BIG, JSON.stringify(exec));
   } catch (e) {
     try {
       const fat = fatmacho.parse(data);
@@ -53,7 +53,7 @@ function isBinaryEncrypted (path) {
         const exec = macho.parse(bin.data);
         for (let cmd of exec.cmds) {
           if (cmd.type === 'encryption_info') {
-            console.log(cmd);
+            log(BIG, JSON.stringify(cmd));
             if (cmd.id) {
               return true;
             }
@@ -137,7 +137,7 @@ codesign.fixPlist = function (file, config, cb) {
     return cb(false);
   }
   const pl_path = [ config.appdir, file ].join('/');
-  console.log(pl_path);
+  log(MSG, pl_path);
   const data = plist.readFileSync(pl_path);
   const oldBundleID = data['CFBundleIdentifier'];
   /* fix bundle-id */
@@ -177,7 +177,7 @@ codesign.fixEntitlements = function (file, config, cb) {
   execProgram(config.security, args, null, (error, stdout, stderr) => {
     const data = plist.parse(stdout);
     const newEntitlements = data[ 'Entitlements' ];
-    console.log(newEntitlements);
+    log(MSG, JSON.stringify(newEntitlements));
     /* save new entitlements */
     const provision = 'embedded.mobileprovision';
     const pl_path = [ config.appdir, provision ].join('/');
