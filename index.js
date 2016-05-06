@@ -103,9 +103,9 @@ function unzip (file, config, cb) {
     cb(true, 'Invalid output directory');
     return false;
   }
-  log(BIG, ['[$] rimraf', config.outdir].join(' '));
+  log(MSG, ['[$] rimraf', config.outdir].join(' '));
   rimraf(config.outdir, function () {
-    log(BIG, '[$] ' + config.unzip + ' ' + args.join(' '));
+    log(MSG, '[$] ' + config.unzip + ' ' + args.join(' '));
     execProgram(config.unzip, args, null, (rc, out, err) => {
       if (rc) {
         /* remove outdir created by unzip */
@@ -251,12 +251,12 @@ codesign.signLibraries = function (path, config, cb) {
         codesign.signFile(file, config, (err) => {
           signs--;
           if (err) {
-            console.error('[E] ' + err.toString());
+            log(ERR, '[E] ' + err.toString());
             errors++;
           }
           if (signs === 0) {
             if (errors > 0) {
-              log(MSG, 'Some ('+errors+') errors happened durning the signature verification');
+              log(ERR, 'Some ('+errors+') errors happened durning the signature verification');
             } else {
               log(MSG, 'Everything seems signed now');
             }
@@ -326,6 +326,14 @@ function relativeUpperDirectory (file) {
   return ((file[0] !== '/') ? '../' : '') + file;
 }
 
+function upperDirectory(file) {
+  const slash = file.replace(/\/$/,'').lastIndexOf('/');
+  if (slash != -1) {
+    return file.substring(0, slash) + '/';
+  }
+  return file + '/';
+}
+
 codesign.cleanup = function (config, cb) {
   rimraf(config.outdir, cb);
 };
@@ -333,7 +341,7 @@ codesign.cleanup = function (config, cb) {
 codesign.ipafyDirectory = function (config, cb) {
   const zipfile = relativeUpperDirectory(config.outfile);
   const args = [ '-qry', zipfile, 'Payload' ];
-  log(MSG, '[*] Zipifying the resigned IPA...');
+  log(MSG, '[*] Zipifying into ' + upperDirectory(config.outdir) + getResignedFilename(config.outfile) + ' ...');
   execProgram(config.zip, args, { cwd: config.outdir }, (error, stdout, stderr) => {
     cb(error, stdout || stderr);
   });
@@ -381,7 +389,7 @@ codesign.signIPA = function (config, cb) {
             cb(error, res);
           }
           codesign.cleanup(config, () => {
-            log(BIG, '[-] Removing temporary directory');
+            log(MSG, '[-] Removing temporary directory');
             cb(error, res);
           });
         });
