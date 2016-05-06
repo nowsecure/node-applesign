@@ -89,6 +89,7 @@ codesign.withConfig = function (options) {
   config.entitlement = options.entitlement || undefined;
   config.bundleid = options.bundleid || undefined;
   config.identity = options.identity || undefined;
+  config.replaceipa = options.replaceipa || undefined;
   config.mobileprovision = options.mobileprovision || undefined;
   return config;
 };
@@ -339,11 +340,19 @@ codesign.cleanup = function (config, cb) {
 };
 
 codesign.ipafyDirectory = function (config, cb) {
-  const zipfile = relativeUpperDirectory(config.outfile);
-  const args = [ '-qry', zipfile, 'Payload' ];
-  log(MSG, '[*] Zipifying into ' + upperDirectory(config.outdir) + getResignedFilename(config.outfile) + ' ...');
+  const ipa_in = config.file;
+  const ipa_out = upperDirectory(config.outdir) + config.outfile; // getResignedFilename(config.outfile);
+  const args = [ '-qry', ipa_out, 'Payload' ];
+  log(MSG, '[*] Zipifying into ' + ipa_out + ' ...');
   execProgram(config.zip, args, { cwd: config.outdir }, (error, stdout, stderr) => {
-    cb(error, stdout || stderr);
+    if (config.replaceipa) {
+      log(MSG, '[*] mv into ' + ipa_in);
+      fs.rename (ipa_out, ipa_in, () => {
+        cb(error, stdout || stderr);
+      });
+    } else {
+      cb(error, stdout || stderr);
+    }
   });
 };
 
@@ -374,7 +383,13 @@ codesign.getIdentities = function (config, cb) {
   });
 };
 
-codesign.signIPA = function (config, cb) {
+codesign.signIPA = function (config, ipafile, cb) {
+  if (typeof ipafile === 'function') {
+    cb = ipafile;
+    ipafile = null;
+  } else {
+    config.file = ipafile;
+  }
   rimraf(config.outdir, () => {
     unzip(config.file, config, (error, stdout, stderr) => {
       if (error) {

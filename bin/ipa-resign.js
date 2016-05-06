@@ -2,7 +2,9 @@
 'use strict';
 
 const Codesign = require('../');
-const conf = require('minimist')(process.argv.slice(2));
+const conf = require('minimist')(process.argv.slice(2), {
+  boolean: ['replace', 'identities']
+});
 
 const options = {
   file: conf._[0] || 'undefined',
@@ -10,7 +12,8 @@ const options = {
   entitlement: conf.entitlement,
   bundleid: conf.bundleid,
   identity: conf.identity,
-  mobileprovision: conf.mobileprovision
+  mobileprovision: conf.mobileprovision,
+  replaceipa: conf.replace
 };
 
 const cs = new Codesign(options);
@@ -31,7 +34,7 @@ if (conf.identities) {
 `Usage:
 
   ${cmd} [--output new.ipa] [--identities] [--identity id] \\
-    [--mobileprovision file] [--bundleid id] [input-ipafile]
+    [--mobileprovision file] [--bundleid id] [--replace] [input-ipafile]
 
 List local codesign identities:
 
