@@ -36,39 +36,18 @@ if (conf.identities) {
   ${cmd} [--output new.ipa] [--identities] [--identity id] \\
     [--mobileprovision file] [--bundleid id] [--replace] [input-ipafile]
 
-List local codesign identities:
+  --identities              List local codesign identities
+  --identity 1C4D1A..       Specify hash-id of the identity to use
+  --replace                 Replace the input IPA file with the resigned one
+  --output [APP.IPA]        Path to the output IPA filename
+  --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  --mobileprovision [FILE]  Specify the mobileprovision file to use
+  [input-ipafile]           Path to the IPA file to resign
 
-  ${cmd} --identities
-  security find-identity -v -p codesigning
+Example:
 
-Resign an IPA with a specific identity:
-
-  ${cmd} --identity 1C4D1A.. foo.ipa
-
-Resign an IPA:
-
-  ${cmd} --output my-foo.ipa --identity $IOS_CERTID \\
-    --mobileprovision embedded.mobileprovision \\
-    --bundleid com.nowsecure.TestApp ./foo.ipa
-
-Change bundleid:
-
-  ${cmd} --bundleid org.nowsecure.testapp path/to/ipa
-
-List mobile provisioning profiles:
-
-  ls ~/Library/MobileDevice/Provisioning\\ Profiles
-  security cms -D -i embedded.mobileprovision   # Display its contents
-
-Install mobileprovisioning in device:
-
-  ideviceprovision list
-  ideviceprovision install /path/to.mobileprovision
-
-Define output IPA filename and install in device:
-
-  ${cmd} --output test.ipa
-  ios-deploy -b test.ipa
+  ${cmd} --replace --identity AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C \\
+    --mobileprovision embedded.mobileprovision --bundleid com.nowsecure.TestApp ./foo.ipa
 `);
 } else {
   cs.signIPA((err, data) => {
