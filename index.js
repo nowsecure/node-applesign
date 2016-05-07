@@ -19,7 +19,7 @@ const BIG = colors.msg;
 const MSG = colors.warn;
 const ERR = colors.error;
 
-var codesign = {};
+const codesign = {};
 
 function execProgram (bin, arg, opt, cb) {
   if (opt === null) {
@@ -409,10 +409,12 @@ codesign.signIPA = function (config, cb) {
   });
 };
 
-module.exports = function (options) {
-  const self = this;
-  this.config = codesign.withConfig(options);
-  this.signIPA = function (file, cb) {
+module.exports = class Applesign {
+  constructor(options) {
+    this.config = codesign.withConfig(options);
+    this.logError = log;
+  }
+  signIPA(file, cb) {
     if (cb) {
       this.config.file = file;
       if (!this.config.outfile) {
@@ -420,13 +422,12 @@ module.exports = function (options) {
         this.config.outfile = getResignedFilename(file);
       }
     }
-    codesign.signIPA(self.config, cb);
-  };
-  this.cleanup = function (cb) {
-    codesign.cleanup(self.config, cb);
-  };
-  this.getIdentities = function (cb) {
-    codesign.getIdentities(self.config, cb);
-  };
-  this.logError = log;
-};
+    codesign.signIPA(this.config, cb);
+  }
+  cleanup(cb) {
+    codesign.cleanup(this.config, cb);
+  }
+  getIdentities(cb) {
+    codesign.getIdentities(this.config, cb);
+  }
+}
