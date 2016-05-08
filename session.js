@@ -7,6 +7,7 @@ const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
 const fatmacho = require('fatmacho');
+const EventHandler = require('./eventhandler');
 
 function getResignedFilename (path) {
   if (!path) return null;
@@ -86,31 +87,6 @@ function checkProvision (appdir, file, next) {
     return fs.copy(file, mobileProvision, next);
   }
   next();
-}
-
-class EventHandler {
-  constructor () {
-    this.cb = {};
-    this.queue = {};
-  }
-  on (ev, cb) {
-    this.cb[ev] = cb;
-    if (typeof this.queue[ev] === 'object') {
-      this.queue[ev].forEach(cb);
-    }
-    return this;
-  }
-  emit (ev, msg) {
-    const cb = this.cb[ev];
-    if (typeof cb === 'function') {
-      return cb(msg);
-    }
-    if (typeof this.queue[ev] !== 'object') {
-      this.queue[ev] = [];
-    }
-    this.queue[ev].push(msg);
-    return false;
-  }
 }
 
 module.exports = class ApplesignSession {
