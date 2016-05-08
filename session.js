@@ -7,7 +7,7 @@ const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
 const fatmacho = require('fatmacho');
-const EventHandler = require('./eventhandler');
+const EventEmitter = require('events').EventEmitter;
 
 function getResignedFilename (path) {
   if (!path) return null;
@@ -92,7 +92,8 @@ function checkProvision (appdir, file, next) {
 module.exports = class ApplesignSession {
   constructor (state) {
     this.config = JSON.parse(JSON.stringify(state));
-    this.events = new EventHandler(this.config);
+    this.events = new EventEmitter();
+    this.events.config = this.config;
   }
 
   /* Event Wrapper API with cb support */
