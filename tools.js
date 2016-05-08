@@ -3,7 +3,7 @@
 const childproc = require('child_process');
 const plist = require('simple-plist');
 
-const path = {
+const cmd = {
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
@@ -31,33 +31,33 @@ module.exports = {
       args.push('--entitlements=' + entitlement);
     }
     args.push(file);
-    execProgram(path.codesign, args, null, cb);
+    execProgram(cmd.codesign, args, null, cb);
   },
   verifyCodesign: function (file, cb) {
     const args = ['-v', '--no-strict', file];
-    execProgram(path.codesign, args, null, cb);
+    execProgram(cmd.codesign, args, null, cb);
   },
   getEntitlementsFromMobileProvision: function (file, cb) {
     const args = [ 'cms', '-D', '-i', file ];
-    execProgram(path.security, args, null, (error, stdout) => {
+    execProgram(cmd.security, args, null, (error, stdout) => {
       cb(error, plist.parse(stdout)['Entitlements']);
     });
   },
   zip: function (cwd, ofile, src, cb) {
     const args = [ '-qry', ofile, src ];
-    execProgram(path.zip, args, { cwd: cwd }, cb);
+    execProgram(cmd.zip, args, { cwd: cwd }, cb);
   },
   unzip: function (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
-    execProgram(path.unzip, args, null, cb);
+    execProgram(cmd.unzip, args, null, cb);
   },
   xcaToIpa: function (ifile, odir, cb) {
     const args = [ '-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir ];
-    execProgram(path.xcodebuild, args, null, cb);
+    execProgram(cmd.xcodebuild, args, null, cb);
   },
   getIdentities: function (cb) {
     const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
-    execProgram(path.security, args, null, (error, stdout) => {
+    execProgram(cmd.security, args, null, (error, stdout) => {
       if (error) {
         return cb(error);
       }
