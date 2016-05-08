@@ -21,7 +21,7 @@ function execProgram (bin, arg, opt, cb) {
 
 function callback (cb) {
   return function (error, stdout, stderr) {
-    if (error) {
+    if (error && error.message) {
       return cb(error.message);
     }
     cb(undefined, stdout);
@@ -58,11 +58,11 @@ module.exports = {
   },
   unzip: function (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
-    execProgram(path.unzip, args, {}, callback(cb));
+    execProgram(path.unzip, args, null, callback(cb));
   },
   xcaToIpa: function (ifile, odir, cb) {
     const args = [ '-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir ];
-    execProgram(path.xcodebuild, args, {}, callback(cb));
+    execProgram(path.xcodebuild, args, null, callback(cb));
   },
   getIdentities: function (cb) {
     const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
