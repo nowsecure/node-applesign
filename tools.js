@@ -7,7 +7,8 @@ const path = {
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
-  security: '/usr/bin/security'
+  security: '/usr/bin/security',
+  xcodebuild: '/usr/bin/xcodebuild'
 };
 
 function execProgram (bin, arg, opt, cb) {
@@ -57,6 +58,10 @@ module.exports = {
   unzip: function (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
     execProgram(path.unzip, args, {}, callback(cb));
+  },
+  xcaToIpa: function (ifile, odir, cb) {
+    const args = [ '-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir ];
+    execProgram(path.xcodebuild, args, {}, callback(cb));
   },
   getIdentities: function (cb) {
     const args = [ 'find-identity', '-v', '-p', 'codesigning' ];

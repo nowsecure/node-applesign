@@ -114,7 +114,6 @@ class EventHandler {
 }
 
 class ApplesignSession {
-
   constructor (state) {
     this.config = JSON.parse(JSON.stringify(state));
     this.events = new EventHandler(this.config);
@@ -394,6 +393,18 @@ module.exports = class Applesign {
       cb = file;
     }
     return s.signIPA(cb);
+  }
+
+  signXCarchive (file, cb) {
+    const self = this;
+    const ipaFile = file + '.ipa';
+    tools.xcaToIpa(file, (error) => {
+      if (error) {
+        self.emit('error', error);
+      } else {
+        self.signIPA(ipaFile, cb);
+      }
+    });
   }
 
   getIdentities (cb) {
