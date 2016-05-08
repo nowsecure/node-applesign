@@ -12,7 +12,7 @@ const path = {
 };
 
 function execProgram (bin, arg, opt, cb) {
-  if (opt === null) {
+  if (!opt) {
     opt = {};
   }
   opt.maxBuffer = 1024 * 1024;
@@ -21,8 +21,10 @@ function execProgram (bin, arg, opt, cb) {
 
 function callback (cb) {
   return function (error, stdout, stderr) {
-    if (error) cb(error.message);
-    else cb(undefined, stdout);
+    if (error) {
+      return cb(error.message);
+    }
+    cb(undefined, stdout);
   };
 }
 
@@ -30,12 +32,11 @@ module.exports = {
   codesign: function (identity, entitlement, file, cb) {
     /* use the --no-strict to avoid the "resource envelope is obsolete" error */
     const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
-    if (identity !== undefined) {
-      args.push('-fs', identity);
-    } else {
+    if (identity === undefined) {
       return cb('--identity is required to sign');
     }
-    if (entitlement !== undefined) {
+    args.push('-fs', identity);
+    if (typeof entitlement === 'string') {
       args.push('--entitlements=' + entitlement);
     }
     args.push(file);
@@ -72,7 +73,7 @@ module.exports = {
       const lines = stdout.split('\n');
       lines.pop(); // remove last line
       let ids = [];
-      for (let line of lines) {
+      lines.forEach((line) => {
         const tok = line.indexOf(') ');
         if (tok !== -1) {
           const msg = line.substring(tok + 2).trim();
@@ -84,7 +85,7 @@ module.exports = {
             });
           }
         }
-      }
+      });
       cb(undefined, ids);
     }));
   }

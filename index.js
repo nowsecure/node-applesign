@@ -400,10 +400,9 @@ module.exports = class Applesign {
     const ipaFile = file + '.ipa';
     tools.xcaToIpa(file, (error) => {
       if (error) {
-        self.emit('error', error);
-      } else {
-        self.signIPA(ipaFile, cb);
+        return self.emit('error', error);
       }
+      self.signIPA(ipaFile, cb);
     });
   }
 
