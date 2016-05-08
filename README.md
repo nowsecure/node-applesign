@@ -8,8 +8,8 @@ Author
 
 Sergi Alvarez aka pancake @ nowsecure.com
 
-Dependencies
-------------
+Program Dependencies
+--------------------
 
 * zip      - re-create IPA
 * unzip    - decompress IPA
@@ -35,46 +35,38 @@ Change bundleid:
 
 	$ bin/ipa-resign --bundleid org.nowsecure.testapp path/to/ipa
 
-List mobile provisioning profiles:
-
-	$ ls ~/Library/MobileDevice/Provisioning\ Profiles
-	$ security cms -D -i embedded.mobileprovision   # Display its contents
-
-Install mobileprovisioning in device:
-
-	$ ideviceprovision install /path/to.mobileprovision
-
-Define output IPA filename and install in device:
-
-	$ bin/ipa-resign.js --output test.ipa
-	$ ios-deploy -b test.ipa
-
 API usage
 ---------
 
 Here's a simple program that resigns an IPA:
 
 ```js
-const Applesign = require('node-applesign');
+const Applesign = require('applesign');
 
 const as = new Applesign({
   identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
   mobileprovision: '/path/to/dev.mobileprovision'
 });
 
-const s = as.signIPA('/path/to/app.ipa', (err, data) => {
+const s = as.signIPA('/path/to/app.ipa', onEnd)
+  .on('warning', (msg) => {
+    console.log('WARNING', msg);
+  })
+  .on('message', (msg) => {
+    console.log('msg', msg);
+  });
+
+function onEnd(err, data) => {
   if (err) {
-    console.error(data);
+    console.error(err);
     s.cleanup();
     process.exit(1);
+  } else {
+    console.log('ios-deploy -b', as.config.outfile);
+    process.exit(0);
   }
-  console.log('ios-deploy -b', as.config.outfile);
-  process.exit(0);
-}).on('warning', (msg) => {
-  console.log('WARNING', msg);
-}).on('message', (msg) => {
-  console.log('msg', msg);
-});;
+}
+
 ```
 
 To list the developer identities available in the system:
@@ -101,7 +93,8 @@ const options = {
   entitlement: '/path/to/entitlement',
   bundleid: 'app.company.bundleid',
   identity: 'hash id of the developer',
-  mobileprovision: '/path/to/mobileprovision file'
+  mobileprovision: '/path/to/mobileprovision file',
+  ignoreVerificationErrors: true
 };
 ```
 
