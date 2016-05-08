@@ -49,23 +49,6 @@ Define output IPA filename and install in device:
 	$ bin/ipa-resign.js --output test.ipa
 	$ ios-deploy -b test.ipa
 
-Provisionings
--------------
-
-In device:
-
-	ideviceprovision list
-	ideviceprovision install /path/to/provision
-
-In System
-
-	ls ~/Library/MobileDevice/Provisioning\ Profiles
-	security find-identity -v -p codesigning
-
-Show provisioning profile contents:
-
-	security cms -D -i embedded.mobileprovision
-
 API usage
 ---------
 
@@ -87,8 +70,8 @@ const s = as.signIPA('/path/to/app.ipa', (err, data) => {
   }
   console.log('ios-deploy -b', as.config.outfile);
   process.exit(0);
-}).on('error', (msg) => {
-  console.log('ERROR', msg);
+}).on('warning', (msg) => {
+  console.log('WARNING', msg);
 }).on('message', (msg) => {
   console.log('msg', msg);
 });;

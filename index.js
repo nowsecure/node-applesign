@@ -16,6 +16,7 @@ module.exports = class Applesign {
       file: undefined,
       outdir: undefined,
       outfile: undefined,
+      ignoreVerificationErrors: true,
       entitlement: opt.entitlement || undefined,
       bundleid: opt.bundleid || undefined,
       identity: opt.identity || undefined,
@@ -38,7 +39,8 @@ module.exports = class Applesign {
     const ipaFile = file + '.ipa';
     tools.xcaToIpa(file, (error) => {
       if (error) {
-        return this.emit('error', error);
+        this.emit('warning', error);
+        return cb(error);
       }
       this.signIPA(ipaFile, cb);
     });

@@ -13,6 +13,6 @@ const s = as.signIPA('/tmp/ada.ipa', (error) => {
   }
 }).on('message', (msg) => {
   console.log('message', msg);
-}).on('error', (msg) => {
-  console.error('error', msg);
+}).on('warning', (msg) => {
+  console.error('warning', msg);
 });

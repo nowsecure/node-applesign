@@ -91,7 +91,7 @@ function checkProvision (appdir, file, next) {
 }
 
 module.exports = class ApplesignSession {
-  constructor (state) {
+  constructor (state, onEnd) {
     this.config = JSON.parse(JSON.stringify(state));
     this.events = new EventEmitter();
     this.events.config = this.config;
@@ -99,10 +99,7 @@ module.exports = class ApplesignSession {
 
   /* Event Wrapper API with cb support */
   emit (ev, msg, cb) {
-    function isEnder (ev) {
-      return (ev === 'error');
-    }
-    if (isEnder(ev) && msg && typeof cb === 'function') {
+    if (ev === 'end' && msg && typeof cb === 'function') {
       cb(msg);
     }
     return this.events.emit(ev, msg);
@@ -115,14 +112,18 @@ module.exports = class ApplesignSession {
 
   /* Public API */
   signIPA (cb) {
+    if (typeof cb === 'function') {
+      //this.events.removeListener('end', this.events['end']);
+      this.events.on('end', cb);
+    }
     this.unzip(this.config.file, this.config.outdir, (error) => {
-      if (error) { return this.emit('error', error, cb); }
+      if (error) { return this.events.emit('end', error); }
       this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
-        if (error) { this.emit('error', error, cb); }
+        if (error) { return this.events.emit('end', error); }
         this.ipafyDirectory((error, res) => {
-          if (error) { this.emit('error', error, cb); }
-          this.cleanup((ignored_error) => {
-            cb(error, res);
+          if (error) { return this.events.emit('end', error); }
+          this.cleanup((_) => {
+            this.events.emit('end');
           });
         });
       });
@@ -134,14 +135,16 @@ module.exports = class ApplesignSession {
     if (!path) {
       path = this.config.outdir + '/Payload';
     }
-    /* W T F */
-    try {
-      if (!fs.lstatSync(path).isDirectory()) {
-        throw new Error('Invalid IPA');
+    function isDirectory () {
+      try {
+        return fs.statSync(path).isDirectory();
+      } catch (e) {
+        return false;
       }
-    } catch (e) {
+    }
+    if (!isDirectory(path)) {
       return this.cleanup(() => {
-        next(e);
+        next(new Error('Cannot find ' + path));
       });
     }
     this.emit('message', 'Payload found');
@@ -164,13 +167,13 @@ module.exports = class ApplesignSession {
       const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
 
       this.fixPlist(infoPlist, this.config.bundleid, (err) => {
-        if (err) return this.emit('error', err, next);
+        if (err) return this.events.emit('end', err, next);
         checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
-          if (err) return this.emit('error', err, next);
+          if (err) return this.emit('end', err, next);
           this.fixEntitlements(binpath, (err) => {
-            if (err) return this.emit('error', err, next);
+            if (err) return this.emit('end', err, next);
             this.signFile(binpath, (err) => {
-              if (err) return this.emit('error', err, next);
+              if (err) return this.emit('end', err, next);
               this.signLibraries(this.config.appdir, next);
             });
           });
@@ -216,11 +219,23 @@ module.exports = class ApplesignSession {
     this.emit('message', 'Sign ' + file);
     tools.codesign(this.config.identity, this.config.entitlement, file, (error, stdout, stderr) => {
       if (error) {
-        return this.emit('error', error, next);
+        if (this.config.ignoreVerificationErrors) {
+          this.emit('warning', error);
+          return next();
+        }
+        return this.emit('end', error, next);
       }
       this.emit('message', 'Verify ' + file);
       tools.verifyCodesign(file, (error, stdout, stderr) => {
-        next(error, stdout || stderr);
+        if (error) {
+          if (this.config.ignoreVerificationErrors) {
+            this.emit('warning', error);
+            return next();
+          }
+          return this.emit('end', error, next);
+        } else {
+          next(undefined, error);
+        }
       });
     });
   }
@@ -257,7 +272,7 @@ module.exports = class ApplesignSession {
             }
             if (signs === 0) {
               if (errors > 0) {
-                this.emit('error', 'Warning: Some (' + errors + ') errors happened.');
+                this.emit('message', 'Warning: Some (' + errors + ') errors happened.');
               } else {
                 this.emit('message', 'Everything seems signed now');
               }
@@ -282,7 +297,7 @@ module.exports = class ApplesignSession {
     try {
       rimraf(outdir, cb);
     } catch (e) {
-      this.emit('error', e);
+      this.emit('message', e);
     }
   }
 
