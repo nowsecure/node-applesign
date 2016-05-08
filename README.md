@@ -83,15 +83,14 @@ const s = as.signIPA('/path/to/app.ipa', (err, data) => {
   if (err) {
     console.error(data);
     s.cleanup();
+    process.exit(1);
   }
   console.log('ios-deploy -b', as.config.outfile);
+  process.exit(0);
 }).on('error', (msg) => {
   console.log('ERROR', msg);
 }).on('message', (msg) => {
   console.log('msg', msg);
-}).on('done', (err) => {
-  console.log('process done');
-  process.exit(0);
 });;
 ```
 

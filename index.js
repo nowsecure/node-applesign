@@ -35,13 +35,12 @@ module.exports = class Applesign {
   }
 
   signXCarchive (file, cb) {
-    const self = this;
     const ipaFile = file + '.ipa';
     tools.xcaToIpa(file, (error) => {
       if (error) {
-        return self.emit('error', error);
+        return this.emit('error', error);
       }
-      self.signIPA(ipaFile, cb);
+      this.signIPA(ipaFile, cb);
     });
   }
 

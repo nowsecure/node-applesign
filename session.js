@@ -114,14 +114,13 @@ module.exports = class ApplesignSession {
 
   /* Public API */
   signIPA (cb) {
-    const self = this;
-    self.unzip(self.config.file, self.config.outdir, (error) => {
-      if (error) { return self.emit('error', error, cb); }
-      self.signAppDirectory(self.config.outdir + '/Payload', (error, res) => {
-        if (error) { self.emit('error', error, cb); }
-        self.ipafyDirectory((error, res) => {
-          if (error) { self.emit('error', error, cb); }
-          self.cleanup((ignored_error) => {
+    this.unzip(this.config.file, this.config.outdir, (error) => {
+      if (error) { return this.emit('error', error, cb); }
+      this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
+        if (error) { this.emit('error', error, cb); }
+        this.ipafyDirectory((error, res) => {
+          if (error) { this.emit('error', error, cb); }
+          this.cleanup((ignored_error) => {
             cb(ignored_error, res);
           });
         });
@@ -131,9 +130,8 @@ module.exports = class ApplesignSession {
   }
 
   signAppDirectory (path, next) {
-    const self = this;
     if (!path) {
-      path = self.config.outdir + '/Payload';
+      path = this.config.outdir + '/Payload';
     }
     /* W T F */
     try {
@@ -141,38 +139,38 @@ module.exports = class ApplesignSession {
         throw new Error('Invalid IPA');
       }
     } catch (e) {
-      return self.cleanup(() => {
+      return this.cleanup(() => {
         next(e.message);
       });
     }
-    self.emit('message', 'Payload found');
+    this.emit('message', 'Payload found');
     const files = fs.readdirSync(path).filter((x) => {
       return x.indexOf('.app') !== -1;
     });
     if (files.length !== 1) {
       return next('Invalid IPA');
     }
-    self.config.appdir = [ path, files[0] ].join('/');
-    const binname = getExecutable(self.config.appdir, files[0].replace('.app', ''));
-    const binpath = [ self.config.appdir, binname ].join('/');
+    this.config.appdir = [ path, files[0] ].join('/');
+    const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
+    const binpath = [ this.config.appdir, binname ].join('/');
     if (fs.lstatSync(binpath).isFile()) {
       const isEncrypted = isBinaryEncrypted(binpath);
       if (isEncrypted) {
         return next('ipa is encrypted');
       }
-      self.emit('message', 'Main IPA executable is not encrypted');
+      this.emit('message', 'Main IPA executable is not encrypted');
 
-      const infoPlist = [ self.config.appdir, 'Info.plist' ].join('/');
+      const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
 
-      self.fixPlist(infoPlist, self.config.bundleid, (err) => {
-        if (err) return self.emit('error', err, next);
-        checkProvision(self.config.appdir, self.config.mobileprovision, (err) => {
-          if (err) return self.emit('error', err, next);
-          self.fixEntitlements(binpath, (err) => {
-            if (err) return self.emit('error', err, next);
-            self.signFile(binpath, (err) => {
-              if (err) return self.emit('error', err, next);
-              self.signLibraries(self.config.appdir, next);
+      this.fixPlist(infoPlist, this.config.bundleid, (err) => {
+        if (err) return this.emit('error', err, next);
+        checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
+          if (err) return this.emit('error', err, next);
+          this.fixEntitlements(binpath, (err) => {
+            if (err) return this.emit('error', err, next);
+            this.signFile(binpath, (err) => {
+              if (err) return this.emit('error', err, next);
+              this.signLibraries(this.config.appdir, next);
             });
           });
         });
@@ -183,16 +181,15 @@ module.exports = class ApplesignSession {
   }
 
   fixEntitlements (file, next) {
-    const self = this;
-    if (!self.config.mobileprovision) {
+    if (!this.config.mobileprovision) {
       return next();
     }
-    self.emit('message', 'Grabbing entitlements from mobileprovision');
-    tools.getEntitlementsFromMobileProvision(self.config.mobileprovision, (error, newEntitlements) => {
-      self.emit('message', JSON.stringify(newEntitlements));
+    this.emit('message', 'Grabbing entitlements from mobileprovision');
+    tools.getEntitlementsFromMobileProvision(this.config.mobileprovision, (error, newEntitlements) => {
+      this.emit('message', JSON.stringify(newEntitlements));
       const provision = 'embedded.mobileprovision';
-      const pathToProvision = [ self.config.appdir, provision ].join('/');
-      self.config.entitlement = pathToProvision;
+      const pathToProvision = [ this.config.appdir, provision ].join('/');
+      this.config.entitlement = pathToProvision;
       plist.writeFileSync(pathToProvision, newEntitlements);
       next(error);
     });
@@ -215,13 +212,12 @@ module.exports = class ApplesignSession {
   }
 
   signFile (file, next) {
-    const self = this;
-    self.emit('message', 'Sign ' + file);
-    tools.codesign(self.config.identity, self.config.entitlement, file, (error, stdout, stderr) => {
+    this.emit('message', 'Sign ' + file);
+    tools.codesign(this.config.identity, this.config.entitlement, file, (error, stdout, stderr) => {
       if (error) {
-        return self.emit('error', error, next);
+        return this.emit('error', error, next);
       }
-      self.emit('message', 'Verify ' + file);
+      this.emit('message', 'Verify ' + file);
       tools.verifyCodesign(file, (error, stdout, stderr) => {
         next(error, stdout || stderr);
       });
@@ -229,14 +225,13 @@ module.exports = class ApplesignSession {
   }
 
   signLibraries (path, next) {
-    const self = this;
     let signs = 0;
     let errors = 0;
     let found = false;
 
     this.emit('message', 'Signing libraries and frameworks');
 
-    const exe = '/' + getExecutable(self.config.appdir);
+    const exe = '/' + getExecutable(this.config.appdir);
     walk.walkSync(path, (basedir, filename, stat) => {
       const file = [ basedir, filename ].join('/');
       if (file.endsWith(exe)) {
@@ -253,17 +248,17 @@ module.exports = class ApplesignSession {
         if (isMacho(buffer)) {
           found = true;
           signs++;
-          self.signFile(file, (err) => {
+          this.signFile(file, (err) => {
             signs--;
             if (err) {
-              self.emit('error ', err);
+              this.emit('error ', err);
               errors++;
             }
             if (signs === 0) {
               if (errors > 0) {
-                self.emit('error', 'Warning: Some (' + errors + ') errors happened.');
+                this.emit('error', 'Warning: Some (' + errors + ') errors happened.');
               } else {
-                self.emit('message', 'Everything seems signed now');
+                this.emit('message', 'Everything seems signed now');
               }
               next();
             }
@@ -291,13 +286,12 @@ module.exports = class ApplesignSession {
   }
 
   ipafyDirectory (next) {
-    const self = this;
-    const ipa_in = self.config.file;
-    const ipa_out = upperDirectory(self.config.outdir) + self.config.outfile;
-    self.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
-    tools.zip(self.config.outdir, ipa_out, 'Payload', (error) => {
-      if (!error && self.config.replaceipa) {
-        self.events.emit('message', 'mv into ' + ipa_in);
+    const ipa_in = this.config.file;
+    const ipa_out = upperDirectory(this.config.outdir) + this.config.outfile;
+    this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
+    tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
+      if (!error && this.config.replaceipa) {
+        this.events.emit('message', 'mv into ' + ipa_in);
         return fs.rename(ipa_out, ipa_in, next);
       }
       next(error);
@@ -320,7 +314,6 @@ module.exports = class ApplesignSession {
 
   /* TODO: move to tools.js */
   unzip (file, outdir, cb) {
-    const self = this;
     if (!file || !outdir) {
       cb(true, 'No output specified');
       return false;
@@ -329,12 +322,12 @@ module.exports = class ApplesignSession {
       cb(true, 'Invalid output directory');
       return false;
     }
-    self.events.emit('message', ['rm -rf', outdir].join(' '));
-    self.cleanup(() => {
-      self.events.emit('message', 'Unzipping ' + file);
+    this.events.emit('message', ['rm -rf', outdir].join(' '));
+    this.cleanup(() => {
+      this.events.emit('message', 'Unzipping ' + file);
       tools.unzip(file, outdir, (error, stdout) => {
         if (error) {
-          self.cleanup(() => { cb(error.message); });
+          this.cleanup(() => { cb(error.message); });
         } else {
           cb(undefined, stdout);
         }
