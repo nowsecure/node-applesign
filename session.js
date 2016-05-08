@@ -99,7 +99,7 @@ module.exports = class ApplesignSession {
   /* Event Wrapper API with cb support */
   emit (ev, msg, cb) {
     function isEnder (ev) {
-      return (ev === 'error' || ev === 'done');
+      return (ev === 'error');
     }
     if (isEnder(ev) && msg && typeof cb === 'function') {
       cb(msg);
@@ -122,7 +122,6 @@ module.exports = class ApplesignSession {
         self.ipafyDirectory((error, res) => {
           if (error) { self.emit('error', error, cb); }
           self.cleanup((ignored_error) => {
-            self.emit('done', '', cb);
             cb(ignored_error, res);
           });
         });

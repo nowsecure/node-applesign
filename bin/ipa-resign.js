@@ -63,8 +63,6 @@ Example:
       process.exit(1);
     }
     console.log('IPA is now signed.');
-  }).on('done', (msg) => {
-    console.log('Done!');
   }).on('message', (msg) => {
     console.log(colors.msg(msg));
   }).on('error', (msg) => {
