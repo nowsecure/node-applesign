@@ -140,7 +140,7 @@ module.exports = class ApplesignSession {
       }
     } catch (e) {
       return this.cleanup(() => {
-        next(e.message);
+        next(e);
       });
     }
     this.emit('message', 'Payload found');
@@ -148,7 +148,7 @@ module.exports = class ApplesignSession {
       return x.indexOf('.app') !== -1;
     });
     if (files.length !== 1) {
-      return next('Invalid IPA');
+      return next(new Error('Invalid IPA'));
     }
     this.config.appdir = [ path, files[0] ].join('/');
     const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
@@ -156,7 +156,7 @@ module.exports = class ApplesignSession {
     if (fs.lstatSync(binpath).isFile()) {
       const isEncrypted = isBinaryEncrypted(binpath);
       if (isEncrypted) {
-        return next('ipa is encrypted');
+        return next(new Error('ipa is encrypted'));
       }
       this.emit('message', 'Main IPA executable is not encrypted');
 
@@ -176,7 +176,7 @@ module.exports = class ApplesignSession {
         });
       });
     } else {
-      next('Invalid path');
+      next(new Error('Invalid path'));
     }
   }
 
@@ -315,11 +315,11 @@ module.exports = class ApplesignSession {
   /* TODO: move to tools.js */
   unzip (file, outdir, cb) {
     if (!file || !outdir) {
-      cb(true, 'No output specified');
+      cb(new Error('No output specified'));
       return false;
     }
     if (!outdir) {
-      cb(true, 'Invalid output directory');
+      cb(new Error('Invalid output directory'));
       return false;
     }
     this.events.emit('message', ['rm -rf', outdir].join(' '));
@@ -327,7 +327,7 @@ module.exports = class ApplesignSession {
       this.events.emit('message', 'Unzipping ' + file);
       tools.unzip(file, outdir, (error, stdout) => {
         if (error) {
-          this.cleanup(() => { cb(error.message); });
+          this.cleanup(() => { cb(error); });
         } else {
           cb(undefined, stdout);
         }
