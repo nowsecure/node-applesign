@@ -3,15 +3,6 @@
 const tools = require('./tools');
 const ApplesignSession = require('./session');
 
-
-function getResignedFilename (path) {
-  if (!path) return null;
-  const newPath = path.replace('.ipa', '-resigned.ipa');
-  const pos = newPath.lastIndexOf('/');
-  if (pos !== -1) return newPath.substring(pos + 1);
-  return newPath;
-}
-
 module.exports = class Applesign {
   constructor (options) {
     this.config = this.withConfig(options);
@@ -22,9 +13,9 @@ module.exports = class Applesign {
       opt = {};
     }
     return {
-      file: undefined, // opt.file || undefined,
-      outdir: undefined, // opt.file ? (opt.outdir || opt.file + '.d') : undefined,
-      outfile: undefined, // opt.file ? (opt.outfile || getResignedFilename(opt.file || undefined)) : undefined,
+      file: undefined,
+      outdir: undefined,
+      outfile: undefined,
       entitlement: opt.entitlement || undefined,
       bundleid: opt.bundleid || undefined,
       identity: opt.identity || undefined,

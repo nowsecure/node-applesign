@@ -56,7 +56,6 @@ function upperDirectory (file) {
   return file + '/';
 }
 
-
 function isMacho (buffer) {
   const magics = [
     [0xca, 0xfe, 0xba, 0xbe], // fat
@@ -71,7 +70,6 @@ function isMacho (buffer) {
   }
   return false;
 }
-
 
 /*
   TODO: verify is mobileprovision app-id glob string matches the bundleid
@@ -168,7 +166,7 @@ module.exports = class ApplesignSession {
       }
     } catch (e) {
       return self.cleanup(() => {
-        next (e.message);
+        next(e.message);
       });
     }
     self.emit('message', 'Payload found');
@@ -307,9 +305,10 @@ module.exports = class ApplesignSession {
   }
 
   cleanup (cb) {
-    this.emit('message', 'Cleaning up ' + this.config.outdir);
+    const outdir = this.config.outdir;
+    this.emit('message', 'Cleaning up ' + outdir);
     try {
-      rimraf(this.config.outdir, cb);
+      rimraf(outdir, cb);
     } catch (e) {
       this.emit('error', e);
     }
@@ -366,5 +365,4 @@ module.exports = class ApplesignSession {
       });
     });
   }
-}
-
+};

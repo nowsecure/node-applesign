@@ -57,7 +57,7 @@ Example:
     --mobileprovision embedded.mobileprovision --bundleid com.nowsecure.TestApp ./foo.ipa
 `);
 } else {
-  const s = cs.signIPA(options.file, (error, data) => {
+  cs.signIPA(options.file, (error, data) => {
     if (error) {
       console.error(error);
       process.exit(1);

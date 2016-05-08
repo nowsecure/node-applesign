@@ -9,7 +9,6 @@ const s = as.signIPA('/tmp/ada.ipa', (error) => {
     console.log('error', error);
     process.exit(1);
   } else {
-    s.cleanup();
     console.log('ios-deploy -b', s.config.outfile);
   }
 }).on('message', (msg) => {
