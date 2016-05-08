@@ -13,7 +13,7 @@ const s = as.signIPA('/tmp/ada.ipa', (error) => {
     console.log('ios-deploy -b', s.config.outfile);
   }
 }).on('message', (msg) => {
-  console.log("message", msg);
+  console.log('message', msg);
 }).on('error', (msg) => {
   console.error('error', msg);
 });

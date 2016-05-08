@@ -11,10 +11,10 @@ const plist = require('simple-plist');
 function isBinaryEncrypted (path) {
   const data = fs.readFileSync(path);
   try {
-    const exec = macho.parse(data);
+    macho.parse(data);
   } catch (e) {
     try {
-      fatmacho.parse(data).forEach((bin) => {;
+      fatmacho.parse(data).forEach((bin) => {
         macho.parse(bin.data).cmds.forEach((cmd) => {
           if (cmd.type === 'encryption_info' && cmd.id) {
             return true;
@@ -36,7 +36,7 @@ function getResignedFilename (path) {
   return newPath;
 }
 
-function getExecutable(appdir, exename) {
+function getExecutable (appdir, exename) {
   if (appdir) {
     const plistPath = [ appdir, 'Info.plist' ].join('/');
     const plistData = plist.readFileSync(plistPath);
@@ -56,7 +56,7 @@ function getExecutable(appdir, exename) {
   const identifierInProvisioning = 'x'
   Read the one in Info.plist and compare with bundleid
 */
-function checkProvision(appdir, file, next) {
+function checkProvision (appdir, file, next) {
   if (file && appdir) {
     const provision = 'embedded.mobileprovision';
     const mobileProvision = [ appdir, provision ].join('/');
@@ -80,31 +80,27 @@ function isMacho (buffer) {
   return false;
 }
 
-function relativeUpperDirectory (file) {
-  return ((file[0] !== '/') ? '../' : '') + file;
-}
-
-function upperDirectory(file) {
-  const slash = file.replace(/\/$/,'').lastIndexOf('/');
-  if (slash != -1) {
+function upperDirectory (file) {
+  const slash = file.replace(/\/$/, '').lastIndexOf('/');
+  if (slash !== -1) {
     return file.substring(0, slash) + '/';
   }
   return file + '/';
 }
 
 class EventHandler {
-  constructor() {
+  constructor () {
     this.cb = {};
     this.queue = {};
   }
-  on(ev, cb) {
+  on (ev, cb) {
     this.cb[ev] = cb;
     if (typeof this.queue[ev] === 'object') {
       this.queue[ev].forEach(cb);
     }
     return this;
   }
-  emit(ev, msg) {
+  emit (ev, msg) {
     const cb = this.cb[ev];
     if (typeof cb === 'function') {
       return cb(msg);
@@ -119,14 +115,14 @@ class EventHandler {
 
 class ApplesignSession {
 
-  constructor(state) {
+  constructor (state) {
     this.config = JSON.parse(JSON.stringify(state));
     this.events = new EventHandler(this.config);
   }
 
   /* Event Wrapper API with cb support */
-  emit(ev, msg, cb) {
-    function isEnder(ev) {
+  emit (ev, msg, cb) {
+    function isEnder (ev) {
       return (ev === 'error' || ev === 'done');
     }
     if (isEnder(ev) && msg && typeof cb === 'function') {
@@ -135,13 +131,13 @@ class ApplesignSession {
     return this.events.emit(ev, msg);
   }
 
-  on(ev, cb) {
+  on (ev, cb) {
     this.events.on(ev, cb);
     return this;
   }
 
   /* Public API */
-  signIPA(cb) {
+  signIPA (cb) {
     const self = this;
     self.unzip(self.config.file, self.config.outdir, (error) => {
       if (error) { return self.emit('error', error, cb); }
@@ -159,7 +155,7 @@ class ApplesignSession {
     return this;
   }
 
-  signAppDirectory(path, next) {
+  signAppDirectory (path, next) {
     const self = this;
     if (!path) {
       path = self.config.outdir + '/Payload';
@@ -205,11 +201,11 @@ class ApplesignSession {
         });
       });
     } else {
-      cb('Invalid path');
+      next('Invalid path');
     }
   }
 
-  fixEntitlements(file, next) {
+  fixEntitlements (file, next) {
     const self = this;
     if (!self.config.mobileprovision) {
       return next();
@@ -219,11 +215,11 @@ class ApplesignSession {
       self.emit('message', JSON.stringify(newEntitlements));
       const provision = 'embedded.mobileprovision';
       const pathToProvision = [ self.config.appdir, provision ].join('/');
-      config.entitlement = pathToProvision;
+      self.config.entitlement = pathToProvision;
       plist.writeFileSync(pathToProvision, newEntitlements);
-      next(error, stdout || stderr);
+      next(error);
     });
-  };
+  }
 
   fixPlist (file, bundleid, next) {
     const appdir = this.config.appdir;
@@ -231,19 +227,17 @@ class ApplesignSession {
       return next('Invalid parameters for fixPlist');
     }
     if (bundleid) {
-      const pl_path = [ config.appdir, file ].join('/');
+      const pl_path = [ this.config.appdir, file ].join('/');
       const data = plist.readFileSync(pl_path);
       const oldBundleID = data['CFBundleIdentifier'];
-  
       this.emit('message', 'Rebundle ' + pl_path + ' ' + oldBundleID + ' into ' + bundleid);
-  
       data['CFBundleIdentifier'] = bundleid;
       plist.writeFileSync(pl_path, data);
     }
     next();
   }
 
-  signFile(file, next) {
+  signFile (file, next) {
     const self = this;
     self.emit('message', 'Sign ' + file);
     tools.codesign(self.config.identity, self.config.entitlement, file, (error, stdout, stderr) => {
@@ -257,7 +251,7 @@ class ApplesignSession {
     });
   }
 
-  signLibraries(path, next) {
+  signLibraries (path, next) {
     const self = this;
     let signs = 0;
     let errors = 0;
@@ -268,7 +262,7 @@ class ApplesignSession {
     const exe = '/' + getExecutable(self.config.appdir);
     walk.walkSync(path, (basedir, filename, stat) => {
       const file = [ basedir, filename ].join('/');
-      if (file.endsWith (exe)) {
+      if (file.endsWith(exe)) {
         found = true;
         return;
       }
@@ -309,7 +303,7 @@ class ApplesignSession {
     }
   }
 
-  cleanup(cb) {
+  cleanup (cb) {
     this.emit('message', 'Cleaning up ' + this.config.outdir);
     try {
       rimraf(this.config.outdir, cb);
@@ -318,21 +312,21 @@ class ApplesignSession {
     }
   }
 
-  ipafyDirectory(next) {
+  ipafyDirectory (next) {
     const self = this;
     const ipa_in = self.config.file;
     const ipa_out = upperDirectory(self.config.outdir) + self.config.outfile;
     self.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
     tools.zip(self.config.outdir, ipa_out, 'Payload', (error) => {
-      if (self.config.replaceipa) {
+      if (!error && self.config.replaceipa) {
         self.events.emit('message', 'mv into ' + ipa_in);
-        return fs.rename (ipa_out, ipa_in, next);
+        return fs.rename(ipa_out, ipa_in, next);
       }
-      next();
+      next(error);
     });
   }
 
-  setFile(name) {
+  setFile (name) {
     if (typeof name === 'string') {
       this.config.file = name;
       this.config.outdir = name + '.d';
@@ -342,12 +336,12 @@ class ApplesignSession {
     }
   }
 
-  setOutputFile(name) {
+  setOutputFile (name) {
     this.config.outfile = name;
   }
 
   /* TODO: move to tools.js */
-  unzip(file, outdir, cb) {
+  unzip (file, outdir, cb) {
     const self = this;
     if (!file || !outdir) {
       cb(true, 'No output specified');
@@ -372,7 +366,7 @@ class ApplesignSession {
 }
 
 module.exports = class Applesign {
-  constructor(options) {
+  constructor (options) {
     this.config = this.withConfig(options);
   }
 
@@ -381,18 +375,18 @@ module.exports = class Applesign {
       opt = {};
     }
     return {
-      file : opt.file || undefined,
-      outdir : opt.file? (opt.outdir || opt.file + '.d'): undefined,
-      outfile : opt.file? (opt.outfile || getResignedFilename(opt.file || undefined)): undefined,
-      entitlement : opt.entitlement || undefined,
-      bundleid : opt.bundleid || undefined,
-      identity : opt.identity || undefined,
-      replaceipa : opt.replaceipa || false,
-      mobileprovision : opt.mobileprovision || undefined
-    }
+      file: opt.file || undefined,
+      outdir: opt.file ? (opt.outdir || opt.file + '.d') : undefined,
+      outfile: opt.file ? (opt.outfile || getResignedFilename(opt.file || undefined)) : undefined,
+      entitlement: opt.entitlement || undefined,
+      bundleid: opt.bundleid || undefined,
+      identity: opt.identity || undefined,
+      replaceipa: opt.replaceipa || false,
+      mobileprovision: opt.mobileprovision || undefined
+    };
   }
 
-  signIPA(file, cb) {
+  signIPA (file, cb) {
     const s = new ApplesignSession(this.config);
     if (typeof cb === 'function') {
       s.setFile(file);
@@ -402,7 +396,7 @@ module.exports = class Applesign {
     return s.signIPA(cb);
   }
 
-  getIdentities(cb) {
+  getIdentities (cb) {
     tools.getIdentities(cb);
   }
-}
+};

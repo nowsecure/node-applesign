@@ -1,12 +1,13 @@
 'use strict';
 
 const childproc = require('child_process');
+const plist = require('simple-plist');
 
 const path = {
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
-  security: '/usr/bin/security',
+  security: '/usr/bin/security'
 };
 
 function execProgram (bin, arg, opt, cb) {
@@ -17,8 +18,8 @@ function execProgram (bin, arg, opt, cb) {
   return childproc.execFile(bin, arg, opt, cb);
 }
 
-function callback(cb) {
-  return function(error, stdout, stderr) {
+function callback (cb) {
+  return function (error, stdout, stderr) {
     if (error) cb(error.message);
     else cb(undefined, stdout);
   };
@@ -37,31 +38,31 @@ module.exports.codesign = function (identity, entitlement, file, cb) {
   }
   args.push(file);
   execProgram(path.codesign, args, null, callback(cb));
-}
+};
 
 module.exports.verifyCodesign = function (file, cb) {
   const args = ['-v', '--no-strict', file];
   execProgram(path.codesign, args, null, callback(cb));
-}
+};
 
 module.exports.getEntitlementsFromMobileProvision = function (file, cb) {
   const args = [ 'cms', '-D', '-i', file ];
-  execProgram(config.security, args, null, callback((error, stdout) => {
+  execProgram(path.security, args, null, callback((error, stdout) => {
     cb(error, plist.parse(stdout)['Entitlements']);
   }));
-}
+};
 
 module.exports.zip = function (cwd, ofile, src, cb) {
   const args = [ '-qry', ofile, src ];
   execProgram(path.zip, args, { cwd: cwd }, callback(cb));
-}
+};
 
 module.exports.unzip = function (ifile, odir, cb) {
   const args = [ '-o', ifile, '-d', odir ];
   execProgram(path.unzip, args, {}, callback(cb));
-}
+};
 
-module.exports.getIdentities = function(cb) {
+module.exports.getIdentities = function (cb) {
   const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
   execProgram(path.security, args, null, callback((error, stdout) => {
     if (error) {
@@ -85,4 +86,4 @@ module.exports.getIdentities = function(cb) {
     }
     cb(undefined, ids);
   }));
-}
+};

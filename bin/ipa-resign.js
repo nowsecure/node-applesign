@@ -64,7 +64,7 @@ Example:
     }
     console.log('IPA is now signed.');
   }).on('done', (msg) => {
-    console.log("Done!");
+    console.log('Done!');
   }).on('message', (msg) => {
     console.log(colors.msg(msg));
   }).on('error', (msg) => {
