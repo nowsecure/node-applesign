@@ -121,7 +121,7 @@ module.exports = class ApplesignSession {
         this.ipafyDirectory((error, res) => {
           if (error) { this.emit('error', error, cb); }
           this.cleanup((ignored_error) => {
-            cb(ignored_error, res);
+            cb(error, res);
           });
         });
       });

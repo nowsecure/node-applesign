@@ -19,54 +19,45 @@ function execProgram (bin, arg, opt, cb) {
   return childproc.execFile(bin, arg, opt, cb);
 }
 
-function callback (cb) {
-  return function (error, stdout, stderr) {
-    if (error && error.message) {
-      return cb(error.message);
-    }
-    cb(undefined, stdout);
-  };
-}
-
 module.exports = {
   codesign: function (identity, entitlement, file, cb) {
     /* use the --no-strict to avoid the "resource envelope is obsolete" error */
     const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
     if (identity === undefined) {
-      return cb('--identity is required to sign');
+      return cb(new Error('--identity is required to sign'));
     }
     args.push('-fs', identity);
     if (typeof entitlement === 'string') {
       args.push('--entitlements=' + entitlement);
     }
     args.push(file);
-    execProgram(path.codesign, args, null, callback(cb));
+    execProgram(path.codesign, args, null, cb);
   },
   verifyCodesign: function (file, cb) {
     const args = ['-v', '--no-strict', file];
-    execProgram(path.codesign, args, null, callback(cb));
+    execProgram(path.codesign, args, null, cb);
   },
   getEntitlementsFromMobileProvision: function (file, cb) {
     const args = [ 'cms', '-D', '-i', file ];
-    execProgram(path.security, args, null, callback((error, stdout) => {
+    execProgram(path.security, args, null, (error, stdout) => {
       cb(error, plist.parse(stdout)['Entitlements']);
-    }));
+    });
   },
   zip: function (cwd, ofile, src, cb) {
     const args = [ '-qry', ofile, src ];
-    execProgram(path.zip, args, { cwd: cwd }, callback(cb));
+    execProgram(path.zip, args, { cwd: cwd }, cb);
   },
   unzip: function (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
-    execProgram(path.unzip, args, null, callback(cb));
+    execProgram(path.unzip, args, null, cb);
   },
   xcaToIpa: function (ifile, odir, cb) {
     const args = [ '-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir ];
-    execProgram(path.xcodebuild, args, null, callback(cb));
+    execProgram(path.xcodebuild, args, null, cb);
   },
   getIdentities: function (cb) {
     const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
-    execProgram(path.security, args, null, callback((error, stdout) => {
+    execProgram(path.security, args, null, (error, stdout) => {
       if (error) {
         return cb(error);
       }
@@ -87,6 +78,6 @@ module.exports = {
         }
       });
       cb(undefined, ids);
-    }));
+    });
   }
 };
