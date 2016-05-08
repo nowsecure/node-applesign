@@ -6,20 +6,7 @@ const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const fatmacho = require('fatmacho');
 const plist = require('simple-plist');
-const colors = require('colors/safe');
 const childproc = require('child_process');
-
-colors.setTheme({
-  error: 'red',
-  warn: 'green',
-  msg: 'yellow'
-});
-
-const BIG = colors.msg;
-const MSG = colors.warn;
-const ERR = colors.error;
-
-const codesign = {};
 
 function execProgram (bin, arg, opt, cb) {
   if (opt === null) {
@@ -29,39 +16,21 @@ function execProgram (bin, arg, opt, cb) {
   return childproc.execFile(bin, arg, opt, cb);
 }
 
-function log () {
-  var args = [];
-  for (var a of arguments) {
-    args.push(a);
-  }
-  if (typeof arguments[0] === 'function') {
-    console.log(arguments[0](args.slice(1).join(' ').trim()));
-  } else {
-    console.error(colors.error('[ERROR] ' + args.join(' ').trim()));
-  }
-}
-
 function isBinaryEncrypted (path) {
   const data = fs.readFileSync(path);
   try {
     const exec = macho.parse(data);
-    log(BIG, JSON.stringify(exec));
   } catch (e) {
     try {
-      const fat = fatmacho.parse(data);
-      for (let bin of fat) {
-        const exec = macho.parse(bin.data);
-        for (let cmd of exec.cmds) {
-          if (cmd.type === 'encryption_info') {
-            log(BIG, JSON.stringify(cmd));
-            if (cmd.id) {
-              return true;
-            }
+      fatmacho.parse(data).forEach((bin) => {;
+        macho.parse(bin.data).cmds.forEach((cmd) => {
+          if (cmd.type === 'encryption_info' && cmd.id) {
+            return true;
           }
-        }
-      }
+        });
+      });
     } catch (e) {
-      console.error(path, e);
+      /* console.error(path, e); */
     }
   }
   return false;
@@ -75,56 +44,9 @@ function getResignedFilename (path) {
   return newPath;
 }
 
-codesign.withConfig = function (options) {
-  if (!options) {
-    log(ERR, '[$] No config file specified');
-    return false;
-  }
-  var config = { };
-  config.file = options.file || undefined;
-  config.outdir = options.outdir || options.file + '.d';
-  config.outfile = options.outfile || getResignedFilename(config.file);
-  config.zip = options.zip || '/usr/bin/zip';
-  config.unzip = options.unzip || '/usr/bin/unzip';
-  config.codesign = options.codesign || '/usr/bin/codesign';
-  config.security = options.codesign || '/usr/bin/security';
-  config.entitlement = options.entitlement || undefined;
-  config.bundleid = options.bundleid || undefined;
-  config.identity = options.identity || undefined;
-  config.replaceipa = options.replaceipa || undefined;
-  config.mobileprovision = options.mobileprovision || undefined;
-  return config;
-};
-
-function unzip (file, config, cb) {
-  if (!file || !config.outdir) {
-    cb(true, 'No output specified');
-    return false;
-  }
-  const args = [ '-o', file, '-d', config.outdir ];
-  if (!config.outdir) {
-    cb(true, 'Invalid output directory');
-    return false;
-  }
-  log(MSG, ['[$] rimraf', config.outdir].join(' '));
-  rimraf(config.outdir, function () {
-    log(MSG, '[$] ' + config.unzip + ' ' + args.join(' '));
-    execProgram(config.unzip, args, null, (rc, out, err) => {
-      if (rc) {
-        /* remove outdir created by unzip */
-        rimraf(config.outdir, function () {
-          cb(rc, out, err || rc);
-        });
-      } else {
-        cb(rc, out || rc, err || rc);
-      }
-    });
-  });
-}
-
-codesign.getExecutable = function (config, exename) {
-  if (config.appdir) {
-    const plistPath = [ config.appdir, 'Info.plist' ].join('/');
+function getExecutable(appdir, exename) {
+  if (appdir) {
+    const plistPath = [ appdir, 'Info.plist' ].join('/');
     const plistData = plist.readFileSync(plistPath);
     const cfBundleExecutable = plistData['CFBundleExecutable'];
     if (cfBundleExecutable) {
@@ -132,33 +54,8 @@ codesign.getExecutable = function (config, exename) {
     }
   }
   return exename;
-};
+}
 
-codesign.fixPlist = function (file, config, cb) {
-  if (!file || !config.bundleid || !config.appdir) {
-    log(MSG, '[-] Skip bundle-id');
-    return cb(false);
-  }
-  const pl_path = [ config.appdir, file ].join('/');
-  log(MSG, pl_path);
-  const data = plist.readFileSync(pl_path);
-  const oldBundleID = data['CFBundleIdentifier'];
-  /* fix bundle-id */
-  log(MSG, 'CFBundleResourceSpecification:', data['CFBundleResourceSpecification']);
-  log(MSG, 'Old BundleID:', oldBundleID);
-  log(MSG, 'New BundleID:', config.bundleid);
-  data['CFBundleIdentifier'] = config.bundleid;
-  plist.writeFileSync(pl_path, data);
-  cb(false, '');
-};
-
-codesign.checkProvision = function (file, config, cb) {
-  if (!file || !config.appdir) {
-    return cb(false);
-  }
-  const provision = 'embedded.mobileprovision';
-  const pl_path = [ config.appdir, provision ].join('/');
-  fs.copy(file, pl_path, function (err) {
 /*
   TODO: verify is mobileprovision app-id glob string matches the bundleid
   read provision file in raw
@@ -167,52 +64,14 @@ codesign.checkProvision = function (file, config, cb) {
   const identifierInProvisioning = 'x'
   Read the one in Info.plist and compare with bundleid
 */
-    cb(err, err);
-  });
-};
-
-codesign.fixEntitlements = function (file, config, cb) {
-  log(BIG, '[*] Generating entitlements');
-  if (!config.security || !config.mobileprovision) {
-    return cb(false);
+function checkProvision(appdir, file, next) {
+  if (!file || !appdir) {
+    return next();
   }
-  const args = [ 'cms', '-D', '-i', config.mobileprovision ];
-  execProgram(config.security, args, null, (error, stdout, stderr) => {
-    const data = plist.parse(stdout);
-    const newEntitlements = data[ 'Entitlements' ];
-    log(MSG, JSON.stringify(newEntitlements));
-    /* save new entitlements */
-    const provision = 'embedded.mobileprovision';
-    const pl_path = [ config.appdir, provision ].join('/');
-    config.entitlement = pl_path;
-    plist.writeFileSync(pl_path, newEntitlements);
-    // log(MSG, stdout + stderr);
-    cb(error, stdout || stderr);
-  });
-};
-
-codesign.signFile = function (file, config, cb) {
-  const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
-  if (config.identity !== undefined) {
-    args.push('-fs', config.identity);
-  } else {
-    cb(true, '--identity is required to sign');
-  }
-  if (config.entitlement !== undefined) {
-    args.push('--entitlements=' + config.entitlement);
-  }
-  log(BIG, '[-] Sign', file);
-  args.push(file);
-  execProgram(config.codesign, args, null, function (error, stdout, stderr) {
-    /* use the --no-strict to avoid the "resource envelope is obsolete" error */
-    if (error) return cb(error, stdout || stderr);
-    const args = ['-v', '--no-strict', file];
-    log(BIG, '[-] Verify', file);
-    execProgram(config.codesign, args, null, (error, stdout, stderr) => {
-      cb(error, stdout || stderr);
-    });
-  });
-};
+  const provision = 'embedded.mobileprovision';
+  const mobileProvision = [ appdir, provision ].join('/');
+  fs.copy(file, mobileProvision, next);
+}
 
 function isMacho (buffer) {
   const magics = [
@@ -229,102 +88,6 @@ function isMacho (buffer) {
   return false;
 }
 
-codesign.signLibraries = function (path, config, cb) {
-  let signs = 0;
-  let errors = 0;
-  log(MSG, 'Signing libraries and frameworks');
-  let found = false;
-  const exe = '/' + codesign.getExecutable(config);
-  walk.walkSync(path, (basedir, filename, stat, next) => {
-    const file = [ basedir, filename ].join('/');
-    if (file.endsWith (exe)) {
-      found = true;
-      return;
-    }
-    if (!fs.lstatSync(file).isFile()) {
-      return;
-    }
-    try {
-      const fd = fs.openSync(file, 'r');
-      let buffer = new Buffer(4);
-      fs.readSync(fd, buffer, 0, 4);
-      if (isMacho(buffer)) {
-        found = true;
-        signs++;
-        codesign.signFile(file, config, (err) => {
-          signs--;
-          if (err) {
-            log(ERR, '[E] ' + err.toString());
-            errors++;
-          }
-          if (signs === 0) {
-            if (errors > 0) {
-              log(ERR, 'Some ('+errors+') errors happened durning the signature verification');
-            } else {
-              log(MSG, 'Everything seems signed now');
-            }
-            cb(null);
-          }
-        });
-      }
-      fs.close(fd);
-    } catch (e) {
-      console.error(basedir, filename, e);
-    }
-  });
-  if (!found) {
-    cb(true, 'Cannot find any MACH0 binary to sign');
-  }
-};
-
-codesign.signAppDirectory = function (path, config, cb) {
-  if (cb === undefined && typeof config === 'function') {
-    cb = config;
-    config = {};
-  }
-  try {
-    if (!fs.lstatSync(config.outdir + '/Payload').isDirectory()) {
-      throw new Error('Invalid IPA');
-    }
-  } catch (e) {
-    return codesign.cleanup(config, () => {
-      cb(true, 'Invalid IPA');
-    });
-  }
-  log(BIG, '[*] Payload found');
-  const files = fs.readdirSync(config.outdir + '/Payload').filter((x) => {
-    return x.indexOf('.app') !== -1;
-  });
-  if (files.length !== 1) {
-    return cb(true, 'Invalid IPA');
-  }
-  config.appdir = [ config.outdir, 'Payload', files[0] ].join('/');
-  const binname = codesign.getExecutable(config, files[0].replace('.app', ''));
-  const binpath = [ config.appdir, binname ].join('/');
-  if (fs.lstatSync(binpath).isFile()) {
-    const isEncrypted = isBinaryEncrypted(binpath);
-    if (isEncrypted) {
-      return cb(new Error('ipa is encrypted'));
-    }
-    log(MSG, '[*] Executable is not encrypted');
-    codesign.fixPlist('Info.plist', config, (err, reason) => {
-      if (err) return cb(err, reason);
-      codesign.checkProvision(config.mobileprovision, config, (err, reason) => {
-        if (err) return cb(err, reason);
-        codesign.fixEntitlements(binpath, config, (err, reason) => {
-          if (err) return cb(err, reason);
-          codesign.signFile(binpath, config, (err, reason) => {
-            if (err) return cb(err, reason);
-            codesign.signLibraries(config.appdir, config, cb);
-          });
-        });
-      });
-    });
-  } else {
-    cb(true, 'Invalid path');
-  }
-};
-
 function relativeUpperDirectory (file) {
   return ((file[0] !== '/') ? '../' : '') + file;
 }
@@ -337,33 +100,347 @@ function upperDirectory(file) {
   return file + '/';
 }
 
-codesign.cleanup = function (config, cb) {
-  rimraf(config.outdir, cb);
-};
+class EventHandler {
+  constructor() {
+    this.cb = {};
+    this.queue = {};
+  }
+  on(ev, cb) {
+    this.cb[ev] = cb;
+    if (typeof this.queue[ev] === 'object') {
+      this.queue[ev].forEach(cb);
+    }
+    return this;
+  }
+  emit(ev, msg) {
+    const cb = this.cb[ev];
+    if (typeof cb === 'function') {
+      return cb(msg);
+    }
+    if (typeof this.queue[ev] !== 'object') {
+      this.queue[ev] = [];
+    }
+    this.queue[ev].push(msg);
+    return false;
+  }
+}
 
-codesign.ipafyDirectory = function (config, cb) {
-  const ipa_in = config.file;
-  const ipa_out = upperDirectory(config.outdir) + config.outfile;
-  const args = [ '-qry', ipa_out, 'Payload' ];
-  log(MSG, '[*] Zipifying into ' + ipa_out + ' ...');
-  execProgram(config.zip, args, { cwd: config.outdir }, (error, stdout, stderr) => {
-    if (config.replaceipa) {
-      log(MSG, '[*] mv into ' + ipa_in);
-      fs.rename (ipa_out, ipa_in, () => {
-        cb(error, stdout || stderr);
+class ApplesignSession {
+
+  constructor(state) {
+    this.config = JSON.parse(JSON.stringify(state));
+    this.events = new EventHandler(this.config);
+  }
+
+  /* Event Wrapper API with cb support */
+  emit(ev, msg, cb) {
+    function isEnder(ev) {
+      return (ev === 'error' || ev === 'done');
+    }
+    if (isEnder(ev) && msg && typeof cb === 'function') {
+      cb(msg);
+    }
+    return this.events.emit(ev, msg);
+  }
+
+  on(ev, cb) {
+    return this.events.on(ev, cb);
+  }
+
+  /* Public API */
+  signIPA(cb) {
+    const self = this;
+    self.cleanup((error) => {
+      self.unzip(self.config.file, self.config.outdir, (error) => {
+        if (error) { return self.emit('error', error, cb); }
+        self.signAppDirectory(self.config.outdir + '/Payload', (error, res) => {
+          if (error) { self.emit('error', error, cb); }
+          self.ipafyDirectory((error, res) => {
+            if (error) { self.emit('error', error, cb); }
+            self.cleanup((ignored_error) => {
+              self.emit('done', '', cb);
+              cb(ignored_error, res);
+            });
+          });
+        });
+      });
+    });
+    return this;
+  }
+
+  signAppDirectory(path, next) {
+    const self = this;
+    if (!path) {
+      path = self.config.outdir + '/Payload';
+    }
+    /* W T F */
+    try {
+      if (!fs.lstatSync(path).isDirectory()) {
+        throw new Error('Invalid IPA');
+      }
+    } catch (e) {
+      return self.cleanup(next);
+    }
+    self.emit('message', 'Payload found');
+    const files = fs.readdirSync(path).filter((x) => {
+      return x.indexOf('.app') !== -1;
+    });
+    if (files.length !== 1) {
+      return next('Invalid IPA');
+    }
+    self.config.appdir = [ path, files[0] ].join('/');
+    const binname = getExecutable(self.config.appdir, files[0].replace('.app', ''));
+    const binpath = [ self.config.appdir, binname ].join('/');
+    if (fs.lstatSync(binpath).isFile()) {
+      const isEncrypted = isBinaryEncrypted(binpath);
+      if (isEncrypted) {
+        return next('ipa is encrypted');
+      }
+      self.emit('message', 'Main IPA executable is not encrypted');
+
+      const infoPlist = [ self.config.appdir, 'Info.plist' ].join('/');
+
+      self.fixPlist(infoPlist, self.config.bundleid, (err) => {
+        if (err) return self.emit('error', err, next);
+        checkProvision(self.config.appdir, self.config.mobileprovision, (err) => {
+          if (err) return self.emit('error', err, next);
+          self.fixEntitlements(binpath, (err) => {
+            if (err) return self.emit('error', err, next);
+            self.signFile(binpath, (err) => {
+              if (err) return self.emit('error', err, next);
+              self.signLibraries(self.config.appdir, next);
+            });
+          });
+        });
       });
     } else {
-      cb(error, stdout || stderr);
+      cb('Invalid path');
     }
-  });
-};
+  }
 
-codesign.getIdentities = function (config, cb) {
-  const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
-  execProgram(config.security, args, null, (error, stdout, stderr) => {
-    if (error) {
-      cb(error, stderr);
+  fixEntitlements(file, next) {
+    const self = this;
+    if (!this.config.security || !this.config.mobileprovision) {
+      return next();
+    }
+    self.emit('message', 'Generating entitlements');
+    const args = [ 'cms', '-D', '-i', this.config.mobileprovision ];
+    execProgram(config.security, args, null, (error, stdout, stderr) => {
+      const data = plist.parse(stdout);
+      const newEntitlements = data[ 'Entitlements' ];
+      self.emit('message', JSON.stringify(newEntitlements));
+      /* save new entitlements */
+      const provision = 'embedded.mobileprovision';
+      const pl_path = [ self.config.appdir, provision ].join('/');
+      config.entitlement = pl_path;
+      plist.writeFileSync(pl_path, newEntitlements);
+      next(error, stdout || stderr);
+    });
+  };
+
+  fixPlist (file, bundleid, next) {
+    const appdir = this.config.appdir;
+    if (!file || !appdir) {
+      return next('Invalid parameters for fixPlist');
+    }
+    if (bundleid) {
+      const pl_path = [ config.appdir, file ].join('/');
+      const data = plist.readFileSync(pl_path);
+      const oldBundleID = data['CFBundleIdentifier'];
+  
+      this.emit('message', 'Rebundle ' + pl_path + ' ' + oldBundleID + ' into ' + bundleid);
+  
+      data['CFBundleIdentifier'] = bundleid;
+      plist.writeFileSync(pl_path, data);
+    }
+    next();
+  }
+
+  signFile(file, next) {
+    const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
+    const self = this;
+    if (self.config.identity !== undefined) {
+      args.push('-fs', self.config.identity);
     } else {
+      return next('--identity is required to sign');
+    }
+    if (self.config.entitlement !== undefined) {
+      args.push('--entitlements=' + self.config.entitlement);
+    }
+    self.emit('message', 'Sign ' + file);
+    args.push(file);
+    execProgram(self.config.codesign, args, null, function (error, stdout, stderr) {
+      /* use the --no-strict to avoid the "resource envelope is obsolete" error */
+      if (error) {
+        return self.emit('error', error, next);
+      }
+      const args = ['-v', '--no-strict', file];
+      self.emit('message', 'Verify ' + file);
+      execProgram(self.config.codesign, args, null, (error, stdout, stderr) => {
+        next(error, stdout || stderr);
+      });
+    });
+  }
+
+  signLibraries(path, next) {
+    const self = this;
+    let signs = 0;
+    let errors = 0;
+    let found = false;
+
+    this.emit('message', 'Signing libraries and frameworks');
+
+    const exe = '/' + getExecutable(self.config.appdir);
+    walk.walkSync(path, (basedir, filename, stat) => {
+      const file = [ basedir, filename ].join('/');
+      if (file.endsWith (exe)) {
+        found = true;
+        return;
+      }
+      if (!fs.lstatSync(file).isFile()) {
+        return;
+      }
+      try {
+        const fd = fs.openSync(file, 'r');
+        let buffer = new Buffer(4);
+        fs.readSync(fd, buffer, 0, 4);
+        if (isMacho(buffer)) {
+          found = true;
+          signs++;
+          self.signFile(file, (err) => {
+            signs--;
+            if (err) {
+              self.emit('error ', err);
+              errors++;
+            }
+            if (signs === 0) {
+              if (errors > 0) {
+                self.emit('error', 'Warning: Some (' + errors + ') errors happened.');
+              } else {
+                self.emit('message', 'Everything seems signed now');
+              }
+              next();
+            }
+          });
+        }
+        fs.close(fd);
+      } catch (e) {
+        console.error(basedir, filename, e);
+        next(e);
+      }
+    });
+    if (!found) {
+      next('Cannot find any MACH0 binary to sign');
+    }
+  }
+
+  cleanup(cb) {
+    this.emit('message', 'Cleaning up ' + this.config.outdir);
+    try {
+      rimraf(this.config.outdir, cb);
+    } catch (e) {
+      this.emit('error', e);
+    }
+  }
+
+  ipafyDirectory(next) {
+    const self = this;
+    const ipa_in = self.config.file;
+    const ipa_out = upperDirectory(self.config.outdir) + self.config.outfile;
+    const args = [ '-qry', ipa_out, 'Payload' ];
+    self.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
+    execProgram(self.config.zip, args, { cwd: self.config.outdir }, (error, stdout, stderr) => {
+      if (self.config.replaceipa) {
+        self.events.emit('message', 'mv into ' + ipa_in);
+        return fs.rename (ipa_out, ipa_in, next);
+      }
+      next();
+    });
+  }
+
+  setFile(name) {
+    this.config.file = name;
+    this.config.outdir = name + '.d';
+    if (!this.config.outfile) {
+      this.setOutputFile(getResignedFilename(name));
+    }
+  }
+
+  setOutputFile(name) {
+    this.config.outfile = name;
+  }
+
+  unzip(file, outdir, cb) {
+    const self = this;
+    if (!file || !outdir) {
+      cb(true, 'No output specified');
+      return false;
+    }
+    const args = [ '-o', file, '-d', outdir ];
+    if (!outdir) {
+      cb(true, 'Invalid output directory');
+      return false;
+    }
+    self.events.emit('message', ['rimraf', outdir].join(' '));
+    rimraf(outdir, function (ignored_error) {
+      self.events.emit('message', self.config.unzip + ' ' + args.join(' '));
+      execProgram(self.config.unzip, args, null, (error, out, err) => {
+        if (error) {
+          /* remove outdir created by unzip */
+          rimraf(outdir, (e) => { cb(error.message); });
+        } else {
+          cb(undefined, out);
+        }
+      });
+    });
+  }
+}
+
+module.exports = class Applesign {
+  constructor(options) {
+    this.config = this.withConfig(options);
+  }
+
+  withConfig (opt) {
+    if (typeof opt !== 'object') {
+      opt = {};
+    }
+    return {
+      file : opt.file || undefined,
+      outdir : opt.outdir || opt.file + '.d',
+      outfile : opt.outfile || getResignedFilename(opt.file || undefined),
+      zip : opt.zip || '/usr/bin/zip',
+      unzip : opt.unzip || '/usr/bin/unzip',
+      codesign : opt.codesign || '/usr/bin/codesign',
+      security : opt.codesign || '/usr/bin/security',
+      entitlement : opt.entitlement || undefined,
+      bundleid : opt.bundleid || undefined,
+      identity : opt.identity || undefined,
+      replaceipa : opt.replaceipa || undefined,
+      mobileprovision : opt.mobileprovision || undefined
+    }
+  }
+
+  signIPA(file, cb) {
+    const s = new ApplesignSession(this.config);
+    if (typeof cb === 'function') {
+      if (typeof file === 'string') {
+        s.setFile(file);
+      } else {
+        throw Error('sarandunga');
+      }
+    } else {
+      cb = file;
+    }
+    return s.signIPA(cb);
+  }
+
+  getIdentities(cb) {
+    const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
+    execProgram(this.config.security, args, null, (error, stdout, stderr) => {
+      if (error) {
+        return cb(error, stderr);
+      }
       const lines = stdout.split('\n');
       lines.pop(); // remove last line
       let ids = [];
@@ -381,53 +458,6 @@ codesign.getIdentities = function (config, cb) {
         }
       }
       cb(false, ids);
-    }
-  });
-};
-
-codesign.signIPA = function (config, cb) {
-  rimraf(config.outdir, () => {
-    unzip(config.file, config, (error, stdout, stderr) => {
-      if (error) {
-        return cb(error, stderr);
-      }
-      codesign.signAppDirectory(config.outdir, config, (error, res) => {
-        if (error) {
-          return cb(error, res);
-        }
-        codesign.ipafyDirectory(config, (error, res) => {
-          if (error) {
-            cb(error, res);
-          }
-          codesign.cleanup(config, () => {
-            log(MSG, '[-] Removing temporary directory');
-            cb(error, res);
-          });
-        });
-      });
     });
-  });
-};
-
-module.exports = class Applesign {
-  constructor(options) {
-    this.config = codesign.withConfig(options);
-    this.logError = log;
-  }
-  signIPA(file, cb) {
-    if (cb) {
-      this.config.file = file;
-      if (!this.config.outfile) {
-        this.config.outdir = file + '.d';
-        this.config.outfile = getResignedFilename(file);
-      }
-    }
-    codesign.signIPA(this.config, cb);
-  }
-  cleanup(cb) {
-    codesign.cleanup(this.config, cb);
-  }
-  getIdentities(cb) {
-    codesign.getIdentities(this.config, cb);
   }
 }

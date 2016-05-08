@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-const Codesign = require('../');
+const colors = require('colors');
+const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
   boolean: ['replace', 'identities']
 });
@@ -16,12 +17,18 @@ const options = {
   replaceipa: conf.replace
 };
 
-const cs = new Codesign(options);
+colors.setTheme({
+  error: 'red',
+  warn: 'green',
+  msg: 'yellow'
+});
+
+const cs = new Applesign(options);
 
 if (conf.identities) {
   cs.getIdentities((err, ids) => {
     if (err) {
-      cs.logError(err, ids);
+      console.error(colors.error(err));
     } else {
       ids.forEach((id) => {
         console.log(id.hash, id.name);
@@ -50,11 +57,17 @@ Example:
     --mobileprovision embedded.mobileprovision --bundleid com.nowsecure.TestApp ./foo.ipa
 `);
 } else {
-  cs.signIPA((err, data) => {
-    if (err) {
-      cs.logError(data);
+  cs.signIPA((error, data) => {
+    if (error) {
+      console.error(error);
       process.exit(1);
     }
     console.log('IPA is now signed.');
+  }).on('done', (msg) => {
+    console.log("Done!");
+  }).on('message', (msg) => {
+    console.log(colors.msg(msg));
+  }).on('error', (msg) => {
+    console.log(colors.error('error'), msg);
   });
 }

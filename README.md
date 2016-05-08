@@ -77,12 +77,19 @@ const as = new Applesign({
   identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
   mobileprovision: '/path/to/dev.mobileprovision'
 });
-as.signIPA('/path/to/app.ipa', (err, data) => {
+const s = as.signIPA('/path/to/app.ipa', (err, data) => {
   if (err) {
     console.error(data);
   }
   console.log('ios-deploy -b', as.config.outfile);
-});
+}).on('error', (msg) => {
+  console.log('ERROR', msg);
+}).on('message', (msg) => {
+  console.log('msg', msg);
+}).on('done', (err) => {
+  console.log('process done');
+  process.exit(0);
+});;
 ```
 
 To list the developer identities available in the system:
