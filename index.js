@@ -220,11 +220,11 @@ class ApplesignSession {
 
   fixEntitlements(file, next) {
     const self = this;
-    if (!this.config.security || !this.config.mobileprovision) {
+    if (!self.config.security || !self.config.mobileprovision) {
       return next();
     }
     self.emit('message', 'Generating entitlements');
-    const args = [ 'cms', '-D', '-i', this.config.mobileprovision ];
+    const args = [ 'cms', '-D', '-i', self.config.mobileprovision ];
     execProgram(config.security, args, null, (error, stdout, stderr) => {
       const data = plist.parse(stdout);
       const newEntitlements = data[ 'Entitlements' ];
@@ -359,10 +359,12 @@ class ApplesignSession {
   }
 
   setFile(name) {
-    this.config.file = name;
-    this.config.outdir = name + '.d';
-    if (!this.config.outfile) {
-      this.setOutputFile(getResignedFilename(name));
+    if (typeof name === 'string') {
+      this.config.file = name;
+      this.config.outdir = name + '.d';
+      if (!this.config.outfile) {
+        this.setOutputFile(getResignedFilename(name));
+      }
     }
   }
 
@@ -407,8 +409,8 @@ module.exports = class Applesign {
     }
     return {
       file : opt.file || undefined,
-      outdir : opt.outdir || opt.file + '.d',
-      outfile : opt.outfile || getResignedFilename(opt.file || undefined),
+      outdir : opt.file? (opt.outdir || opt.file + '.d'): undefined,
+      outfile : opt.file? (opt.outfile || getResignedFilename(opt.file || undefined)): undefined,
       zip : opt.zip || '/usr/bin/zip',
       unzip : opt.unzip || '/usr/bin/unzip',
       codesign : opt.codesign || '/usr/bin/codesign',
@@ -424,11 +426,7 @@ module.exports = class Applesign {
   signIPA(file, cb) {
     const s = new ApplesignSession(this.config);
     if (typeof cb === 'function') {
-      if (typeof file === 'string') {
-        s.setFile(file);
-      } else {
-        throw Error('sarandunga');
-      }
+      s.setFile(file);
     } else {
       cb = file;
     }
@@ -447,12 +445,12 @@ module.exports = class Applesign {
       for (let line of lines) {
         const tok = line.indexOf(') ');
         if (tok !== -1) {
-          line = line.substring(tok + 2).trim();
-          const tok2 = line.indexOf(' ');
+          const msg = line.substring(tok + 2).trim();
+          const tok2 = msg.indexOf(' ');
           if (tok2 !== -1) {
             ids.push({
-              'hash': line.substring(0, tok2),
-              'name': line.substring(tok2 + 1)
+              'hash': msg.substring(0, tok2),
+              'name': msg.substring(tok2 + 1)
             });
           }
         }
