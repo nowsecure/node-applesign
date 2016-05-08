@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const fs = require('fs-extra');
 const macho = require('macho');
 const walk = require('fs-walk');
@@ -301,7 +302,7 @@ module.exports = class ApplesignSession {
   setFile (name) {
     if (typeof name === 'string') {
       this.config.file = name;
-      this.config.outdir = name + '.d';
+      this.config.outdir = path.resolve(name + '.d');
       if (!this.config.outfile) {
         this.setOutputFile(getResignedFilename(name));
       }
@@ -315,12 +316,10 @@ module.exports = class ApplesignSession {
   /* TODO: move to tools.js */
   unzip (file, outdir, cb) {
     if (!file || !outdir) {
-      cb(new Error('No output specified'));
-      return false;
+      return cb(new Error('No output specified'));
     }
     if (!outdir) {
-      cb(new Error('Invalid output directory'));
-      return false;
+      return cb(new Error('Invalid output directory'));
     }
     this.events.emit('message', ['rm -rf', outdir].join(' '));
     this.cleanup(() => {
