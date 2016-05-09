@@ -241,16 +241,16 @@ module.exports = class ApplesignSession {
   }
 
   signLibraries (path, next) {
-    let signs = 0;
-    let errors = 0;
-    let found = false;
-
     this.emit('message', 'Signing libraries and frameworks');
 
+    const libraries = [];
     const exe = '/' + getExecutable(this.config.appdir);
+
+    let found = false;
     walk.walkSync(path, (basedir, filename, stat) => {
       const file = [ basedir, filename ].join('/');
       if (file.endsWith(exe)) {
+        this.emit('message', 'Executable found at '+file);
         found = true;
         return;
       }
@@ -262,23 +262,7 @@ module.exports = class ApplesignSession {
         let buffer = new Buffer(4);
         fs.readSync(fd, buffer, 0, 4);
         if (isMacho(buffer)) {
-          found = true;
-          signs++;
-          this.signFile(file, (err) => {
-            signs--;
-            if (err) {
-              this.emit('error ', err);
-              errors++;
-            }
-            if (signs === 0) {
-              if (errors > 0) {
-                this.emit('message', 'Warning: Some (' + errors + ') errors happened.');
-              } else {
-                this.emit('message', 'Everything seems signed now');
-              }
-              next();
-            }
-          });
+          libraries.push(file);
         }
         fs.close(fd);
       } catch (e) {
@@ -288,6 +272,32 @@ module.exports = class ApplesignSession {
     });
     if (!found) {
       next('Cannot find any MACH0 binary to sign');
+    }
+    if (libraries.length > 0) {
+      let issues = 0;
+      let signs = 0;
+      this.emit('message', 'Found ' + libraries.length + ' libraries');
+      libraries.forEach((lib) => {
+        signs++;
+        this.signFile(lib, (err) => {
+          signs--;
+          if (err) {
+            this.emit('warning', err);
+            issues++;
+          }
+          if (signs === 0) {
+            if (issues > 0) {
+              this.emit('message', 'Warning: Some (' + issues + ') errors happened.');
+            } else {
+              this.emit('message', 'Everything seems signed now');
+            }
+            next();
+          }
+        });
+      });
+    } else {
+      this.emit('message', 'No libraries found, moving along');
+      next();
     }
   }
 
