@@ -73,23 +73,6 @@ function isMacho (buffer) {
   return false;
 }
 
-/*
-  TODO: verify is mobileprovision app-id glob string matches the bundleid
-  read provision file in raw
-  search for application-identifier and <string>...</string>
-  check if prefix matches and last dot separated word is an asterisk
-  const identifierInProvisioning = 'x'
-  Read the one in Info.plist and compare with bundleid
-*/
-function checkProvision (appdir, file, next) {
-  if (file && appdir) {
-    const provision = 'embedded.mobileprovision';
-    const mobileProvision = [ appdir, provision ].join('/');
-    return fs.copy(file, mobileProvision, next);
-  }
-  next();
-}
-
 module.exports = class ApplesignSession {
   constructor (state, onEnd) {
     this.config = JSON.parse(JSON.stringify(state));
@@ -168,7 +151,7 @@ module.exports = class ApplesignSession {
 
       this.fixPlist(infoPlist, this.config.bundleid, (err) => {
         if (err) return this.events.emit('end', err, next);
-        checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
+        this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
           if (err) return this.emit('end', err, next);
           this.fixEntitlements(binpath, (err) => {
             if (err) return this.emit('end', err, next);
@@ -182,6 +165,24 @@ module.exports = class ApplesignSession {
     } else {
       next(new Error('Invalid path'));
     }
+  }
+
+  /*
+    TODO: verify is mobileprovision app-id glob string matches the bundleid
+    read provision file in raw
+    search for application-identifier and <string>...</string>
+    check if prefix matches and last dot separated word is an asterisk
+    const identifierInProvisioning = 'x'
+    Read the one in Info.plist and compare with bundleid
+  */
+  checkProvision (appdir, file, next) {
+    if (file && appdir) {
+      const provision = 'embedded.mobileprovision';
+      const mobileProvision = [ appdir, provision ].join('/');
+      this.emit('message', 'Embedding new mobileprovision');
+      return fs.copy(file, mobileProvision, next);
+    }
+    next();
   }
 
   fixEntitlements (file, next) {
