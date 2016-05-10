@@ -205,12 +205,11 @@ module.exports = class ApplesignSession {
       return next('Invalid parameters for fixPlist');
     }
     if (bundleid) {
-      const pl_path = [ this.config.appdir, file ].join('/');
-      const data = plist.readFileSync(pl_path);
+      const data = plist.readFileSync(file);
       const oldBundleID = data['CFBundleIdentifier'];
-      this.emit('message', 'Rebundle ' + pl_path + ' ' + oldBundleID + ' into ' + bundleid);
+      this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleID + ' into ' + bundleid);
       data['CFBundleIdentifier'] = bundleid;
-      plist.writeFileSync(pl_path, data);
+      plist.writeFileSync(file, data);
     }
     next();
   }
