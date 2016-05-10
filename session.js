@@ -99,10 +99,10 @@ module.exports = class ApplesignSession {
 
   /* Event Wrapper API with cb support */
   emit (ev, msg, cb) {
-    if (ev === 'end' && msg && typeof cb === 'function') {
-      cb(msg);
+    this.events.emit(ev, msg);
+    if (typeof cb === 'function') {
+      return cb(msg);
     }
-    return this.events.emit(ev, msg);
   }
 
   on (ev, cb) {
@@ -113,17 +113,17 @@ module.exports = class ApplesignSession {
   /* Public API */
   signIPA (cb) {
     if (typeof cb === 'function') {
-      //this.events.removeListener('end', this.events['end']);
+      this.events.removeAllListeners('end');
       this.events.on('end', cb);
     }
     this.unzip(this.config.file, this.config.outdir, (error) => {
-      if (error) { return this.events.emit('end', error); }
+      if (error) { return this.emit('end', error); }
       this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
-        if (error) { return this.events.emit('end', error); }
+        if (error) { return this.emit('end', error); }
         this.ipafyDirectory((error, res) => {
-          if (error) { return this.events.emit('end', error); }
+          if (error) { return this.emit('end', error); }
           this.cleanup((_) => {
-            this.events.emit('end');
+            this.emit('end');
           });
         });
       });
@@ -216,21 +216,19 @@ module.exports = class ApplesignSession {
   }
 
   signFile (file, next) {
+    function codesignHasFailed (config, errmsg) {
+      return ((errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
+    }
     this.emit('message', 'Sign ' + file);
     tools.codesign(this.config.identity, this.config.entitlement, file, (error, stdout, stderr) => {
-      if (error) {
-        if (this.config.ignoreVerificationErrors) {
-          this.emit('warning', error);
-          return next();
-        }
+      if (error && codesignHasFailed(this.config, stderr)) {
         return this.emit('end', error, next);
       }
       this.emit('message', 'Verify ' + file);
       tools.verifyCodesign(file, (error, stdout, stderr) => {
         if (error) {
           if (this.config.ignoreVerificationErrors) {
-            this.emit('warning', error);
-            return next();
+            return this.emit('warning', error, next);
           }
           return this.emit('end', error, next);
         } else {
@@ -250,7 +248,7 @@ module.exports = class ApplesignSession {
     walk.walkSync(path, (basedir, filename, stat) => {
       const file = [ basedir, filename ].join('/');
       if (file.endsWith(exe)) {
-        this.emit('message', 'Executable found at '+file);
+        this.emit('message', 'Executable found at ' + file);
         found = true;
         return;
       }

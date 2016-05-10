@@ -12,7 +12,7 @@ const s = as.signIPA('/tmp/ada.ipa', onEnd)
     console.error('warning', msg);
   });
 
-function onEnd(error) {
+function onEnd (error) {
   if (error) {
     console.log('error', error);
     process.exit(1);
