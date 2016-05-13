@@ -132,7 +132,7 @@ module.exports = class ApplesignSession {
     }
     this.emit('message', 'Payload found');
     const files = fs.readdirSync(path).filter((x) => {
-      return x.indexOf('.app') !== -1;
+      return x.indexOf('.app') === x.length - 4;
     });
     if (files.length !== 1) {
       return next(new Error('Invalid IPA'));
