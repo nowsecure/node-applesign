@@ -6,8 +6,8 @@ const macho = require('macho');
 const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
-const plist = require('simple-plist');
 const fatmacho = require('fatmacho');
+const plist = require('simple-plist');
 const EventEmitter = require('events').EventEmitter;
 
 function getResignedFilename (path) {
@@ -216,16 +216,19 @@ module.exports = class ApplesignSession {
   }
 
   signFile (file, next) {
-    function codesignHasFailed (config, errmsg) {
-      return ((errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
+    function codesignHasFailed (config, error, errmsg) {
+      if (error && error.message.indexOf('Error:')) {
+        return true;
+      }
+      return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
     }
     this.emit('message', 'Sign ' + file);
-    tools.codesign(this.config.identity, this.config.entitlement, file, (error, stdout, stderr) => {
-      if (error && codesignHasFailed(this.config, stderr)) {
+    tools.codesign(this.config.identity, this.config.entitlement, this.config.keychain, file, (error, stdout, stderr) => {
+      if (error && codesignHasFailed(this.config, error, stderr)) {
         return this.emit('end', error, next);
       }
       this.emit('message', 'Verify ' + file);
-      tools.verifyCodesign(file, (error, stdout, stderr) => {
+      tools.verifyCodesign(file, this.config.keychain, (error, stdout, stderr) => {
         if (error) {
           if (this.config.ignoreVerificationErrors) {
             return this.emit('warning', error, next);

@@ -16,6 +16,7 @@ module.exports = class Applesign {
       file: opt.file,
       outdir: undefined,
       outfile: opt.outfile,
+      keychain: opt.keychain,
       ignoreVerificationErrors: true,
       ignoreCodesignErrors: true,
       entitlement: opt.entitlement || undefined,

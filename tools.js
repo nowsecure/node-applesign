@@ -20,7 +20,7 @@ function execProgram (bin, arg, opt, cb) {
 }
 
 module.exports = {
-  codesign: function (identity, entitlement, file, cb) {
+  codesign: function (identity, entitlement, keychain, file, cb) {
     /* use the --no-strict to avoid the "resource envelope is obsolete" error */
     const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
     if (identity === undefined) {
@@ -30,11 +30,18 @@ module.exports = {
     if (typeof entitlement === 'string') {
       args.push('--entitlements=' + entitlement);
     }
+    if (typeof keychain === 'string') {
+      args.push('--keychain=' + keychain);
+    }
     args.push(file);
     execProgram(cmd.codesign, args, null, cb);
   },
-  verifyCodesign: function (file, cb) {
-    const args = ['-v', '--no-strict', file];
+  verifyCodesign: function (file, keychain, cb) {
+    const args = ['-v', '--no-strict'];
+    if (typeof keychain === 'string') {
+      args.push('--keychain=' + keychain);
+    }
+    args.push(file);
     execProgram(cmd.codesign, args, null, cb);
   },
   getEntitlementsFromMobileProvision: function (file, cb) {

@@ -14,7 +14,8 @@ const options = {
   bundleid: conf.bundleid,
   identity: conf.identity,
   mobileprovision: conf.mobileprovision,
-  replaceipa: conf.replace
+  replaceipa: conf.replace,
+  keychain: conf.keychain
 };
 
 colors.setTheme({
@@ -46,6 +47,7 @@ if (conf.identities) {
   --identities              List local codesign identities
   --identity 1C4D1A..       Specify hash-id of the identity to use
   --replace                 Replace the input IPA file with the resigned one
+  --keychain [KEYCHAIN]     Specify alternative keychain file
   --output [APP.IPA]        Path to the output IPA filename
   --bundleid [BUNDLEID]     Change the bundleid when repackaging
   --mobileprovision [FILE]  Specify the mobileprovision file to use
