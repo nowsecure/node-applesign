@@ -18,6 +18,10 @@ function getResignedFilename (path) {
   return newPath;
 }
 
+function parentDirectory(root) {
+  return path.normalize ([root, '..'].join('/'));
+}
+
 function isBinaryEncrypted (path) {
   const data = fs.readFileSync(path);
   try {
@@ -48,14 +52,6 @@ function getExecutable (appdir, exename) {
     }
   }
   return exename;
-}
-
-function upperDirectory (file) {
-  const slash = file.replace(/\/$/, '').lastIndexOf('/');
-  if (slash !== -1) {
-    return file.substring(0, slash) + '/';
-  }
-  return file + '/';
 }
 
 function isMacho (buffer) {
@@ -314,7 +310,7 @@ module.exports = class ApplesignSession {
 
   ipafyDirectory (next) {
     const ipa_in = this.config.file;
-    const ipa_out = upperDirectory(this.config.outdir) + this.config.outfile;
+    const ipa_out = [parentDirectory (this.config.outdir), this.config.outfile].join ('/');
     this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
     tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
       if (!error && this.config.replaceipa) {
