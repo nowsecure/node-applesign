@@ -2,11 +2,10 @@
 
 const path = require('path');
 const fs = require('fs-extra');
-const macho = require('macho');
 const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
-const fatmacho = require('fatmacho');
+const isEncryptedSync = require('macho-is-encrypted')
 const plist = require('simple-plist');
 const EventEmitter = require('events').EventEmitter;
 
@@ -20,26 +19,6 @@ function getResignedFilename (path) {
 
 function parentDirectory(root) {
   return path.normalize ([root, '..'].join('/'));
-}
-
-function isBinaryEncrypted (path) {
-  const data = fs.readFileSync(path);
-  try {
-    macho.parse(data);
-  } catch (e) {
-    try {
-      fatmacho.parse(data).forEach((bin) => {
-        macho.parse(bin.data).cmds.forEach((cmd) => {
-          if (cmd.type === 'encryption_info' && cmd.id) {
-            return true;
-          }
-        });
-      });
-    } catch (e) {
-      /* console.error(path, e); */
-    }
-  }
-  return false;
 }
 
 function getExecutable (appdir, exename) {
@@ -137,8 +116,7 @@ module.exports = class ApplesignSession {
     const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
     const binpath = [ this.config.appdir, binname ].join('/');
     if (fs.lstatSync(binpath).isFile()) {
-      const isEncrypted = isBinaryEncrypted(binpath);
-      if (isEncrypted) {
+      if (isEncryptedSync.path(binpath)) {
         return next(new Error('ipa is encrypted'));
       }
       this.emit('message', 'Main IPA executable is not encrypted');
