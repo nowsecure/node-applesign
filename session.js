@@ -290,7 +290,11 @@ module.exports = class ApplesignSession {
     const ipa_in = this.config.file;
     const ipa_out = [parentDirectory (this.config.outdir), this.config.outfile].join ('/');
     this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
-    fs.unlinkSync(ipa_out);
+    try {
+        fs.unlinkSync(ipa_out);
+    } catch (e) {
+      /* do nothing */
+    }
     tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
       if (!error && this.config.replaceipa) {
         this.events.emit('message', 'mv into ' + ipa_in);
