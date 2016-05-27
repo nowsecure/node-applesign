@@ -5,9 +5,9 @@ const fs = require('fs-extra');
 const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
-const isEncryptedSync = require('macho-is-encrypted')
 const plist = require('simple-plist');
 const EventEmitter = require('events').EventEmitter;
+const isEncryptedSync = require('macho-is-encrypted')
 
 function getResignedFilename (path) {
   if (!path) return null;
@@ -78,7 +78,7 @@ module.exports = class ApplesignSession {
       if (error) { return this.emit('end', error); }
       this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
         if (error) { return this.emit('end', error); }
-        this.ipafyDirectory((error, res) => {
+        this.zip((error, res) => {
           if (error) { return this.emit('end', error); }
           this.cleanup((_) => {
             this.emit('end');
@@ -286,10 +286,11 @@ module.exports = class ApplesignSession {
     }
   }
 
-  ipafyDirectory (next) {
+  zip (next) {
     const ipa_in = this.config.file;
     const ipa_out = [parentDirectory (this.config.outdir), this.config.outfile].join ('/');
     this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
+    fs.unlinkSync(ipa_out);
     tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
       if (!error && this.config.replaceipa) {
         this.events.emit('message', 'mv into ' + ipa_in);
