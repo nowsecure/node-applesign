@@ -295,13 +295,20 @@ module.exports = class ApplesignSession {
     } catch (e) {
       /* do nothing */
     }
-    tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
-      if (!error && this.config.replaceipa) {
-        this.events.emit('message', 'mv into ' + ipa_in);
-        return fs.rename(ipa_out, ipa_in, next);
-      }
-      next(error);
-    });
+    const continuation = () => {
+      tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
+        if (!error && this.config.replaceipa) {
+          this.events.emit('message', 'mv into ' + ipa_in);
+          return fs.rename(ipa_out, ipa_in, next);
+        }
+        next(error);
+      });
+    }
+    if (this.config.watchapp) {
+      continuation();
+    } else {
+      rimraf([ this.config.appdir, 'Watch' ].join('/'), continuation);
+    }
   }
 
   setFile (name) {

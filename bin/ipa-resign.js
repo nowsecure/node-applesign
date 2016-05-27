@@ -15,6 +15,7 @@ const options = {
   identity: conf.identity,
   mobileprovision: conf.mobileprovision,
   replaceipa: conf.replace,
+  watchapp: !conf['without-watchapp'],
   keychain: conf.keychain
 };
 
@@ -47,6 +48,7 @@ if (conf.identities) {
   --identities              List local codesign identities
   --identity 1C4D1A..       Specify hash-id of the identity to use
   --replace                 Replace the input IPA file with the resigned one
+  --without-watchapp        Remove the WatchApp from the IPA before resigning
   --keychain [KEYCHAIN]     Specify alternative keychain file
   --output [APP.IPA]        Path to the output IPA filename
   --bundleid [BUNDLEID]     Change the bundleid when repackaging
