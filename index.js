@@ -23,7 +23,7 @@ module.exports = class Applesign {
       bundleid: opt.bundleid || undefined,
       identity: opt.identity || undefined,
       replaceipa: opt.replaceipa || false,
-      watchapp: (typeof opt.watchapp === 'undefined')? false: !!opt.watchapp,
+      withoutWatchapp: opt.withoutWatchapp || false,
       mobileprovision: opt.mobileprovision || undefined
     };
   }

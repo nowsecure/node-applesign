@@ -9,14 +9,14 @@ const conf = require('minimist')(process.argv.slice(2), {
 
 const options = {
   file: conf._[0] || 'undefined',
-  outfile: conf.output,
-  entitlement: conf.entitlement,
-  bundleid: conf.bundleid,
-  identity: conf.identity,
-  mobileprovision: conf.mobileprovision,
-  replaceipa: conf.replace,
-  watchapp: !conf['without-watchapp'],
-  keychain: conf.keychain
+  outfile: conf.output || conf.o,
+  entitlement: conf.entitlement || conf.e,
+  bundleid: conf.bundleid || conf.b,
+  identity: conf.identity || conf.i,
+  mobileprovision: conf.mobileprovision || conf.m,
+  replaceipa: conf.replace || conf.r,
+  withoutWatchapp: !!conf['without-watchapp'] || !! conf.w,
+  keychain: conf.keychain || conf.k
 };
 
 colors.setTheme({
@@ -27,7 +27,7 @@ colors.setTheme({
 
 const cs = new Applesign(options);
 
-if (conf.identities) {
+if (conf.identities || conf.I) {
   cs.getIdentities((err, ids) => {
     if (err) {
       console.error(colors.error(err));
@@ -42,22 +42,22 @@ if (conf.identities) {
   console.error(
 `Usage:
 
-  ${cmd} [--output new.ipa] [--identities] [--identity id] \\
-    [--mobileprovision file] [--bundleid id] [--replace] [input-ipafile]
+  ${cmd} [--options ...] [input-ipafile]
 
-  --identities              List local codesign identities
-  --identity 1C4D1A..       Specify hash-id of the identity to use
-  --replace                 Replace the input IPA file with the resigned one
-  --without-watchapp        Remove the WatchApp from the IPA before resigning
-  --keychain [KEYCHAIN]     Specify alternative keychain file
-  --output [APP.IPA]        Path to the output IPA filename
-  --bundleid [BUNDLEID]     Change the bundleid when repackaging
-  --mobileprovision [FILE]  Specify the mobileprovision file to use
-  [input-ipafile]           Path to the IPA file to resign
+  -i, --identities              List local codesign identities
+  -I, --identity 1C4D1A..       Specify hash-id of the identity to use
+  -r, --replace                 Replace the input IPA file with the resigned one
+  -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
+  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+  -k, --keychain [KEYCHAIN]     Specify alternative keychain file
+  -o, --output [APP.IPA]        Path to the output IPA filename
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  [input-ipafile]               Path to the IPA file to resign
 
 Example:
 
-  ${cmd} --replace --identity AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C \\
+  ${cmd} --replace -identity AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C \\
     --mobileprovision embedded.mobileprovision --bundleid com.nowsecure.TestApp ./foo.ipa
 `);
 } else {

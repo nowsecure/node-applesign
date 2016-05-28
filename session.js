@@ -304,12 +304,12 @@ module.exports = class ApplesignSession {
         next(error);
       });
     }
-    if (this.config.watchapp) {
-      continuation();
-    } else {
+    if (this.config.withoutWatchapp) {
       const watchdir = [ this.config.appdir, 'Watch' ].join('/');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
       rimraf(watchdir, continuation);
+    } else {
+      continuation();
     }
   }
 
