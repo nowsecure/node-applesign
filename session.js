@@ -289,13 +289,13 @@ module.exports = class ApplesignSession {
   zip (next) {
     const ipa_in = this.config.file;
     const ipa_out = [parentDirectory (this.config.outdir), this.config.outfile].join ('/');
-    this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
     try {
         fs.unlinkSync(ipa_out);
     } catch (e) {
       /* do nothing */
     }
     const continuation = () => {
+      this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
       tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
         if (!error && this.config.replaceipa) {
           this.events.emit('message', 'mv into ' + ipa_in);
@@ -307,7 +307,9 @@ module.exports = class ApplesignSession {
     if (this.config.watchapp) {
       continuation();
     } else {
-      rimraf([ this.config.appdir, 'Watch' ].join('/'), continuation);
+      const watchdir = [ this.config.appdir, 'Watch' ].join('/');
+      this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
+      rimraf(watchdir, continuation);
     }
   }
 
