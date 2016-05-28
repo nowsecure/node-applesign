@@ -307,7 +307,10 @@ module.exports = class ApplesignSession {
     if (this.config.withoutWatchapp) {
       const watchdir = [ this.config.appdir, 'Watch' ].join('/');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
-      rimraf(watchdir, continuation);
+      rimraf(watchdir, () => {
+        const plugdir = [ this.config.appdir, 'PlugIns' ].join('/');
+        rimraf(plugdir, continuation);
+      });
     } else {
       continuation();
     }
