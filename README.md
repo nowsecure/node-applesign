@@ -19,21 +19,30 @@ Program Dependencies
 Usage
 -----
 
-	$ bin/ipa-resign.js
-	Usage: codesign [--output new.ipa] [--identities] [--identity id]
-		[--mobileprovision file] [--bundleid id] [--replace] [input-ipafile]
+	$ ipa-resign.js [--options ...] [input-ipafile]
+
+	-i, --identities              List local codesign identities
+	-I, --identity 1C4D1A..       Specify hash-id of the identity to use
+	-r, --replace                 Replace the input IPA file with the resigned one
+	-e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
+	-w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+	-k, --keychain [KEYCHAIN]     Specify alternative keychain file
+	-o, --output [APP.IPA]        Path to the output IPA filename
+	-b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+	-m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+	[input-ipafile]               Path to the IPA file to resign
 
 List local codesign identities:
 
-	$ bin/ipa-resign --identities
+	$ bin/ipa-resign -I
 
 Resign an IPA with a specific identity:
 
-	$ bin/ipa-resign --identity 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
+	$ bin/ipa-resign -i 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
 
 Change bundleid:
 
-	$ bin/ipa-resign --bundleid org.nowsecure.testapp path/to/ipa
+	$ bin/ipa-resign -b org.nowsecure.testapp path/to/ipa
 
 API usage
 ---------
@@ -45,7 +54,8 @@ const Applesign = require('applesign');
 
 const as = new Applesign({
   identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
-  mobileprovision: '/path/to/dev.mobileprovision'
+  mobileprovision: '/path/to/dev.mobileprovision',
+  withoutWatchapp: true
 });
 
 const s = as.signIPA('/path/to/app.ipa', onEnd)
@@ -94,7 +104,8 @@ const options = {
   bundleid: 'app.company.bundleid',
   identity: 'hash id of the developer',
   mobileprovision: '/path/to/mobileprovision file',
-  ignoreVerificationErrors: true
+  ignoreVerificationErrors: true,
+  withoutWatchapp: true
 };
 ```
 
