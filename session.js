@@ -120,18 +120,18 @@ module.exports = class ApplesignSession {
         return next(new Error('ipa is encrypted'));
       }
       this.emit('message', 'Main IPA executable is not encrypted');
-
-      const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
-
-      this.fixPlist(infoPlist, this.config.bundleid, (err) => {
-        if (err) return this.events.emit('end', err, next);
-        this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
-          if (err) return this.emit('end', err, next);
-          this.fixEntitlements(binpath, (err) => {
+      this.removeWatchApp(() => {
+        const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
+        this.fixPlist(infoPlist, this.config.bundleid, (err) => {
+          if (err) return this.events.emit('end', err, next);
+          this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
             if (err) return this.emit('end', err, next);
-            this.signFile(binpath, (err) => {
+            this.fixEntitlements(binpath, (err) => {
               if (err) return this.emit('end', err, next);
-              this.signLibraries(this.config.appdir, next);
+              this.signFile(binpath, (err) => {
+                if (err) return this.emit('end', err, next);
+                this.signLibraries(this.config.appdir, next);
+              });
             });
           });
         });
@@ -141,6 +141,18 @@ module.exports = class ApplesignSession {
     }
   }
 
+  removeWatchApp (cb) {
+    if (!this.config.withoutWatchapp) {
+      return cb();
+    }
+    const watchdir = [ this.config.appdir, 'Watch' ].join('/');
+    this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
+    rimraf(watchdir, () => {
+      const plugdir = [ this.config.appdir, 'PlugIns' ].join('/');
+      this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
+      rimraf(plugdir, cb);
+    });
+  }
   /*
     TODO: verify is mobileprovision app-id glob string matches the bundleid
     read provision file in raw
