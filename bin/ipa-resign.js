@@ -15,7 +15,7 @@ const options = {
   identity: conf.identity || conf.i,
   mobileprovision: conf.mobileprovision || conf.m,
   replaceipa: conf.replace || conf.r,
-  withoutWatchapp: !!conf['without-watchapp'] || !! conf.w,
+  withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   keychain: conf.keychain || conf.k
 };
 
@@ -27,7 +27,7 @@ colors.setTheme({
 
 const cs = new Applesign(options);
 
-if (conf.identities || conf.I) {
+if (conf.identities || conf.L) {
   cs.getIdentities((err, ids) => {
     if (err) {
       console.error(colors.error(err));
@@ -44,8 +44,8 @@ if (conf.identities || conf.I) {
 
   ${cmd} [--options ...] [input-ipafile]
 
-  -i, --identities              List local codesign identities
-  -I, --identity 1C4D1A..       Specify hash-id of the identity to use
+  -L, --identities              List local codesign identities
+  -i, --identity 1C4D1A..       Specify hash-id of the identity to use
   -r, --replace                 Replace the input IPA file with the resigned one
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
