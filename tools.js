@@ -2,6 +2,7 @@
 
 const childproc = require('child_process');
 const plist = require('simple-plist');
+const fs = require('fs');
 
 const cmd = {
   zip: '/usr/bin/zip',
@@ -51,8 +52,10 @@ module.exports = {
     });
   },
   zip: function (cwd, ofile, src, cb) {
-    const args = [ '-qry', ofile, src ];
-    execProgram(cmd.zip, args, { cwd: cwd }, cb);
+    fs.unlink(ofile, () => {
+      const args = [ '-qry', ofile, src ];
+      execProgram(cmd.zip, args, { cwd: cwd }, cb);
+    });
   },
   unzip: function (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
