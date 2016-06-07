@@ -299,8 +299,14 @@ module.exports = class ApplesignSession {
   }
 
   zip (next) {
+    function getOutputPath(cwd, ofile) {
+      if (ofile.startsWith('/')) {
+        return ofile;
+      }
+      return [parentDirectory (cwd), ofile].join ('/');
+    }
     const ipa_in = this.config.file;
-    const ipa_out = [parentDirectory (this.config.outdir), this.config.outfile].join ('/');
+    const ipa_out = getOutputPath(this.config.outdir, this.config.outfile);
     try {
         fs.unlinkSync(ipa_out);
     } catch (e) {
