@@ -7,6 +7,13 @@ const conf = require('minimist')(process.argv.slice(2), {
   boolean: ['replace', 'identities']
 });
 
+function getBool(c, b) {
+  if (c !== undefined) {
+    return c;
+  }
+  return b;
+}
+
 const options = {
   file: conf._[0] || 'undefined',
   outfile: conf.output || conf.o,
@@ -16,7 +23,9 @@ const options = {
   mobileprovision: conf.mobileprovision || conf.m,
   replaceipa: conf.replace || conf.r,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
-  keychain: conf.keychain || conf.k
+  graphSortedBins: conf.d || conf.dependencies,
+  keychain: conf.keychain || conf.k,
+  verifyOnce: !(conf.verifyOnce || conf.v)
 };
 
 colors.setTheme({
@@ -47,12 +56,14 @@ if (conf.identities || conf.L) {
   -L, --identities              List local codesign identities
   -i, --identity 1C4D1A..       Specify hash-id of the identity to use
   -r, --replace                 Replace the input IPA file with the resigned one
+  -d, --dependencies            Sign binaries in the correct dependency order
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -o, --output [APP.IPA]        Path to the output IPA filename
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -v, --verify-once             Do not verify twice
   [input-ipafile]               Path to the IPA file to resign
 
 Example:
@@ -63,7 +74,7 @@ Example:
 } else {
   cs.signIPA(options.file, (error, data) => {
     if (error) {
-      console.error(error);
+      console.error(error, data);
       process.exit(1);
     }
     console.log('IPA is now signed.');
