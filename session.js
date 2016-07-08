@@ -6,9 +6,9 @@ const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
+const depSolver = require('./depsolver');
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted')
-const depSolver = require('./depsolver')
 
 function getResignedFilename (path) {
   if (!path) return null;
