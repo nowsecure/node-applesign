@@ -3,7 +3,6 @@
 const childproc = require('child_process');
 const plist = require('simple-plist');
 const fs = require('fs');
-const debug = require('debug');
 
 const cmd = {
   zip: '/usr/bin/zip',
@@ -18,7 +17,6 @@ function execProgram (bin, arg, opt, cb) {
     opt = {};
   }
   opt.maxBuffer = 1024 * 1024;
-  debug(`${bin} ${arg} ${opt}`);
   return childproc.execFile(bin, arg, opt, cb);
 }
 
