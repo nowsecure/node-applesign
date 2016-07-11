@@ -1,3 +1,4 @@
+'use strict';
 const r2pipe = require('r2pipe');
 const tsort = require('tsort');
 const uniq = require('uniq');
@@ -6,6 +7,7 @@ const fs = require('fs');
 function resolvePath(file, x) {
   if (x.startsWith('@rpath')) {
     let baseIndex = file.lastIndexOf('/Frameworks');
+    let basePath = '/';
     if (baseIndex !== -1) {
       basePath = file.substring(0, baseIndex + 12);
       return basePath + x.substring(6);
@@ -16,7 +18,6 @@ function resolvePath(file, x) {
       }
       return basePath + x.substring(6);
     }
-    console.log("allalala");
   }
   return x;
 }
