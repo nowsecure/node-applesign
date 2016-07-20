@@ -25,17 +25,18 @@ function resolvePath(file, x) {
 module.exports = function(libs, cb) {
   const files = {};
   const graph = tsort();
-  let peekableLibs = libs.slice(0);
-  console.log(libs);
-  const peek = () => {
+  if (libs.length > 0) {
+    let peekableLibs = libs.slice(0);
+    console.log(libs);
+    const peek = () => {
     const lib = peekableLibs.pop();
     r2pipe.syscmdj('rabin2 -lj ' + lib, (res) => {
       for (let r of res.libs) {
         if (!r.startsWith('/')) {
           const realPath = resolvePath(lib, r);
-          fs.statSync(realPath);
-          console.log('realPath', realPath);
-          graph.add(lib, realPath);
+	  fs.statSync(realPath);
+	  console.log('realPath', realPath);
+  	  graph.add(lib, realPath);
         }
       }
       if (peekableLibs.length === 0) {
@@ -43,7 +44,10 @@ module.exports = function(libs, cb) {
       } else {
         peek();
       }
-    });
-  };
-  peek();
+      });
+    };
+    peek();
+  } else {
+    cb([]);
+  }
 }
