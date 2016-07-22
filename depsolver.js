@@ -27,6 +27,7 @@ module.exports = function(libs, cb) {
   const graph = tsort();
   if (libs.length > 0) {
     let peekableLibs = libs.slice(0);
+    let mod = false;
     console.log(libs);
     const peek = () => {
     const lib = peekableLibs.pop();
@@ -34,10 +35,14 @@ module.exports = function(libs, cb) {
       for (let r of res.libs) {
         if (!r.startsWith('/')) {
           const realPath = resolvePath(lib, r);
-	  fs.statSync(realPath);
-	  console.log('realPath', realPath);
-  	  graph.add(lib, realPath);
+          fs.statSync(realPath);
+          console.log('realPath', realPath);
+          graph.add(lib, realPath);
+          mod = true;
         }
+      }
+      if (lib && !mod) {
+        graph.add(lib, undefined);
       }
       if (peekableLibs.length === 0) {
         cb(uniq(graph.sort()));
