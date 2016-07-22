@@ -267,7 +267,8 @@ module.exports = class ApplesignSession {
     if (!found) {
       next('Cannot find any MACH0 binary to sign');
     }
-    depSolver(libraries, (libs) => {
+    depSolver(libraries, (err, libs) => {
+      if (err) { return next(err); }
       if (libs.length > 0) {
         if (this.config.graphSortedBins) {
           let libsCopy = libs.slice(0);

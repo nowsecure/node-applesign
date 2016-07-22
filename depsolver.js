@@ -40,7 +40,7 @@ module.exports = function(libs, cb) {
           }
         }
         if (peekableLibs.length === 0) {
-          cb(uniq(graph.sort()));
+          cb(null, uniq(graph.sort()));
         } else {
           peek();
         }
@@ -48,6 +48,6 @@ module.exports = function(libs, cb) {
     };
     peek();
   } else {
-    cb([]);
+    cb(null, []);
   }
 }
