@@ -277,9 +277,13 @@ module.exports = class ApplesignSession {
               return cb();
             }
             const lib = libsCopy.pop();
-            this.signFile(lib, (err) => {
+            if (!(lib === 'undefined')) {
+              this.signFile(lib, (err) => {
+                peek (cb);
+              });
+            } else {
               peek (cb);
-            });
+            }
           };
           peek (() => {
             libsCopy = libs.slice(0);
@@ -288,10 +292,14 @@ module.exports = class ApplesignSession {
                 return cb();
               }
               const lib = libsCopy.pop();
-              this.emit('message', 'Verifying ' + lib);
-              tools.verifyCodesign(lib, null, (err) => {
+              if (!(lib === 'undefined')) {
+                this.emit('message', 'Verifying ' + lib);
+                tools.verifyCodesign(lib, null, (err) => {
+                  verify(cb);
+                });
+              } else {
                 verify(cb);
-              });
+              }
             };
             verify(next);
           });
