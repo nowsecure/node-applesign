@@ -130,9 +130,11 @@ module.exports = class ApplesignSession {
             if (err) return this.emit('error', err, next);
             this.fixEntitlements(binpath, (err) => {
               if (err) return this.emit('error', err, next);
-              this.signFile(binpath, (err) => {
+              this.signLibraries(this.config.appdir, (err) => {
                 if (err) return this.emit('error', err, next);
-                this.signLibraries(this.config.appdir, (err) => {
+		this.config.verifyTwice = true;
+                this.signFile(binpath, (err) => {
+		  this.config.verifyTwice = false;
                   if (err) return this.emit('error', err, next);
                   next (null, next);
                 });

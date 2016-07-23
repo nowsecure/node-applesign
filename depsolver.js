@@ -27,10 +27,17 @@ function getMachoLibs(file, cb) {
       var exec = macho.parse(data);
     } catch (e) {
       try {
-        const fat = fatmacho.parse(data);
-        var exec = macho.parse(fat[0].data);
+        var fat = fatmacho.parse(data);
       } catch (e2) {
         return cb (e2);
+      }
+      for (let i = 0; i < fat.length; i++) {
+        try {
+          var exec = macho.parse(fat[0].data);
+          break;
+        } catch (e2) {
+          /* ignore exceptions here */
+        }
       }
     }
     const libs = exec.cmds.filter( (x) => {
@@ -64,7 +71,7 @@ module.exports = function(libs, cb) {
           }
         }
         if (peekableLibs.length === 0) {
-          cb(null, uniq(graph.sort()));
+          cb(null, uniq(graph.sort()).reverse());
         } else {
           peek();
         }
