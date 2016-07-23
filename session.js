@@ -7,6 +7,7 @@ const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
 const depSolver = require('./depsolver');
+// const depSolver = require('./depsolver-orig');
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted')
 
