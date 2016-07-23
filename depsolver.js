@@ -9,22 +9,18 @@ const isArray = require('is-array');
 const useR2Pipe = false;
 const r2pipe = require('r2pipe');
 
-function resolvePath(file, x) {
-  if (x.startsWith('@rpath')) {
-    let baseIndex = file.lastIndexOf('/Frameworks');
-    let basePath = '/';
-    if (baseIndex !== -1) {
-      basePath = file.substring(0, baseIndex + 12);
-      return basePath + x.substring(6);
-    } else {
-      baseIndex = file.lastIndexOf('/');
-      if (baseIndex !== -1) {
-        basePath = file.substring(0, baseIndex);
-      }
-      return basePath + x.substring(6);
-    }
+function resolvePath(file, lib) {
+  const slash = file.lastIndexOf('/Frameworks');
+  if (slash !== -1) {
+    const rpath = file.substring(0, slash + '/Frameworks'.length);
+    return lib.replace('@rpath', rpath);
   }
-  return x;
+  const sl4sh = file.lastIndexOf('/');
+  if (sl4sh !== -1) {
+    const rpath = file.substring(0, sl4sh);
+    return lib.replace('@rpath', rpath);
+  }
+  throw new Error('Cannot resolve rpath');
 }
 
 function getMachoLibs(file, cb) {
