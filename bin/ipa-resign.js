@@ -25,7 +25,7 @@ const options = {
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   graphSortedBins: conf.d || conf.dependencies,
   keychain: conf.keychain || conf.k,
-  verifyOnce: !(conf.verifyOnce || conf.v)
+  verifyTwice: conf.verifyTwice || !!conf.v
 };
 
 colors.setTheme({
@@ -63,7 +63,7 @@ if (conf.identities || conf.L) {
   -o, --output [APP.IPA]        Path to the output IPA filename
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
-  -v, --verify-once             Do not verify twice
+  -v, --verify-twice            Verify after signing every file and at the end
   [input-ipafile]               Path to the IPA file to resign
 
 Example:

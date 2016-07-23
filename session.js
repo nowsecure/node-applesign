@@ -218,7 +218,7 @@ module.exports = class ApplesignSession {
       if (error && codesignHasFailed(this.config, error, stderr)) {
         return this.emit('end', error, next);
       }
-      if (this.config.verifyOnce) {
+      if (this.config.verifyTwice) {
         this.emit('message', 'Verify ' + file);
         tools.verifyCodesign(file, this.config.keychain, (error, stdout, stderr) => {
           if (error) {
