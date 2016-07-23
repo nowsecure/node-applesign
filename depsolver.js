@@ -6,9 +6,6 @@ const uniq = require('uniq');
 const fs = require('fs');
 const isArray = require('is-array');
 
-const useR2Pipe = false;
-const r2pipe = require('r2pipe');
-
 function resolvePath(file, lib) {
   const slash = file.lastIndexOf('/Frameworks');
   if (slash !== -1) {
@@ -24,16 +21,6 @@ function resolvePath(file, lib) {
 }
 
 function getMachoLibs(file, cb) {
-  if (useR2Pipe) {
-    r2pipe.syscmdj('rabin2 -lj ' + file, (res) => {
-      if (!res) {
-        cb (new Error('r2pipe error'));
-      } else {
-        cb (null, res.libs);
-      }
-    });
-    return;
-  }
   try {
     const data = fs.readFileSync(file);
     try {
