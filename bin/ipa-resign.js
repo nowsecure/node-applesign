@@ -7,13 +7,6 @@ const conf = require('minimist')(process.argv.slice(2), {
   boolean: ['replace', 'identities']
 });
 
-function getBool(c, b) {
-  if (c !== undefined) {
-    return c;
-  }
-  return b;
-}
-
 const options = {
   file: conf._[0] || 'undefined',
   outfile: conf.output || conf.o,

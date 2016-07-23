@@ -1,4 +1,5 @@
 'use strict';
+
 const tsort = require('tsort');
 const fatmacho = require('fatmacho');
 const macho = require('macho');
@@ -6,7 +7,7 @@ const uniq = require('uniq');
 const fs = require('fs');
 const isArray = require('is-array');
 
-function resolvePath(file, lib) {
+function resolvePath (file, lib) {
   const slash = file.lastIndexOf('/Frameworks');
   if (slash !== -1) {
     const rpath = file.substring(0, slash + '/Frameworks'.length);
@@ -20,7 +21,7 @@ function resolvePath(file, lib) {
   throw new Error('Cannot resolve rpath');
 }
 
-function getMachoLibs(file, cb) {
+function getMachoLibs (file, cb) {
   try {
     const data = fs.readFileSync(file);
     try {
@@ -29,30 +30,29 @@ function getMachoLibs(file, cb) {
       try {
         var fat = fatmacho.parse(data);
       } catch (e2) {
-        return cb (e2);
+        return cb(e2);
       }
       for (let i = 0; i < fat.length; i++) {
         try {
-          var exec = macho.parse(fat[0].data);
+          exec = macho.parse(fat[0].data);
           break;
         } catch (e2) {
           /* ignore exceptions here */
         }
       }
     }
-    const libs = exec.cmds.filter( (x) => {
+    const libs = exec.cmds.filter((x) => {
       return x.type === 'load_dylib';
-    }).map ( (x) => {
+    }).map((x) => {
       return x.name;
     });
-    cb (null, libs);
+    cb(null, libs);
   } catch (e) {
-    cb (e);
+    cb(e);
   }
 }
 
-module.exports = function(libs, cb) {
-  const files = {};
+module.exports = function (libs, cb) {
   const graph = tsort();
   if (libs.length > 0) {
     let peekableLibs = libs.slice(0);
@@ -66,7 +66,6 @@ module.exports = function(libs, cb) {
           if (!r.startsWith('/')) {
             const realPath = resolvePath(lib, r);
             fs.statSync(realPath);
-            //console.log('realPath', realPath);
             graph.add(lib, realPath);
           }
         }
@@ -81,4 +80,4 @@ module.exports = function(libs, cb) {
   } else {
     cb(null, []);
   }
-}
+};

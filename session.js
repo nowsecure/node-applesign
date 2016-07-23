@@ -9,7 +9,7 @@ const plist = require('simple-plist');
 const depSolver = require('./depsolver');
 // const depSolver = require('./depsolver-orig');
 const EventEmitter = require('events').EventEmitter;
-const isEncryptedSync = require('macho-is-encrypted')
+const isEncryptedSync = require('macho-is-encrypted');
 
 function getResignedFilename (path) {
   if (!path) return null;
@@ -19,8 +19,8 @@ function getResignedFilename (path) {
   return newPath;
 }
 
-function parentDirectory(root) {
-  return path.normalize ([root, '..'].join('/'));
+function parentDirectory (root) {
+  return path.normalize([root, '..'].join('/'));
 }
 
 function getExecutable (appdir, exename) {
@@ -132,11 +132,11 @@ module.exports = class ApplesignSession {
               if (err) return this.emit('error', err, next);
               this.signLibraries(this.config.appdir, (err) => {
                 if (err) return this.emit('error', err, next);
-		this.config.verifyTwice = true;
+                this.config.verifyTwice = true;
                 this.signFile(binpath, (err) => {
-		  this.config.verifyTwice = false;
+                  this.config.verifyTwice = false;
                   if (err) return this.emit('error', err, next);
-                  next (null, next);
+                  next(null, next);
                 });
               });
             });
@@ -281,11 +281,11 @@ module.exports = class ApplesignSession {
               return cb();
             }
             const lib = libsCopy.pop();
-            this.signFile(lib, (err) => {
-              peek (cb);
+            this.signFile(lib, () => {
+              peek(cb);
             });
           };
-          peek (() => {
+          peek(() => {
             libsCopy = libs.slice(0);
             const verify = (cb) => {
               if (libsCopy.length === 0) {
@@ -293,7 +293,7 @@ module.exports = class ApplesignSession {
               }
               const lib = libsCopy.pop();
               this.emit('message', 'Verifying ' + lib);
-              tools.verifyCodesign(lib, null, (err) => {
+              tools.verifyCodesign(lib, null, () => {
                 verify(cb);
               });
             };
@@ -340,16 +340,16 @@ module.exports = class ApplesignSession {
   }
 
   zip (next) {
-    function getOutputPath(cwd, ofile) {
+    function getOutputPath (cwd, ofile) {
       if (ofile.startsWith('/')) {
         return ofile;
       }
-      return [parentDirectory (cwd), ofile].join ('/');
+      return [parentDirectory(cwd), ofile].join('/');
     }
     const ipa_in = this.config.file;
     const ipa_out = getOutputPath(this.config.outdir, this.config.outfile);
     try {
-        fs.unlinkSync(ipa_out);
+      fs.unlinkSync(ipa_out);
     } catch (e) {
       /* do nothing */
     }
@@ -362,7 +362,7 @@ module.exports = class ApplesignSession {
         }
         next(error);
       });
-    }
+    };
     if (this.config.withoutWatchapp) {
       const watchdir = [ this.config.appdir, 'Watch' ].join('/');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
