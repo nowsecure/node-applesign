@@ -31,6 +31,8 @@ function resolveRpath (libs, file, lib) {
 }
 
 function resolveEpath (file, lib) {
+    const sl4sh = file.lastIndexOf('/');
+    const rpath = (sl4sh !== -1) ? file.substring(0, sl4sh) : '';
     return lib.replace('@executable_path', rpath);
 }
 
