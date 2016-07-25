@@ -7,7 +7,6 @@ const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
 const depSolver = require('./depsolver');
-// const depSolver = require('./depsolver-orig');
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
 
@@ -116,9 +115,9 @@ module.exports = class ApplesignSession {
     }
     this.config.appdir = [ path, files[0] ].join('/');
     const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
-    const binpath = [ this.config.appdir, binname ].join('/');
-    if (fs.lstatSync(binpath).isFile()) {
-      if (isEncryptedSync.path(binpath)) {
+    this.config.appbin = [ this.config.appdir, binname ].join('/');
+    if (fs.lstatSync(this.config.appbin).isFile()) {
+      if (isEncryptedSync.path(this.config.appbin)) {
         return next(new Error('ipa is encrypted'));
       }
       this.emit('message', 'Main IPA executable is not encrypted');
@@ -128,12 +127,12 @@ module.exports = class ApplesignSession {
           if (err) return this.events.emit('error', err, next);
           this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
             if (err) return this.emit('error', err, next);
-            this.fixEntitlements(binpath, (err) => {
+            this.fixEntitlements(this.config.appbin, (err) => {
               if (err) return this.emit('error', err, next);
-              this.signLibraries(this.config.appdir, (err) => {
+              this.signLibraries(this.config.appbin, this.config.appdir, (err) => {
                 if (err) return this.emit('error', err, next);
                 this.config.verifyTwice = true;
-                this.signFile(binpath, (err) => {
+                this.signFile(this.config.appbin, (err) => {
                   this.config.verifyTwice = false;
                   if (err) return this.emit('error', err, next);
                   next(null, next);
@@ -237,7 +236,7 @@ module.exports = class ApplesignSession {
     });
   }
 
-  signLibraries (path, next) {
+  signLibraries (bpath, path, next) {
     this.emit('message', 'Signing libraries and frameworks');
 
     const libraries = [];
@@ -270,7 +269,7 @@ module.exports = class ApplesignSession {
     if (!found) {
       next('Cannot find any MACH0 binary to sign');
     }
-    depSolver(libraries, (err, libs) => {
+    depSolver(bpath, libraries, (err, libs) => {
       if (err) { return next(err); }
       if (libs.length > 0) {
         if (this.config.graphSortedBins) {
