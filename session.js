@@ -247,6 +247,7 @@ module.exports = class ApplesignSession {
       const file = [ basedir, filename ].join('/');
       if (file.endsWith(exe)) {
         this.emit('message', 'Executable found at ' + file);
+        libraries.push(file);
         found = true;
         return;
       }
