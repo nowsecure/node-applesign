@@ -131,12 +131,7 @@ module.exports = class ApplesignSession {
               if (err) return this.emit('error', err, next);
               this.signLibraries(this.config.appbin, this.config.appdir, (err) => {
                 if (err) return this.emit('error', err, next);
-                this.config.verifyTwice = true;
-                this.signFile(this.config.appbin, (err) => {
-                  this.config.verifyTwice = false;
-                  if (err) return this.emit('error', err, next);
-                  next(null, next);
-                });
+                next(null, next);
               });
             });
           });
@@ -272,59 +267,57 @@ module.exports = class ApplesignSession {
     }
     depSolver(bpath, libraries, (err, libs) => {
       if (err) { return next(err); }
-      if (libs.length > 0) {
-        if (this.config.graphSortedBins) {
-          let libsCopy = libs.slice(0);
-          const peek = (cb) => {
+      if (libs.length === 0) {
+        libs.push(bpath);
+      }
+      if (this.config.graphSortedBins) {
+        let libsCopy = libs.slice(0);
+        const peek = (cb) => {
+          if (libsCopy.length === 0) {
+            libsCopy = libs.slice(0);
+            return cb();
+          }
+          const lib = libsCopy.pop();
+          this.signFile(lib, () => {
+            peek(cb);
+          });
+        };
+        peek(() => {
+          libsCopy = libs.slice(0);
+          const verify = (cb) => {
             if (libsCopy.length === 0) {
-              libsCopy = libs.slice(0);
               return cb();
             }
             const lib = libsCopy.pop();
-            this.signFile(lib, () => {
-              peek(cb);
+            this.emit('message', 'Verifying ' + lib);
+            tools.verifyCodesign(lib, null, () => {
+              verify(cb);
             });
           };
-          peek(() => {
-            libsCopy = libs.slice(0);
-            const verify = (cb) => {
-              if (libsCopy.length === 0) {
-                return cb();
-              }
-              const lib = libsCopy.pop();
-              this.emit('message', 'Verifying ' + lib);
-              tools.verifyCodesign(lib, null, () => {
-                verify(cb);
-              });
-            };
-            verify(next);
-          });
-        } else {
-          let issues = 0;
-          let signs = 0;
-          this.emit('message', 'Found ' + libs.length + ' libraries');
-          libs.forEach((lib) => {
-            signs++;
-            this.signFile(lib, (err) => {
-              signs--;
-              if (err) {
-                this.emit('warning', err);
-                issues++;
-              }
-              if (signs === 0) {
-                if (issues > 0) {
-                  this.emit('message', 'Warning: Some (' + issues + ') errors happened.');
-                } else {
-                  this.emit('message', 'Everything seems signed now');
-                }
-                next();
-              }
-            });
-          });
-        }
+          verify(next);
+        });
       } else {
-        this.emit('message', 'No libraries found, moving along');
-        next();
+        let issues = 0;
+        let signs = 0;
+        this.emit('message', 'Found ' + libs.length + ' libraries');
+        libs.forEach((lib) => {
+          signs++;
+          this.signFile(lib, (err) => {
+            signs--;
+            if (err) {
+              this.emit('warning', err);
+              issues++;
+            }
+            if (signs === 0) {
+              if (issues > 0) {
+                this.emit('message', 'Warning: Some (' + issues + ') errors happened.');
+              } else {
+                this.emit('message', 'Everything seems signed now');
+              }
+              next();
+            }
+          });
+        });
       }
     });
   }
