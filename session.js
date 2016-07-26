@@ -118,9 +118,13 @@ module.exports = class ApplesignSession {
     this.config.appbin = [ this.config.appdir, binname ].join('/');
     if (fs.lstatSync(this.config.appbin).isFile()) {
       if (isEncryptedSync.path(this.config.appbin)) {
-        return next(new Error('ipa is encrypted'));
+        if (!this.config.unfairPlay) {
+          return next(new Error('ipa is encrypted'));
+        }
+        this.emit('message', 'Main IPA executable is encrypted');
+      } else {
+        this.emit('message', 'Main IPA executable is not encrypted');
       }
-      this.emit('message', 'Main IPA executable is not encrypted');
       this.removeWatchApp(() => {
         const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
         this.fixPlist(infoPlist, this.config.bundleid, (err) => {

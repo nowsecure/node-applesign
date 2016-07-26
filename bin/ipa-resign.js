@@ -18,7 +18,8 @@ const options = {
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   graphSortedBins: conf.d || conf.dependencies,
   keychain: conf.keychain || conf.k,
-  verifyTwice: conf.verifyTwice || !!conf.v
+  verifyTwice: conf.verifyTwice || !!conf.v,
+  unfairPlay: conf['without-fairplay'] || conf.f
 };
 
 colors.setTheme({
@@ -51,6 +52,7 @@ if (conf.identities || conf.L) {
   -r, --replace                 Replace the input IPA file with the resigned one
   -d, --dependencies            Sign binaries in the correct dependency order
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
+  -f, --without-fairplay        Resign encrypted applications
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -o, --output [APP.IPA]        Path to the output IPA filename

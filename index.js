@@ -26,7 +26,8 @@ module.exports = class Applesign {
       graphSortedBins: opt.graphSortedBins || false,
       withoutWatchapp: opt.withoutWatchapp || false,
       mobileprovision: opt.mobileprovision || undefined,
-      verifyTwice: opt.verifyTwice || false
+      verifyTwice: opt.verifyTwice || false,
+      unfairPlay: opt.unfairPlay || false
     };
   }
 
