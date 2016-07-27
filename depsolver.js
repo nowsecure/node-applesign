@@ -14,7 +14,7 @@ function resolveRpath (libs, file, lib) {
   }).map((x) => {
     return x.substring(0, x.lastIndexOf('/'));
   }));
-  rpaths.forEach ((x) => {
+  rpaths.forEach((x) => {
     console.log(file);
     try {
       const paz = x + realLib;
@@ -31,9 +31,9 @@ function resolveRpath (libs, file, lib) {
 }
 
 function resolveEpath (file, lib) {
-    const sl4sh = file.lastIndexOf('/');
-    const rpath = (sl4sh !== -1) ? file.substring(0, sl4sh) : '';
-    return lib.replace('@executable_path', rpath);
+  const sl4sh = file.lastIndexOf('/');
+  const rpath = (sl4sh !== -1) ? file.substring(0, sl4sh) : '';
+  return lib.replace('@executable_path', rpath);
 }
 
 function resolveLpath (file, lib) {
@@ -104,7 +104,6 @@ module.exports = function (executable, libs, cb) {
               graph.add(lib, realPath);
             } catch (e) {
               graph.add(lib);
-              console.log('MISSING: '+ realPath);
             }
           }
         }
