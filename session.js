@@ -6,9 +6,11 @@ const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
+const plistBuild = require('plist').build;
 const depSolver = require('./depsolver');
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
+const machoEntitlements = require('./macho-entitlements');
 
 function getResignedFilename (path) {
   if (!path) return null;
@@ -119,7 +121,7 @@ module.exports = class ApplesignSession {
     if (fs.lstatSync(this.config.appbin).isFile()) {
       if (isEncryptedSync.path(this.config.appbin)) {
         if (!this.config.unfairPlay) {
-          return next(new Error('ipa is encrypted'));
+          return next(new Error('This IPA is encrypted'));
         }
         this.emit('message', 'Main IPA executable is encrypted');
       } else {
@@ -168,10 +170,29 @@ module.exports = class ApplesignSession {
   */
   checkProvision (appdir, file, next) {
     if (file && appdir) {
-      const provision = 'embedded.mobileprovision';
-      const mobileProvision = [ appdir, provision ].join('/');
       this.emit('message', 'Embedding new mobileprovision');
+      const mobileProvision = [ appdir, 'embedded.mobileprovision' ].join('/');
       return fs.copy(file, mobileProvision, next);
+    }
+    next();
+  }
+
+  adjustEntitlements (file, entMobProv, next) {
+    /* TODO: check if this supports binary plist too */
+    const ent = machoEntitlements.parseFile(file);
+    const entMacho = plist.parse(ent.toString());
+    let changed = false;
+    ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
+      if (entMacho[id] !== entMobProv[id]) {
+        changed = true;
+        entMacho[id] = entMobProv[id];
+      }
+    });
+    if (changed) {
+      const newEntitlementsFile = file + '.entitlements';
+      fs.writeFileSync(newEntitlementsFile, plistBuild(entMacho).toString());
+      this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
+      this.config.entitlement = newEntitlementsFile;
     }
     next();
   }
@@ -182,12 +203,14 @@ module.exports = class ApplesignSession {
     }
     this.emit('message', 'Grabbing entitlements from mobileprovision');
     tools.getEntitlementsFromMobileProvision(this.config.mobileprovision, (error, newEntitlements) => {
+      if (error) {
+        return next(error);
+      }
       this.emit('message', JSON.stringify(newEntitlements));
-      const provision = 'embedded.mobileprovision';
-      const pathToProvision = [ this.config.appdir, provision ].join('/');
-      this.config.entitlement = pathToProvision;
+      const pathToProvision = [ this.config.appdir, 'embedded.mobileprovision' ].join('/');
+      /* replace ipa's mobileprovision with given the entitlements? */
       plist.writeFileSync(pathToProvision, newEntitlements);
-      next(error);
+      this.adjustEntitlements(file, newEntitlements, next);
     });
   }
 
@@ -275,6 +298,7 @@ module.exports = class ApplesignSession {
         libs.push(bpath);
       }
       if (this.config.graphSortedBins) {
+        this.emit('message', 'Using tsort signing order method');
         let libsCopy = libs.slice(0);
         const peek = (cb) => {
           if (libsCopy.length === 0) {
@@ -301,6 +325,7 @@ module.exports = class ApplesignSession {
           verify(next);
         });
       } else {
+        this.emit('message', 'Using parallel signing order method');
         let issues = 0;
         let signs = 0;
         this.emit('message', 'Found ' + libs.length + ' libraries');
