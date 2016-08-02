@@ -24,7 +24,8 @@
     "uniq": "1.0.1",
     "colors": "1.1.2",
     "fatmacho": "0.1.0",
-    "macho-is-encrypted": "0.0.1"
+    "macho-is-encrypted": "0.0.1",
+    "macho-entitlements": "0.2.1"
   },
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",

@@ -10,7 +10,7 @@ const plistBuild = require('plist').build;
 const depSolver = require('./depsolver');
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
-const machoEntitlements = require('./macho-entitlements');
+const machoEntitlements = require('macho-entitlements');
 
 function getResignedFilename (path) {
   if (!path) return null;
