@@ -20,9 +20,10 @@
     "minimist": "1.2.0",
     "tsort": "0.0.1",
     "plist": "1.1.0",
-    "macho": "0.4.0",
     "uniq": "1.0.1",
     "colors": "1.1.2",
+    "mocha": "3.0.2",
+    "macho": "0.4.0",
     "fatmacho": "0.1.0",
     "macho-is-encrypted": "0.0.1",
     "macho-entitlements": "0.2.1"
