@@ -4,7 +4,7 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['replace', 'identities']
+  boolean: ['r', 'replace', 'L', 'identities', 'd', 'dependencies', 'v', 'verifyTwice', 'f', 'without-fairplay', 'w', 'without-watchapp']
 });
 
 const options = {
