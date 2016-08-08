@@ -50,6 +50,18 @@
       "email": "pancake@nowsecure.com"
     }
   ],
+  "semistandard": {
+    "globals": [
+      "describe",
+      "context",
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach",
+      "it",
+      "expect"
+    ]
+  },
   "name": "applesign",
-  "version": "0.7.1"
+  "version": "0.7.2"
 }

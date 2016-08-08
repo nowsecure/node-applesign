@@ -3,11 +3,11 @@
 const assert = require('assert');
 const process = require('child_process');
 
-describe('API', function() {
-  describe('require', function() {
-    it('cannot require', function() {
+describe('API', function () {
+  describe('require', function () {
+    it('cannot require', function () {
       try {
-        require('../')
+        require('../');
         assert.equal(0, 0);
       } catch (e) {
         it('require');
@@ -17,9 +17,9 @@ describe('API', function() {
   });
 });
 
-describe('Commandline', function() {
-  describe('bin/ipa-resign.js', function() {
-    it('should fail when ipa-resign cannot be executed', function(done) {
+describe('Commandline', function () {
+  describe('bin/ipa-resign.js', function () {
+    it('should fail when ipa-resign cannot be executed', function (done) {
       var data = '';
       const ipaResign = process.spawn('bin/ipa-resign.js');
       ipaResign.on('stdout', (text) => {
@@ -32,8 +32,8 @@ describe('Commandline', function() {
       });
     });
   });
-  describe('bin/ipa-resign.js missing.ipa', function() {
-    it('should fail when passing an unexistent IPA', function(done) {
+  describe('bin/ipa-resign.js missing.ipa', function () {
+    it('should fail when passing an unexistent IPA', function (done) {
       const ipaResign = process.spawn('bin/ipa-resign.js', ['missing.ipa']);
       ipaResign.on('close', (code) => {
         assert.equal(code, 1);

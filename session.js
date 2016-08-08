@@ -368,19 +368,19 @@ module.exports = class ApplesignSession {
       }
       return [parentDirectory(cwd), ofile].join('/');
     }
-    const ipa_in = this.config.file;
-    const ipa_out = getOutputPath(this.config.outdir, this.config.outfile);
+    const ipaIn = this.config.file;
+    const ipaOut = getOutputPath(this.config.outdir, this.config.outfile);
     try {
-      fs.unlinkSync(ipa_out);
+      fs.unlinkSync(ipaOut);
     } catch (e) {
       /* do nothing */
     }
     const continuation = () => {
-      this.events.emit('message', 'Zipifying into ' + ipa_out + ' ...');
-      tools.zip(this.config.outdir, ipa_out, 'Payload', (error) => {
+      this.events.emit('message', 'Zipifying into ' + ipaOut + ' ...');
+      tools.zip(this.config.outdir, ipaOut, 'Payload', (error) => {
         if (!error && this.config.replaceipa) {
-          this.events.emit('message', 'mv into ' + ipa_in);
-          return fs.rename(ipa_out, ipa_in, next);
+          this.events.emit('message', 'mv into ' + ipaIn);
+          return fs.rename(ipaOut, ipaIn, next);
         }
         next(error);
       });
