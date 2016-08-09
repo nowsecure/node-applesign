@@ -2,10 +2,16 @@
 
 const assert = require('assert');
 const spawn = require('child_process').spawn;
+const path = require('path');
+const fs = require('fs');
+
+const mochaTimeout = 15000; /* 15s */
+var developerCertificate = process.env.DEVCERT;
+const ipaDir = 'test/ipa';
 
 describe('API', function () {
   describe('require', function () {
-    it('cannot require', function () {
+    it('require works', function () {
       try {
         require('../');
         assert.equal(0, 0);
@@ -46,12 +52,75 @@ describe('Commandline', function () {
       var data = '';
       const ipaResign = spawn('bin/ipa-resign.js', ['-L']);
       ipaResign.stdout.on('data', (text) => {
+        if (developerCertificate === undefined) {
+          developerCertificate = text.toString().split(' ')[0];
+        }
         data += text;
       });
       ipaResign.on('close', (code) => {
         assert.notEqual(data, '');
         assert.equal(code, 0);
         done();
+      });
+    });
+  });
+});
+
+function grabIPAs (file) {
+  return (file.indexOf('resigned') === -1) && file.endsWith('.ipa');
+}
+
+function grabResignedIPAs (file) {
+  return (file.indexOf('resigned') !== -1) && file.endsWith('.ipa');
+}
+
+describe('Commandline IPA signing', function () {
+  fs.readdir(ipaDir, function (err, files) {
+    assert.equal(err, undefined);
+    files.filter(grabIPAs).forEach(function (file) {
+      describe(file, function () {
+        this.timeout(mochaTimeout);
+        it('Signing', function (done) {
+          var hasData = false;
+          const ipaResign = spawn('bin/ipa-resign.js', ['-d', '-i', developerCertificate, path.join(ipaDir, file)]);
+          ipaResign.stdout.on('data', (text) => {
+            hasData = true;
+          });
+          ipaResign.stderr.on('data', (text) => {
+            console.error(text.toString());
+          });
+          ipaResign.on('close', (code) => {
+            assert.equal(hasData, true);
+            assert.equal(code, 0);
+            done();
+          });
+        });
+      });
+    });
+  });
+});
+
+describe('Resigned IPA deploy', function () {
+  fs.readdir(ipaDir, function (err, files) {
+    assert.equal(err, undefined);
+    files.filter(grabResignedIPAs).forEach(function (file) {
+      describe(file, function () {
+        this.timeout(mochaTimeout);
+        it('deploying', function (done) {
+          var hasData = false;
+          const ipaResign = spawn('ios-deploy', ['-b', path.join(ipaDir, file)]);
+          ipaResign.stdout.on('data', (text) => {
+            hasData = true;
+          });
+          ipaResign.stderr.on('data', (text) => {
+            console.error(text.toString());
+          });
+          ipaResign.on('close', (code) => {
+            assert.equal(hasData, true);
+            assert.equal(code, 0);
+            done();
+          });
+        });
       });
     });
   });
