@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const process = require('child_process');
+const spawn = require('child_process').spawn;
 
 describe('API', function () {
   describe('require', function () {
@@ -21,8 +21,8 @@ describe('Commandline', function () {
   describe('bin/ipa-resign.js', function () {
     it('should fail when ipa-resign cannot be executed', function (done) {
       var data = '';
-      const ipaResign = process.spawn('bin/ipa-resign.js');
-      ipaResign.on('stdout', (text) => {
+      const ipaResign = spawn('bin/ipa-resign.js');
+      ipaResign.stdout.on('data', (text) => {
         data += text;
       });
       ipaResign.on('close', (code) => {
@@ -34,9 +34,23 @@ describe('Commandline', function () {
   });
   describe('bin/ipa-resign.js missing.ipa', function () {
     it('should fail when passing an unexistent IPA', function (done) {
-      const ipaResign = process.spawn('bin/ipa-resign.js', ['missing.ipa']);
+      const ipaResign = spawn('bin/ipa-resign.js', ['missing.ipa']);
       ipaResign.on('close', (code) => {
         assert.equal(code, 1);
+        done();
+      });
+    });
+  });
+  describe('bin/ipa-resign.js -L', function () {
+    it('checking for developer certificates', function (done) {
+      var data = '';
+      const ipaResign = spawn('bin/ipa-resign.js', ['-L']);
+      ipaResign.stdout.on('data', (text) => {
+        data += text;
+      });
+      ipaResign.on('close', (code) => {
+        assert.notEqual(data, '');
+        assert.equal(code, 0);
         done();
       });
     });
