@@ -6,8 +6,8 @@ const walk = require('fs-walk');
 const rimraf = require('rimraf');
 const tools = require('./tools');
 const plist = require('simple-plist');
-const plistBuild = require('plist').build;
 const depSolver = require('./depsolver');
+const plistBuild = require('plist').build;
 const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
 const machoEntitlements = require('macho-entitlements');
@@ -15,18 +15,18 @@ const machoEntitlements = require('macho-entitlements');
 function getResignedFilename (path) {
   if (!path) return null;
   const newPath = path.replace('.ipa', '-resigned.ipa');
-  const pos = newPath.lastIndexOf('/');
+  const pos = newPath.lastIndexOf(path.sep);
   if (pos !== -1) return newPath.substring(pos + 1);
   return newPath;
 }
 
 function parentDirectory (root) {
-  return path.normalize([root, '..'].join('/'));
+  return path.normalize(path.join(root, '..'));
 }
 
 function getExecutable (appdir, exename) {
   if (appdir) {
-    const plistPath = [ appdir, 'Info.plist' ].join('/');
+    const plistPath = path.join(appdir, 'Info.plist');
     const plistData = plist.readFileSync(plistPath);
     const cfBundleExecutable = plistData['CFBundleExecutable'];
     if (cfBundleExecutable) {
@@ -92,32 +92,32 @@ module.exports = class ApplesignSession {
     return this;
   }
 
-  signAppDirectory (path, next) {
-    if (!path) {
-      path = this.config.outdir + '/Payload';
+  signAppDirectory (ipadir, next) {
+    if (!ipadir) {
+      ipadir = path.join(this.config.outdir, 'Payload');
     }
     function isDirectory () {
       try {
-        return fs.statSync(path).isDirectory();
+        return fs.statSync(ipadir).isDirectory();
       } catch (e) {
         return false;
       }
     }
-    if (!isDirectory(path)) {
+    if (!isDirectory(ipadir)) {
       return this.cleanup(() => {
-        next(new Error('Cannot find ' + path));
+        next(new Error('Cannot find ' + ipadir));
       });
     }
     this.emit('message', 'Payload found');
-    const files = fs.readdirSync(path).filter((x) => {
+    const files = fs.readdirSync(ipadir).filter((x) => {
       return x.indexOf('.app') === x.length - 4;
     });
     if (files.length !== 1) {
       return next(new Error('Invalid IPA'));
     }
-    this.config.appdir = [ path, files[0] ].join('/');
+    this.config.appdir = path.join(ipadir, files[0]);
     const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
-    this.config.appbin = [ this.config.appdir, binname ].join('/');
+    this.config.appbin = path.join(this.config.appdir, binname);
     if (fs.lstatSync(this.config.appbin).isFile()) {
       if (isEncryptedSync.path(this.config.appbin)) {
         if (!this.config.unfairPlay) {
@@ -128,7 +128,7 @@ module.exports = class ApplesignSession {
         this.emit('message', 'Main IPA executable is not encrypted');
       }
       this.removeWatchApp(() => {
-        const infoPlist = [ this.config.appdir, 'Info.plist' ].join('/');
+        const infoPlist = path.join(this.config.appdir, 'Info.plist');
         this.fixPlist(infoPlist, this.config.bundleid, (err) => {
           if (err) return this.events.emit('error', err, next);
           this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
@@ -152,10 +152,10 @@ module.exports = class ApplesignSession {
     if (!this.config.withoutWatchapp) {
       return cb();
     }
-    const watchdir = [ this.config.appdir, 'Watch' ].join('/');
+    const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
     rimraf(watchdir, () => {
-      const plugdir = [ this.config.appdir, 'PlugIns' ].join('/');
+      const plugdir = path.join(this.config.appdir, 'PlugIns');
       this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
       rimraf(plugdir, cb);
     });
@@ -171,7 +171,7 @@ module.exports = class ApplesignSession {
   checkProvision (appdir, file, next) {
     if (file && appdir) {
       this.emit('message', 'Embedding new mobileprovision');
-      const mobileProvision = [ appdir, 'embedded.mobileprovision' ].join('/');
+      const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
       return fs.copy(file, mobileProvision, next);
     }
     next();
@@ -207,7 +207,7 @@ module.exports = class ApplesignSession {
         return next(error);
       }
       this.emit('message', JSON.stringify(newEntitlements));
-      const pathToProvision = [ this.config.appdir, 'embedded.mobileprovision' ].join('/');
+      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       /* replace ipa's mobileprovision with given the entitlements? */
       plist.writeFileSync(pathToProvision, newEntitlements);
       this.adjustEntitlements(file, newEntitlements, next);
@@ -258,15 +258,15 @@ module.exports = class ApplesignSession {
     });
   }
 
-  signLibraries (bpath, path, next) {
+  signLibraries (bpath, appdir, next) {
     this.emit('message', 'Signing libraries and frameworks');
 
     const libraries = [];
-    const exe = '/' + getExecutable(this.config.appdir);
+    const exe = path.sep + getExecutable(this.config.appdir);
 
     let found = false;
-    walk.walkSync(path, (basedir, filename, stat) => {
-      const file = [ basedir, filename ].join('/');
+    walk.walkSync(appdir, (basedir, filename, stat) => {
+      const file = path.join(basedir, filename);
       if (file.endsWith(exe)) {
         this.emit('message', 'Executable found at ' + file);
         libraries.push(file);
@@ -338,10 +338,10 @@ module.exports = class ApplesignSession {
 
   zip (next) {
     function getOutputPath (cwd, ofile) {
-      if (ofile.startsWith('/')) {
+      if (ofile.startsWith(path.sep)) {
         return ofile;
       }
-      return [parentDirectory(cwd), ofile].join('/');
+      return path.join(parentDirectory(cwd), ofile);
     }
     const ipaIn = this.config.file;
     const ipaOut = getOutputPath(this.config.outdir, this.config.outfile);
@@ -361,10 +361,10 @@ module.exports = class ApplesignSession {
       });
     };
     if (this.config.withoutWatchapp) {
-      const watchdir = [ this.config.appdir, 'Watch' ].join('/');
+      const watchdir = path.join(this.config.appdir, 'Watch');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
       rimraf(watchdir, () => {
-        const plugdir = [ this.config.appdir, 'PlugIns' ].join('/');
+        const plugdir = path.join(this.config.appdir, 'PlugIns');
         rimraf(plugdir, continuation);
       });
     } else {
