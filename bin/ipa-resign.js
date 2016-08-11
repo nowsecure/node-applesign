@@ -4,7 +4,7 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['r', 'replace', 'L', 'identities', 'd', 'dependencies', 'v', 'verifyTwice', 'f', 'without-fairplay', 'w', 'without-watchapp']
+  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'w', 'without-watchapp']
 });
 
 const options = {
@@ -16,7 +16,6 @@ const options = {
   mobileprovision: conf.mobileprovision || conf.m,
   replaceipa: conf.replace || conf.r,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
-  graphSortedBins: conf.d || conf.dependencies,
   keychain: conf.keychain || conf.k,
   verifyTwice: conf.verifyTwice || !!conf.v,
   unfairPlay: conf['without-fairplay'] || conf.f
@@ -50,7 +49,6 @@ if (conf.identities || conf.L) {
   -L, --identities              List local codesign identities
   -i, --identity 1C4D1A..       Specify hash-id of the identity to use
   -r, --replace                 Replace the input IPA file with the resigned one
-  -d, --dependencies            Sign binaries in the correct dependency order
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -f, --without-fairplay        Resign encrypted applications
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning

@@ -297,57 +297,32 @@ module.exports = class ApplesignSession {
       if (libs.length === 0) {
         libs.push(bpath);
       }
-      if (this.config.graphSortedBins) {
-        this.emit('message', 'Using tsort signing order method');
-        let libsCopy = libs.slice(0);
-        const peek = (cb) => {
+      this.emit('message', 'Using tsort signing order method');
+      let libsCopy = libs.slice(0);
+      const peek = (cb) => {
+        if (libsCopy.length === 0) {
+          libsCopy = libs.slice(0);
+          return cb();
+        }
+        const lib = libsCopy.pop();
+        this.signFile(lib, () => {
+          peek(cb);
+        });
+      };
+      peek(() => {
+        libsCopy = libs.slice(0);
+        const verify = (cb) => {
           if (libsCopy.length === 0) {
-            libsCopy = libs.slice(0);
             return cb();
           }
           const lib = libsCopy.pop();
-          this.signFile(lib, () => {
-            peek(cb);
+          this.emit('message', 'Verifying ' + lib);
+          tools.verifyCodesign(lib, null, () => {
+            verify(cb);
           });
         };
-        peek(() => {
-          libsCopy = libs.slice(0);
-          const verify = (cb) => {
-            if (libsCopy.length === 0) {
-              return cb();
-            }
-            const lib = libsCopy.pop();
-            this.emit('message', 'Verifying ' + lib);
-            tools.verifyCodesign(lib, null, () => {
-              verify(cb);
-            });
-          };
-          verify(next);
-        });
-      } else {
-        this.emit('message', 'Using parallel signing order method');
-        let issues = 0;
-        let signs = 0;
-        this.emit('message', 'Found ' + libs.length + ' libraries');
-        libs.forEach((lib) => {
-          signs++;
-          this.signFile(lib, (err) => {
-            signs--;
-            if (err) {
-              this.emit('warning', err);
-              issues++;
-            }
-            if (signs === 0) {
-              if (issues > 0) {
-                this.emit('message', 'Warning: Some (' + issues + ') errors happened.');
-              } else {
-                this.emit('message', 'Everything seems signed now');
-              }
-              next();
-            }
-          });
-        });
-      }
+        verify(next);
+      });
     });
   }
 
