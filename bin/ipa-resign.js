@@ -46,23 +46,23 @@ if (conf.identities || conf.L) {
 
   ${cmd} [--options ...] [input-ipafile]
 
-  -L, --identities              List local codesign identities
-  -i, --identity 1C4D1A..       Specify hash-id of the identity to use
-  -r, --replace                 Replace the input IPA file with the resigned one
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -f, --without-fairplay        Resign encrypted applications
-  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
-  -o, --output [APP.IPA]        Path to the output IPA filename
-  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -o, --output [APP.IPA]        Path to the output IPA filename
+  -r, --replace                 Replace the input IPA file with the resigned one
   -v, --verify-twice            Verify after signing every file and at the end
+  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   [input-ipafile]               Path to the IPA file to resign
 
 Example:
 
-  ${cmd} --replace -identity AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C \\
-    --mobileprovision embedded.mobileprovision --bundleid com.nowsecure.TestApp ./foo.ipa
+  ${cmd} -L # enumerate codesign identities, grab one and use it with -i
+  ${cmd} -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
 `);
 } else {
   cs.signIPA(options.file, (error, data) => {
