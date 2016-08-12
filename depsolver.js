@@ -15,7 +15,6 @@ function resolveRpath (libs, file, lib) {
     return x.substring(0, x.lastIndexOf('/'));
   }));
   rpaths.forEach((x) => {
-    console.log(file);
     try {
       const paz = x + realLib;
       fs.statSync(paz);

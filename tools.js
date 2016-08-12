@@ -2,6 +2,7 @@
 
 const childproc = require('child_process');
 const plist = require('simple-plist');
+const which = require('which');
 const fs = require('fs');
 
 const cmd = {
@@ -21,7 +22,21 @@ function execProgram (bin, arg, opt, cb) {
 }
 
 module.exports = {
-  codesign: function (identity, entitlement, keychain, file, cb) {
+  findInPath: function findInPath (cb) {
+    const keys = Object.keys(cmd);
+    let pending = keys.length;
+    for (let key of keys) {
+      which(key, function (err, loc) {
+        if (err !== undefined) {
+          cmd[key] = loc;
+          if (--pending === 0) {
+            cb(null, cmd);
+          }
+        }
+      });
+    }
+  },
+  codesign: function codesign (identity, entitlement, keychain, file, cb) {
     /* use the --no-strict to avoid the "resource envelope is obsolete" error */
     const args = [ '--no-strict' ]; // http://stackoverflow.com/a/26204757
     if (identity === undefined) {
@@ -37,7 +52,7 @@ module.exports = {
     args.push(file);
     execProgram(cmd.codesign, args, null, cb);
   },
-  verifyCodesign: function (file, keychain, cb) {
+  verifyCodesign: function verifyCodesign (file, keychain, cb) {
     const args = ['-v', '--no-strict'];
     if (typeof keychain === 'string') {
       args.push('--keychain=' + keychain);
@@ -45,27 +60,27 @@ module.exports = {
     args.push(file);
     execProgram(cmd.codesign, args, null, cb);
   },
-  getEntitlementsFromMobileProvision: function (file, cb) {
+  getEntitlementsFromMobileProvision: function getEntitlementsFromMobileProvision (file, cb) {
     const args = [ 'cms', '-D', '-i', file ];
     execProgram(cmd.security, args, null, (error, stdout) => {
       cb(error, plist.parse(stdout)['Entitlements']);
     });
   },
-  zip: function (cwd, ofile, src, cb) {
+  zip: function zip (cwd, ofile, src, cb) {
     fs.unlink(ofile, () => {
       const args = [ '-qry', ofile, src ];
       execProgram(cmd.zip, args, { cwd: cwd }, cb);
     });
   },
-  unzip: function (ifile, odir, cb) {
+  unzip: function unzip (ifile, odir, cb) {
     const args = [ '-o', ifile, '-d', odir ];
     execProgram(cmd.unzip, args, null, cb);
   },
-  xcaToIpa: function (ifile, odir, cb) {
+  xcaToIpa: function xcaToIpa (ifile, odir, cb) {
     const args = [ '-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir ];
     execProgram(cmd.xcodebuild, args, null, cb);
   },
-  getIdentities: function (cb) {
+  getIdentities: function getIdentities (cb) {
     const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
     execProgram(cmd.security, args, null, (error, stdout) => {
       if (error) {
