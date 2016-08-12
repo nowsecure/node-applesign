@@ -293,11 +293,23 @@ module.exports = class ApplesignSession {
       next('Cannot find any MACH0 binary to sign');
     }
 
+    const parallelVerify = (libs, next) => {
+      let depsCount = libs.length;
+      for (let lib of libs) {
+        this.emit('message', 'Verifying ' + lib);
+        tools.verifyCodesign(lib, null, (err) => {
+          if (--depsCount === 0) {
+            next(err);
+          }
+        });
+      }
+    };
+
     const layeredSigning = (libs, next) => {
       let libsCopy = libs.slice(0).reverse();
       const peel = () => {
         if (libsCopy.length === 0) {
-          return next();
+          return parallelVerify(libraries, next);
         }
         const deps = libsCopy.pop();
         let depsCount = deps.length;
