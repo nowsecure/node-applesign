@@ -413,10 +413,10 @@ module.exports = class ApplesignSession {
 
   setFile (name) {
     if (typeof name === 'string') {
-      this.config.file = name;
-      this.config.outdir = path.resolve(name + '.d');
+      this.config.file = path.resolve(name);
+      this.config.outdir = this.config.file + '.d';
       if (!this.config.outfile) {
-        this.setOutputFile(getResignedFilename(name));
+        this.setOutputFile(getResignedFilename(this.config.file));
       }
     }
   }

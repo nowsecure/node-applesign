@@ -1,6 +1,7 @@
 'use strict';
 
 const tools = require('./tools');
+const path = require('path');
 const ApplesignSession = require('./session');
 
 module.exports = class Applesign {
@@ -13,7 +14,7 @@ module.exports = class Applesign {
       opt = {};
     }
     return {
-      file: opt.file,
+      file: path.resolve(opt.file),
       outdir: undefined,
       outfile: opt.outfile,
       keychain: opt.keychain,
@@ -33,10 +34,10 @@ module.exports = class Applesign {
 
   signIPA (file, cb) {
     const s = new ApplesignSession(this.config);
-    if (typeof cb === 'function') {
-      s.setFile(file);
-    } else {
+    if (typeof file === 'function') {
       cb = file;
+    } else {
+      s.setFile(file);
     }
     return s.signIPA(cb);
   }
