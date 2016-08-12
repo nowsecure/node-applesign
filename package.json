@@ -19,7 +19,6 @@
     "fs-extra": "0.30.0",
     "is-array": "1.0.1",
     "minimist": "1.2.0",
-    "tsort": "0.0.1",
     "plist": "1.2.0",
     "uniq": "1.0.1",
     "colors": "1.1.2",

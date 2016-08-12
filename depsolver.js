@@ -1,6 +1,5 @@
 'use strict';
 
-const tsort = require('tsort');
 const fatmacho = require('fatmacho');
 const macho = require('macho');
 const uniq = require('uniq');
@@ -138,7 +137,6 @@ module.exports = function depSolver(executable, libs, parallel, cb) {
     return cb(null, []);
   }
   const state = {};
-  const graph = tsort();
   let peekableLibs = libs.slice(0);
   const peek = () => {
     const target = peekableLibs.pop();
@@ -155,15 +153,12 @@ module.exports = function depSolver(executable, libs, parallel, cb) {
           const realPath = resolvePath(executable, target, r, libs);
           try {
             fs.statSync(realPath);
-            graph.add(target, realPath);
             state[target].deps.push(realPath);
           } catch (e) {
-            graph.add(target);
           }
         }
       }
       if (peekableLibs.length === 0) {
-        const sortedList = uniq(graph.sort());
         const layers = layerize(state);
         if (parallel) {
           cb(null, layers);
