@@ -75,9 +75,9 @@ function grabResignedIPAs (file) {
 }
 
 function processIPA (file, parallel)  {
- describe(file, function () {
+ describe((parallel? 'Parallel': 'Serial') + ' signing', function () {
    this.timeout(mochaTimeout);
-   it((parallel? 'parallel': 'serial') + ' signing', function (done) {
+   it(file, function (done) {
      let hasData = false;
      const ipaFile = path.resolve(path.join(ipaDir, file));
      const ipaResign = spawn('bin/ipa-resign.js', parallel
