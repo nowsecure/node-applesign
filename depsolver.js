@@ -85,36 +85,92 @@ function getMachoLibs (file, cb) {
   }
 }
 
-module.exports = function (executable, libs, cb) {
-  const graph = tsort();
-  if (libs.length > 0) {
-    let peekableLibs = libs.slice(0);
-    const peek = () => {
-      const lib = peekableLibs.pop();
-      getMachoLibs(lib, (error, macholibs) => {
-        if (lib === undefined || error || !isArray(macholibs)) {
-          return cb(error);
+function layerize(state) {
+  let currentLayer = 0;
+  const result = [];
+  // fs.writeFileSync('lala.json', JSON.stringify(state));
+  let processing = false;
+  do {
+    result[currentLayer] = [];
+    for (let lib of Object.keys(state)) {
+      const deps = state[lib].deps;
+      if (deps.length === 0) {
+        if (state[lib].layer === -1) {
+          result[currentLayer].push(lib);
+          state[lib].layer = 0;
         }
-        for (let r of macholibs) {
-          if (!r.startsWith('/')) {
-            const realPath = resolvePath(executable, lib, r, libs);
-            try {
-              fs.statSync(realPath);
-              graph.add(lib, realPath);
-            } catch (e) {
-              graph.add(lib);
-            }
+      }
+      let allDepsSolved = true;
+      for (let dep of deps) {
+        const depLayer = state[dep].layer;
+        if (depLayer === -1) {
+          allDepsSolved = false;
+          break;
+        }
+      }
+      processing = true;
+      if (allDepsSolved) {
+        if (state[lib].layer === -1) {
+          result[currentLayer].push(lib);
+          state[lib].layer = currentLayer;
+        }
+        processing = false;
+      }
+    }
+    currentLayer ++;
+  } while(processing);
+
+  return result;
+}
+
+function flattenize(layers) {
+  const list = [];
+  for (let layer of layers) {
+    for (let lib of layer) {
+      list.push(lib);
+    }
+  }
+  return list;
+}
+
+module.exports = function depSolver(executable, libs, cb) {
+  if (libs.length === 0) {
+    return cb(null, []);
+  }
+  const state = {};
+  const graph = tsort();
+  let peekableLibs = libs.slice(0);
+  const peek = () => {
+    const target = peekableLibs.pop();
+    getMachoLibs(target, (error, macholibs) => {
+      if (target === undefined || error || !isArray(macholibs)) {
+        return cb(error);
+      }
+      state[target] = {
+        layer: -1,
+        deps: []
+      };
+      for (let r of macholibs) {
+        if (!r.startsWith('/')) {
+          const realPath = resolvePath(executable, target, r, libs);
+          try {
+            fs.statSync(realPath);
+            graph.add(target, realPath);
+            state[target].deps.push(realPath);
+          } catch (e) {
+            graph.add(target);
           }
         }
-        if (peekableLibs.length === 0) {
-          cb(null, uniq(graph.sort()).reverse());
-        } else {
-          peek();
-        }
-      });
-    };
-    peek();
-  } else {
-    cb(null, []);
-  }
+      }
+      if (peekableLibs.length === 0) {
+        const sortedList = uniq(graph.sort());
+        const layers = layerize(state);
+        // cb(null, layers);
+        cb(null, flattenize(layers).reverse());
+      } else {
+        peek();
+      }
+    });
+  };
+  peek();
 };

@@ -292,12 +292,21 @@ module.exports = class ApplesignSession {
     if (!found) {
       next('Cannot find any MACH0 binary to sign');
     }
+
+    function layeredSigning(libs, next) {
+      console.error('layered signing is not yet implemented');
+      next(null);
+    }
+
+    this.emit('message', 'Resolving signing order using layered list');
     depSolver(bpath, libraries, (err, libs) => {
       if (err) { return next(err); }
       if (libs.length === 0) {
         libs.push(bpath);
       }
-      this.emit('message', 'Using tsort signing order method');
+      if (typeof libs[0] === 'object') {
+        return layeredSigning(libs, next);
+      }
       let libsCopy = libs.slice(0);
       const peek = (cb) => {
         if (libsCopy.length === 0) {
