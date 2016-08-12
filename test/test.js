@@ -80,9 +80,37 @@ describe('Commandline IPA signing', function () {
     files.filter(grabIPAs).forEach(function (file) {
       describe(file, function () {
         this.timeout(mochaTimeout);
-        it('Signing', function (done) {
-          var hasData = false;
-          const ipaResign = spawn('bin/ipa-resign.js', ['-d', '-i', developerCertificate, path.join(ipaDir, file)]);
+        it('signing', function (done) {
+          let hasData = false;
+          const ipaFile = path.resolve(path.join(ipaDir, file));
+          const ipaResign = spawn('bin/ipa-resign.js', ['-i', developerCertificate, ipaFile]);
+          ipaResign.stdout.on('data', (text) => {
+            hasData = true;
+          });
+          ipaResign.stderr.on('data', (text) => {
+            console.error(text.toString());
+          });
+          ipaResign.on('close', (code) => {
+            assert.equal(hasData, true);
+            assert.equal(code, 0);
+            done();
+          });
+        });
+      });
+    });
+  });
+});
+
+describe('Commandline IPA parallel signing', function () {
+  fs.readdir(ipaDir, function (err, files) {
+    assert.equal(err, undefined);
+    files.filter(grabIPAs).forEach(function (file) {
+      describe(file, function () {
+        this.timeout(mochaTimeout);
+        it('parallel signing', function (done) {
+          let hasData = false;
+          const ipaFile = path.resolve(path.join(ipaDir, file));
+          const ipaResign = spawn('bin/ipa-resign.js', ['-p', '-i', developerCertificate, ipaFile]);
           ipaResign.stdout.on('data', (text) => {
             hasData = true;
           });
