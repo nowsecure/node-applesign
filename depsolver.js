@@ -168,7 +168,7 @@ module.exports = function depSolver(executable, libs, parallel, cb) {
         if (parallel) {
           cb(null, layers);
         } else {
-          cb(null, flattenize(layers).reverse());
+          cb(null, flattenize(layers));
         }
       } else {
         peek();

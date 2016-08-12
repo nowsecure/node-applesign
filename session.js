@@ -323,7 +323,7 @@ module.exports = class ApplesignSession {
       if (typeof libs[0] === 'object') {
         return layeredSigning(libs, next);
       }
-      let libsCopy = libs.slice(0);
+      let libsCopy = libs.slice(0).reverse();
       const peek = (cb) => {
         if (libsCopy.length === 0) {
           libsCopy = libs.slice(0);
