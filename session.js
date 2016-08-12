@@ -294,8 +294,6 @@ module.exports = class ApplesignSession {
     }
 
     const layeredSigning = (libs, next) => {
-      console.error('layered signing is not yet implemented');
-      
       let libsCopy = libs.slice(0).reverse();
       const peel = () => {
         if (libsCopy.length === 0) {
@@ -312,17 +310,9 @@ module.exports = class ApplesignSession {
         }
       };
       peel();
-    }
+    };
 
-    this.emit('message', 'Resolving signing order using layered list');
-    depSolver(bpath, libraries, this.config.parallel, (err, libs) => {
-      if (err) { return next(err); }
-      if (libs.length === 0) {
-        libs.push(bpath);
-      }
-      if (typeof libs[0] === 'object') {
-        return layeredSigning(libs, next);
-      }
+    const serialSigning = (libs, next) => {
       let libsCopy = libs.slice(0).reverse();
       const peek = (cb) => {
         if (libsCopy.length === 0) {
@@ -348,6 +338,18 @@ module.exports = class ApplesignSession {
         };
         verify(next);
       });
+    };
+
+    this.emit('message', 'Resolving signing order using layered list');
+    depSolver(bpath, libraries, this.config.parallel, (err, libs) => {
+      if (err) { return next(err); }
+      if (libs.length === 0) {
+        libs.push(bpath);
+      }
+      if (typeof libs[0] === 'object') {
+        return layeredSigning(libs, next);
+      }
+      return serialSigning(libs, next);
     });
   }
 

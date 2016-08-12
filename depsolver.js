@@ -84,7 +84,7 @@ function getMachoLibs (file, cb) {
   }
 }
 
-function layerize(state) {
+function layerize (state) {
   let currentLayer = 0;
   const result = [];
   // fs.writeFileSync('lala.json', JSON.stringify(state));
@@ -116,13 +116,13 @@ function layerize(state) {
         processing = false;
       }
     }
-    currentLayer ++;
-  } while(processing);
+    currentLayer++;
+  } while (processing);
 
   return result;
 }
 
-function flattenize(layers) {
+function flattenize (layers) {
   const list = [];
   for (let layer of layers) {
     for (let lib of layer) {
@@ -132,7 +132,7 @@ function flattenize(layers) {
   return list;
 }
 
-module.exports = function depSolver(executable, libs, parallel, cb) {
+module.exports = function depSolver (executable, libs, parallel, cb) {
   if (libs.length === 0) {
     return cb(null, []);
   }
