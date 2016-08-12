@@ -219,6 +219,15 @@ module.exports = class ApplesignSession {
     if (!file || !appdir) {
       return next('Invalid parameters for fixPlist');
     }
+    if (this.config.forceFamily) {
+      const data = plist.readFileSync(file);
+      const oldFamily = +data['UIDeviceFamily'];
+      if (oldFamily === 2) {
+        this.emit('message', 'UIDeviceFamily forced to iPhone');
+        data['UIDeviceFamily'] = 1;
+        plist.writeFileSync(file, data);
+      }
+    }
     if (bundleid) {
       const data = plist.readFileSync(file);
       const oldBundleID = data['CFBundleIdentifier'];

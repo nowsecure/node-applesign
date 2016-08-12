@@ -26,6 +26,7 @@ module.exports = class Applesign {
       replaceipa: opt.replaceipa || false,
       withoutWatchapp: opt.withoutWatchapp || false,
       mobileprovision: opt.mobileprovision || undefined,
+      forceFamily: opt.forceFamily || false,
       parallel: opt.parallel || false,
       verifyTwice: opt.verifyTwice || false,
       unfairPlay: opt.unfairPlay || false

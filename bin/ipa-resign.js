@@ -4,7 +4,7 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp']
+  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp', 'u', 'unfair', 'f', 'force-family']
 });
 
 const options = {
@@ -19,7 +19,8 @@ const options = {
   keychain: conf.keychain || conf.k,
   parallel: conf.parallel || conf.p,
   verifyTwice: conf.verifyTwice || !!conf.v,
-  unfairPlay: conf['without-fairplay'] || conf.f
+  unfairPlay: conf['unfair'] || conf.u
+  forceFamily: conf['force-family'] || conf.f
 };
 
 colors.setTheme({
@@ -49,7 +50,7 @@ if (conf.identities || conf.L) {
 
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
-  -f, --without-fairplay        Resign encrypted applications
+  -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -L, --identities              List local codesign identities
@@ -57,6 +58,7 @@ if (conf.identities || conf.L) {
   -o, --output [APP.IPA]        Path to the output IPA filename
   -p, --parallel                Run layered signing dependencies in parallel
   -r, --replace                 Replace the input IPA file with the resigned one
+  -u, --unfair                  Resign encrypted applications
   -v, --verify-twice            Verify after signing every file and at the end
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   [input-ipafile]               Path to the IPA file to resign
