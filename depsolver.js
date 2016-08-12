@@ -103,7 +103,7 @@ function layerize(state) {
       let allDepsSolved = true;
       for (let dep of deps) {
         const depLayer = state[dep].layer;
-        if (depLayer === -1) {
+        if (depLayer === -1 || depLayer === currentLayer) {
           allDepsSolved = false;
           break;
         }
@@ -133,7 +133,7 @@ function flattenize(layers) {
   return list;
 }
 
-module.exports = function depSolver(executable, libs, cb) {
+module.exports = function depSolver(executable, libs, parallel, cb) {
   if (libs.length === 0) {
     return cb(null, []);
   }
@@ -165,8 +165,11 @@ module.exports = function depSolver(executable, libs, cb) {
       if (peekableLibs.length === 0) {
         const sortedList = uniq(graph.sort());
         const layers = layerize(state);
-        // cb(null, layers);
-        cb(null, flattenize(layers).reverse());
+        if (parallel) {
+          cb(null, layers);
+        } else {
+          cb(null, flattenize(layers).reverse());
+        }
       } else {
         peek();
       }

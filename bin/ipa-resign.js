@@ -4,7 +4,7 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'w', 'without-watchapp']
+  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp']
 });
 
 const options = {
@@ -17,6 +17,7 @@ const options = {
   replaceipa: conf.replace || conf.r,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   keychain: conf.keychain || conf.k,
+  parallel: conf.parallel || conf.p,
   verifyTwice: conf.verifyTwice || !!conf.v,
   unfairPlay: conf['without-fairplay'] || conf.f
 };
@@ -54,6 +55,7 @@ if (conf.identities || conf.L) {
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
+  -p, --parallel                Run layered signing dependencies in parallel
   -r, --replace                 Replace the input IPA file with the resigned one
   -v, --verify-twice            Verify after signing every file and at the end
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
