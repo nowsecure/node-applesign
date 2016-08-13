@@ -4,13 +4,25 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp', 'u', 'unfair', 'f', 'force-family', 's', 'single' ]
+  boolean: [
+    'r', 'replace',
+    'L', 'identities',
+    'v', 'verify-twice',
+    'E', 'entry-entitlement',
+    'f', 'without-fairplay',
+    'p', 'parallel',
+    'w', 'without-watchapp',
+    'u', 'unfair',
+    'f', 'force-family',
+    's', 'single'
+  ]
 });
 
 const options = {
   file: conf._[0] || 'undefined',
   outfile: conf.output || conf.o,
   entitlement: conf.entitlement || conf.e,
+  entry: conf['entry-entitlement'] || conf.E,
   bundleid: conf.bundleid || conf.b,
   identity: conf.identity || conf.i,
   mobileprovision: conf.mobileprovision || conf.m,
@@ -19,9 +31,9 @@ const options = {
   keychain: conf.keychain || conf.k,
   parallel: conf.parallel || conf.p,
   verifyTwice: conf.verifyTwice || !!conf.v,
-  unfairPlay: conf['unfair'] || conf.u,
+  unfairPlay: conf.unfair || conf.u,
   forceFamily: conf['force-family'] || conf.f,
-  single: conf['single'] || conf.s
+  single: conf.single || conf.s
 };
 
 colors.setTheme({
@@ -49,8 +61,9 @@ if (conf.identities || conf.L) {
 
   ${cmd} [--options ...] [input-ipafile]
 
-  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging (EXPERIMENTAL)
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
+  -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
@@ -71,6 +84,7 @@ Example:
 `);
 } else {
   const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
+console.log(options.entry);
   const session = cs[target](options.file, (error, data) => {
     if (error) {
       console.error(error, data);

@@ -12,6 +12,36 @@ const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
 const machoEntitlements = require('macho-entitlements');
 
+const entitlementTemplate = `
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>application-identifier</key>
+	<string>FILLME.APPID</string>
+	<key>com.apple.developer.team-identifier</key>
+	<string>FILLME</string>
+	<key>get-task-allow</key>
+	<true/>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>FILLME.APPID</string>
+	</array>
+</dict>
+</plist>
+`;
+
+function defaultEntitlements (appid, devid) {
+  const ent = plist.parse(entitlementTemplate);
+  console.log('appid', appid);
+  console.log('devid', devid);
+  //const appid = devid + bundleid;
+  ent['application-identifier'] = appid;
+  ent['com.apple.developer.team-identifier'] = devid
+  ent['keychain-access-groups'] = [ appid ];
+  return plistBuild(ent).toString();
+}
+
 function getResignedFilename (path) {
   if (!path) return null;
   const newPath = path.replace('.ipa', '-resigned.ipa');
@@ -188,11 +218,15 @@ module.exports = class ApplesignSession {
         entMacho[id] = entMobProv[id];
       }
     });
-    if (changed) {
+    if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
-      let newEntitlements = (this.config.entitlement)
-        ? fs.readFileSync(this.config.entitlement)
-        : plistBuild(entMacho).toString();
+      const appid = entMobProv['application-identifier'];
+      const devid = entMobProv['com.apple.developer.team-identifier'];
+      let newEntitlements = (appid && devid && this.config.entry)
+        ? defaultEntitlements(appid, devid)
+        : (this.config.entitlement)
+          ? fs.readFileSync(this.config.entitlement)
+          : plistBuild(entMacho).toString();
       fs.writeFileSync(newEntitlementsFile, newEntitlements);
       this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
       this.config.entitlement = newEntitlementsFile;
@@ -202,9 +236,16 @@ module.exports = class ApplesignSession {
 
   fixEntitlements (file, next) {
     if (!this.config.mobileprovision) {
-      return next();
+      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
+      tools.getEntitlementsFromMobileProvision(pathToProvision, (error, newEntitlements) => {
+        if (error) {
+          return next();
+        }
+        this.emit('message', 'Grabbing entitlements from mobileprovision');
+        return this.adjustEntitlements(file, newEntitlements, next);
+      });
+      return;
     }
-    this.emit('message', 'Grabbing entitlements from mobileprovision');
     tools.getEntitlementsFromMobileProvision(this.config.mobileprovision, (error, newEntitlements) => {
       if (error) {
         return next(error);
