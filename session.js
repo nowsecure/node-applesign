@@ -190,7 +190,10 @@ module.exports = class ApplesignSession {
     });
     if (changed) {
       const newEntitlementsFile = file + '.entitlements';
-      fs.writeFileSync(newEntitlementsFile, plistBuild(entMacho).toString());
+      let newEntitlements = (this.config.entitlement)
+        ? fs.readFileSync(this.config.entitlement)
+        : plistBuild(entMacho).toString();
+      fs.writeFileSync(newEntitlementsFile, newEntitlements);
       this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
       this.config.entitlement = newEntitlementsFile;
     }
@@ -220,11 +223,21 @@ module.exports = class ApplesignSession {
       return next('Invalid parameters for fixPlist');
     }
     if (this.config.forceFamily) {
+      let changed = false;
       const data = plist.readFileSync(file);
+      const oldSupportedDevices = data['UISupportedDevices'];
+      if (oldSupportedDevices) {
+        this.emit('message', 'Empty UISupportedDevices');
+        delete data['UISupportedDevices'];
+        changed = true;
+      }
       const oldFamily = +data['UIDeviceFamily'];
       if (oldFamily === 2) {
         this.emit('message', 'UIDeviceFamily forced to iPhone');
         data['UIDeviceFamily'] = 1;
+        changed = true;
+      }
+      if (changed) {
         plist.writeFileSync(file, data);
       }
     }
