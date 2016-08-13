@@ -43,6 +43,11 @@ module.exports = class Applesign {
     return s.signIPA(cb);
   }
 
+  signFile (file, cb) {
+    const s = new ApplesignSession(this.config);
+    return s.signFile(file, cb);
+  }
+
   signXCarchive (file, cb) {
     const ipaFile = file + '.ipa';
     tools.xcaToIpa(file, (error) => {

@@ -245,8 +245,8 @@ module.exports = class ApplesignSession {
       }
       return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
     }
-    this.emit('message', 'Sign ' + file);
     tools.codesign(this.config.identity, this.config.entitlement, this.config.keychain, file, (error, stdout, stderr) => {
+      this.emit('message', 'Signed ' + file);
       if (error && codesignHasFailed(this.config, error, stderr)) {
         return this.emit('end', error, next);
       }
@@ -265,6 +265,7 @@ module.exports = class ApplesignSession {
         next(undefined, error);
       }
     });
+    return this;
   }
 
   signLibraries (bpath, appdir, next) {

@@ -4,7 +4,7 @@
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
-  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp', 'u', 'unfair', 'f', 'force-family']
+  boolean: ['r', 'replace', 'L', 'identities', 'v', 'verifyTwice', 'f', 'without-fairplay', 'p', 'parallel', 'w', 'without-watchapp', 'u', 'unfair', 'f', 'force-family', 's', 'single' ]
 });
 
 const options = {
@@ -19,8 +19,9 @@ const options = {
   keychain: conf.keychain || conf.k,
   parallel: conf.parallel || conf.p,
   verifyTwice: conf.verifyTwice || !!conf.v,
-  unfairPlay: conf['unfair'] || conf.u
-  forceFamily: conf['force-family'] || conf.f
+  unfairPlay: conf['unfair'] || conf.u,
+  forceFamily: conf['force-family'] || conf.f,
+  single: conf['single'] || conf.s
 };
 
 colors.setTheme({
@@ -69,15 +70,18 @@ Example:
   ${cmd} -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
 `);
 } else {
-  cs.signIPA(options.file, (error, data) => {
+  const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
+  const session = cs[target](options.file, (error, data) => {
     if (error) {
       console.error(error, data);
       process.exit(1);
     }
-    console.log('IPA is now signed.');
+    console.log('Target is now signed:', session.config.outfile || options.file);
   }).on('message', (msg) => {
     console.log(colors.msg(msg));
   }).on('warning', (msg) => {
-    console.log(colors.error('error'), msg);
+    console.error(colors.error('error'), msg);
+  }).on('error', (msg) => {
+    console.error(colors.msg(msg));
   });
 }
