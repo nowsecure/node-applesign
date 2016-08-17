@@ -218,6 +218,7 @@ module.exports = class ApplesignSession {
         entMacho[id] = entMobProv[id];
       }
     });
+    entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       const appid = entMobProv['application-identifier'];
@@ -263,9 +264,9 @@ module.exports = class ApplesignSession {
     if (!file || !appdir) {
       return next('Invalid parameters for fixPlist');
     }
+    let changed = false;
+    const data = plist.readFileSync(file);
     if (this.config.forceFamily) {
-      let changed = false;
-      const data = plist.readFileSync(file);
       const oldSupportedDevices = data['UISupportedDevices'];
       if (oldSupportedDevices) {
         this.emit('message', 'Empty UISupportedDevices');
@@ -278,15 +279,24 @@ module.exports = class ApplesignSession {
         data['UIDeviceFamily'] = 1;
         changed = true;
       }
-      if (changed) {
-        plist.writeFileSync(file, data);
-      }
     }
     if (bundleid) {
-      const data = plist.readFileSync(file);
-      const oldBundleID = data['CFBundleIdentifier'];
-      this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleID + ' into ' + bundleid);
-      data['CFBundleIdentifier'] = bundleid;
+      const oldBundleId = data['CFBundleIdentifier'];
+      this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleId + ' into ' + bundleid);
+      if (oldBundleId) {
+        data['CFBundleIdentifier'] = bundleid;
+      }
+      if (data['basebundleidentifier']) {
+        data['basebundleidentifier'] = bundleid;
+      }
+      try {
+        data['CFBundleURLTypes'][0]['CFBundleURLName'] = bundleid;
+      } catch (e) {
+        /* do nothing */
+      }
+      changed = true;
+    }
+    if (changed) {
       plist.writeFileSync(file, data);
     }
     next();
