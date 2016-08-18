@@ -84,7 +84,6 @@ Example:
 `);
 } else {
   const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
-console.log(options.entry);
   const session = cs[target](options.file, (error, data) => {
     if (error) {
       console.error(error, data);

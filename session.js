@@ -35,9 +35,8 @@ function defaultEntitlements (appid, devid) {
   const ent = plist.parse(entitlementTemplate);
   console.log('appid', appid);
   console.log('devid', devid);
-  //const appid = devid + bundleid;
   ent['application-identifier'] = appid;
-  ent['com.apple.developer.team-identifier'] = devid
+  ent['com.apple.developer.team-identifier'] = devid;
   ent['keychain-access-groups'] = [ appid ];
   return plistBuild(ent).toString();
 }
@@ -210,6 +209,9 @@ module.exports = class ApplesignSession {
   adjustEntitlements (file, entMobProv, next) {
     /* TODO: check if this supports binary plist too */
     const ent = machoEntitlements.parseFile(file);
+    if (ent === null) {
+      return next();
+    }
     const entMacho = plist.parse(ent.toString());
     let changed = false;
     ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
