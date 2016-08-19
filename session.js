@@ -221,6 +221,7 @@ module.exports = class ApplesignSession {
       }
     });
     if (typeof entMacho['keychain-access-groups'] === 'object') {
+      changed = true;
       entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
     }
     [
@@ -230,8 +231,17 @@ module.exports = class ApplesignSession {
       'com.apple.security.application-groups',
       'aps-environment'
     ].forEach((id) => {
-      delete entMacho[id];
+      if (typeof entMacho[id] !== undefined) {
+        delete entMacho[id];
+        changed = true;
+      }
     });
+    if (true) {
+      if (entMacho['get-task-allow'] !== true) {
+        entMacho['get-task-allow'] = true;
+        changed = true;
+      }
+    }
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       const appid = entMobProv['application-identifier'];
