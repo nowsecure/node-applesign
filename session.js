@@ -220,7 +220,9 @@ module.exports = class ApplesignSession {
         entMacho[id] = entMobProv[id];
       }
     });
-    entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
+    if (typeof entMacho['keychain-access-groups'] === 'object') {
+      entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
+    }
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       const appid = entMobProv['application-identifier'];
