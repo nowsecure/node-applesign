@@ -223,6 +223,13 @@ module.exports = class ApplesignSession {
     if (typeof entMacho['keychain-access-groups'] === 'object') {
       entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
     }
+    [
+      'com.apple.developer.default-data-protection',
+      'com.apple.security.application-groups',
+      'aps-environment'
+    ].forEach((id) => {
+      delete entMacho[id];
+    });
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       const appid = entMobProv['application-identifier'];
