@@ -224,7 +224,9 @@ module.exports = class ApplesignSession {
       entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
     }
     [
+      'com.apple.developer.payment-pass-provisioning',
       'com.apple.developer.default-data-protection',
+      'com.apple.developer.associated-domains',
       'com.apple.security.application-groups',
       'aps-environment'
     ].forEach((id) => {
