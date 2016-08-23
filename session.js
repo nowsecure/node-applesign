@@ -227,6 +227,7 @@ module.exports = class ApplesignSession {
     [
       'com.apple.developer.payment-pass-provisioning',
       'com.apple.developer.default-data-protection',
+      'com.apple.networking.vpn.configuration',
       'com.apple.developer.associated-domains',
       'com.apple.security.application-groups',
       'aps-environment'
