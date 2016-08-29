@@ -230,6 +230,7 @@ module.exports = class ApplesignSession {
       'com.apple.networking.vpn.configuration',
       'com.apple.developer.associated-domains',
       'com.apple.security.application-groups',
+      'com.apple.developer.in-app-payments',
       'aps-environment'
     ].forEach((id) => {
       if (typeof entMacho[id] !== undefined) {
