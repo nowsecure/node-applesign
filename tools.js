@@ -7,12 +7,16 @@ const plist = require('simple-plist');
 const which = require('which');
 const fs = require('fs');
 
+const useOpenSSL = true;
+
 const cmd = {
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
   security: '/usr/bin/security',
-  xcodebuild: '/usr/bin/xcodebuild'
+  xcodebuild: '/usr/bin/xcodebuild',
+  /* only when useOpenSSL is true */
+  openssl: '/usr/local/bin/openssl'
 };
 
 function execProgram (bin, arg, opt, cb) {
@@ -67,10 +71,19 @@ function verifyCodesign (file, keychain, cb) {
 }
 
 function getEntitlementsFromMobileProvision (file, cb) {
-  const args = [ 'cms', '-D', '-i', file ];
-  execProgram(cmd.security, args, null, (error, stdout) => {
-    cb(error, plist.parse(stdout)['Entitlements']);
-  });
+  if (useOpenSSL === true) {
+    /* portable using openssl */
+    const args = [ 'smime', '-in', file, '-inform', 'der', '-verify' ];
+    execProgram(cmd.openssl, args, null, (error, stdout) => {
+      cb(error, plist.parse(stdout)['Entitlements']);
+    });
+  } else {
+    /* OSX specific using security */
+    const args = [ 'cms', '-D', '-i', file ];
+    execProgram(cmd.security, args, null, (error, stdout) => {
+      cb(error, plist.parse(stdout)['Entitlements']);
+    });
+  }
 }
 
 function zip (cwd, ofile, src, cb) {
