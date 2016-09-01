@@ -225,6 +225,9 @@ module.exports = class ApplesignSession {
       entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
     }
     [
+      'com.apple.developer.icloud-container-identifiers',
+      'com.apple.developer.icloud-container-environment',
+      'com.apple.developer.icloud-services',
       'com.apple.developer.payment-pass-provisioning',
       'com.apple.developer.default-data-protection',
       'com.apple.networking.vpn.configuration',
