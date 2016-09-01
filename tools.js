@@ -73,7 +73,7 @@ function verifyCodesign (file, keychain, cb) {
 function getEntitlementsFromMobileProvision (file, cb) {
   if (useOpenSSL === true) {
     /* portable using openssl */
-    const args = [ 'smime', '-in', file, '-inform', 'der', '-verify' ];
+    const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
     execProgram(cmd.openssl, args, null, (error, stdout) => {
       cb(error, plist.parse(stdout)['Entitlements']);
     });
