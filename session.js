@@ -198,6 +198,14 @@ module.exports = class ApplesignSession {
     Read the one in Info.plist and compare with bundleid
   */
   checkProvision (appdir, file, next) {
+    /* allow to generate an IPA file without the embedded.mobileprovision */
+    const withoutMobileProvision = false;
+    if (withoutMobileProvision) {
+      const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
+      return fs.unlink(mobileProvision, () => {
+        next();
+      });
+    }
     if (file && appdir) {
       this.emit('message', 'Embedding new mobileprovision');
       const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
@@ -270,7 +278,7 @@ module.exports = class ApplesignSession {
         if (error) {
           return next();
         }
-        this.emit('message', 'Grabbing entitlements from mobileprovision');
+        this.emit('message', 'Using the entitlements from the mobileprovision');
         return this.adjustEntitlements(file, newEntitlements, next);
       });
       return;
@@ -280,9 +288,9 @@ module.exports = class ApplesignSession {
         return next(error);
       }
       this.emit('message', JSON.stringify(newEntitlements));
-      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
-      /* replace ipa's mobileprovision with given the entitlements? */
-      plist.writeFileSync(pathToProvision, newEntitlements);
+      fs.copySync(this.config.mobileprovision, pathToProvision);
+      // const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
+      // plist.writeFileSync(pathToProvision, newEntitlements);
       this.adjustEntitlements(file, newEntitlements, next);
     });
   }
