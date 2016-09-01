@@ -14,7 +14,8 @@ const conf = require('minimist')(process.argv.slice(2), {
     'w', 'without-watchapp',
     'u', 'unfair',
     'f', 'force-family',
-    's', 'single'
+    's', 'single',
+    'c', 'clone-entitlements'
   ]
 });
 
@@ -26,6 +27,7 @@ const options = {
   bundleid: conf.bundleid || conf.b,
   identity: conf.identity || conf.i,
   mobileprovision: conf.mobileprovision || conf.m,
+  cloneEntitlements: conf.c || conf['clone-entitlements'],
   replaceipa: conf.replace || conf.r,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   keychain: conf.keychain || conf.k,
@@ -62,6 +64,7 @@ if (conf.identities || conf.L) {
   ${cmd} [--options ...] [input-ipafile]
 
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging (EXPERIMENTAL)
+  -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone

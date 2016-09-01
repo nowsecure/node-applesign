@@ -33,8 +33,8 @@ const entitlementTemplate = `
 
 function defaultEntitlements (appid, devid) {
   const ent = plist.parse(entitlementTemplate);
-  console.log('appid', appid);
-  console.log('devid', devid);
+  // console.log('appid', appid);
+  // console.log('devid', devid);
   ent['application-identifier'] = appid;
   ent['com.apple.developer.team-identifier'] = devid;
   ent['keychain-access-groups'] = [ appid ];
@@ -45,7 +45,9 @@ function getResignedFilename (path) {
   if (!path) return null;
   const newPath = path.replace('.ipa', '-resigned.ipa');
   const pos = newPath.lastIndexOf(path.sep);
-  if (pos !== -1) return newPath.substring(pos + 1);
+  if (pos !== -1) {
+    return newPath.substring(pos + 1);
+  }
   return newPath;
 }
 
@@ -215,40 +217,54 @@ module.exports = class ApplesignSession {
   }
 
   adjustEntitlements (file, entMobProv, next) {
+    const teamId = entMobProv['com.apple.developer.team-identifier'];
+    const appId = entMobProv['application-identifier'];
     /* TODO: check if this supports binary plist too */
-    const ent = machoEntitlements.parseFile(file);
+    let ent = machoEntitlements.parseFile(file);
     if (ent === null) {
-      return next();
+      console.log('Cannot find entitlements in binary. Using defaults');
+      ent = defaultEntitlements(appId, teamId);
+      // return next();
     }
-    const entMacho = plist.parse(ent.toString());
+    let entMacho = plist.parse(ent.toString());
     let changed = false;
-    ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
-      if (entMacho[id] !== entMobProv[id]) {
-        changed = true;
-        entMacho[id] = entMobProv[id];
-      }
-    });
-    if (typeof entMacho['keychain-access-groups'] === 'object') {
+    if (this.config.cloneEntitlements) {
+      this.emit('message', 'Cloning entitlements');
+      //const teamId = entMacho['com.apple.developer.team-identifier'];
+      const m0appId = entMacho['application-identifier'];
+      entMacho = entMobProv;
+     // entMacho['com.apple.developer.team-identifier'] = teamId;
+      entMacho['application-identifier'] = m0appId;
       changed = true;
-      entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
-    }
-    [
-      'com.apple.developer.icloud-container-identifiers',
-      'com.apple.developer.icloud-container-environment',
-      'com.apple.developer.icloud-services',
-      'com.apple.developer.payment-pass-provisioning',
-      'com.apple.developer.default-data-protection',
-      'com.apple.networking.vpn.configuration',
-      'com.apple.developer.associated-domains',
-      'com.apple.security.application-groups',
-      'com.apple.developer.in-app-payments',
-      'aps-environment'
-    ].forEach((id) => {
-      if (typeof entMacho[id] !== undefined) {
-        delete entMacho[id];
+    } else {
+      ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
+        if (entMacho[id] !== entMobProv[id]) {
+          changed = true;
+          entMacho[id] = entMobProv[id];
+        }
+      });
+      if (typeof entMacho['keychain-access-groups'] === 'object') {
         changed = true;
+        entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
       }
-    });
+      [
+        'com.apple.developer.icloud-container-identifiers',
+        'com.apple.developer.icloud-container-environment',
+        'com.apple.developer.icloud-services',
+        'com.apple.developer.payment-pass-provisioning',
+        'com.apple.developer.default-data-protection',
+        'com.apple.networking.vpn.configuration',
+        'com.apple.developer.associated-domains',
+        'com.apple.security.application-groups',
+        'com.apple.developer.in-app-payments',
+        'aps-environment'
+      ].forEach((id) => {
+        if (typeof entMacho[id] !== undefined) {
+          delete entMacho[id];
+          changed = true;
+        }
+      });
+    }
     if (true) {
       if (entMacho['get-task-allow'] !== true) {
         entMacho['get-task-allow'] = true;
@@ -257,9 +273,7 @@ module.exports = class ApplesignSession {
     }
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
-      const appid = entMobProv['application-identifier'];
-      const devid = entMobProv['com.apple.developer.team-identifier'];
-      let newEntitlements = (appid && devid && this.config.entry)
+      let newEntitlements = (appId && teamId && this.config.entry)
         ? defaultEntitlements(appid, devid)
         : (this.config.entitlement)
           ? fs.readFileSync(this.config.entitlement)
@@ -288,6 +302,7 @@ module.exports = class ApplesignSession {
         return next(error);
       }
       this.emit('message', JSON.stringify(newEntitlements));
+      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       fs.copySync(this.config.mobileprovision, pathToProvision);
       // const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       // plist.writeFileSync(pathToProvision, newEntitlements);
@@ -402,7 +417,6 @@ module.exports = class ApplesignSession {
     if (!found) {
       next('Cannot find any MACH0 binary to sign');
     }
-
     const parallelVerify = (libs, next) => {
       let depsCount = libs.length;
       for (let lib of libs) {
