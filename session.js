@@ -214,21 +214,25 @@ module.exports = class ApplesignSession {
       if (this.config.selfSignedProvision) {
         /* update entitlements */
         return tools.getMobileProvisionPlist(this.config.mobileprovision, (err, data) => {
+          if (err) {
+            next(err);
+          }
           const mainBin = path.join(this.config.appdir, getExecutable(this.config.appdir));
           let ent = machoEntitlements.parseFile(mainBin);
           if (ent === null) {
             console.log('Cannot find entitlements in binary. Using defaults');
+            const entMobProv = data['Entitlements'];
+            const teamId = entMobProv['com.apple.developer.team-identifier'];
+            const appId = entMobProv['application-identifier'];
             ent = defaultEntitlements(appId, teamId);
-            // return next();
           }
           data['Entitlements'] = plist.parse(ent.toString());
-          fs.writeFileSync(mobileProvision, plistBuild(data).toString() + '\n');
+          fs.writeFileSync(mobileProvision, plistBuild(data).toString());
           /* TODO: self-sign mobile provisioning */
           next();
         });
-      } else {
-        return fs.copy(file, mobileProvision, next);
       }
+      return fs.copy(file, mobileProvision, next);
     }
     next();
   }
@@ -295,7 +299,7 @@ module.exports = class ApplesignSession {
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       let newEntitlements = (appId && teamId && this.config.entry)
-        ? defaultEntitlements(appid, devid)
+        ? defaultEntitlements(appId, teamId)
         : (this.config.entitlement)
           ? fs.readFileSync(this.config.entitlement)
           : plistBuild(entMacho).toString();
