@@ -70,20 +70,29 @@ function verifyCodesign (file, keychain, cb) {
   execProgram(cmd.codesign, args, null, cb);
 }
 
-function getEntitlementsFromMobileProvision (file, cb) {
+function getMobileProvisionPlist (file, cb) {
   if (useOpenSSL === true) {
     /* portable using openssl */
     const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
     execProgram(cmd.openssl, args, null, (error, stdout) => {
-      cb(error, plist.parse(stdout)['Entitlements']);
+      cb(error, plist.parse(stdout));
     });
   } else {
     /* OSX specific using security */
     const args = [ 'cms', '-D', '-i', file ];
     execProgram(cmd.security, args, null, (error, stdout) => {
-      cb(error, plist.parse(stdout)['Entitlements']);
+      cb(error, plist.parse(stdout));
     });
   }
+}
+
+function getEntitlementsFromMobileProvision (file, cb) {
+  return getMobileProvisionPlist(file, (e, o) => {
+    if (e) {
+      return cb(e, o);
+    }
+    return cb(e, o['Entitlements']);
+  });
 }
 
 function zip (cwd, ofile, src, cb) {
@@ -133,6 +142,7 @@ function getIdentities (cb) {
   codesign,
   verifyCodesign,
   getEntitlementsFromMobileProvision,
+  getMobileProvisionPlist,
   zip,
   unzip,
   xcaToIpa,

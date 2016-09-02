@@ -211,7 +211,24 @@ module.exports = class ApplesignSession {
     if (file && appdir) {
       this.emit('message', 'Embedding new mobileprovision');
       const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
-      return fs.copy(file, mobileProvision, next);
+      if (this.config.selfSignedProvision) {
+        /* update entitlements */
+        return tools.getMobileProvisionPlist(this.config.mobileprovision, (err, data) => {
+          const mainBin = path.join(this.config.appdir, getExecutable(this.config.appdir));
+          let ent = machoEntitlements.parseFile(mainBin);
+          if (ent === null) {
+            console.log('Cannot find entitlements in binary. Using defaults');
+            ent = defaultEntitlements(appId, teamId);
+            // return next();
+          }
+          data['Entitlements'] = plist.parse(ent.toString());
+          fs.writeFileSync(mobileProvision, plistBuild(data).toString() + '\n');
+          /* TODO: self-sign mobile provisioning */
+          next();
+        });
+      } else {
+        return fs.copy(file, mobileProvision, next);
+      }
     }
     next();
   }
@@ -227,14 +244,18 @@ module.exports = class ApplesignSession {
       // return next();
     }
     let entMacho = plist.parse(ent.toString());
+    if (this.config.selfSignedProvision) { /* */
+      this.emit('message', 'Using an unsigned provisioning');
+      const newEntitlementsFile = file + '.entitlements';
+      const newEntitlements = plistBuild(entMacho).toString();
+      fs.writeFileSync(newEntitlementsFile, newEntitlements);
+      this.config.entitlement = newEntitlementsFile;
+      return next();
+    }
     let changed = false;
     if (this.config.cloneEntitlements) {
       this.emit('message', 'Cloning entitlements');
-      //const teamId = entMacho['com.apple.developer.team-identifier'];
-      const m0appId = entMacho['application-identifier'];
       entMacho = entMobProv;
-     // entMacho['com.apple.developer.team-identifier'] = teamId;
-      entMacho['application-identifier'] = m0appId;
       changed = true;
     } else {
       ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
@@ -245,7 +266,7 @@ module.exports = class ApplesignSession {
       });
       if (typeof entMacho['keychain-access-groups'] === 'object') {
         changed = true;
-        entMacho['keychain-access-groups'][0] = entMobProv['application-identifier'];
+        entMacho['keychain-access-groups'][0] = appId;
       }
       [
         'com.apple.developer.icloud-container-identifiers',
@@ -302,14 +323,14 @@ module.exports = class ApplesignSession {
         return next(error);
       }
       this.emit('message', JSON.stringify(newEntitlements));
-      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
-      fs.copySync(this.config.mobileprovision, pathToProvision);
       // const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
+      // fs.copySync(this.config.mobileprovision, pathToProvision);
       // plist.writeFileSync(pathToProvision, newEntitlements);
       this.adjustEntitlements(file, newEntitlements, next);
     });
   }
 
+  /* Adjust Info.plist */
   fixPlist (file, bundleid, next) {
     const appdir = this.config.appdir;
     if (!file || !appdir) {

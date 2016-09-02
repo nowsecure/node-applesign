@@ -15,7 +15,9 @@ const conf = require('minimist')(process.argv.slice(2), {
     'u', 'unfair',
     'f', 'force-family',
     's', 'single',
-    'c', 'clone-entitlements'
+    'S', 'self-signed-provision',
+    'c', 'clone-entitlements',
+    'u', 'unsigned-provision'
   ]
 });
 
@@ -35,7 +37,8 @@ const options = {
   verifyTwice: conf.verifyTwice || !!conf.v,
   unfairPlay: conf.unfair || conf.u,
   forceFamily: conf['force-family'] || conf.f,
-  single: conf.single || conf.s
+  single: conf.single || conf.s,
+  selfSignedProvision: conf.S || conf['self-signed-provision']
 };
 
 colors.setTheme({
@@ -63,7 +66,7 @@ if (conf.identities || conf.L) {
 
   ${cmd} [--options ...] [input-ipafile]
 
-  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging (EXPERIMENTAL)
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
@@ -75,6 +78,8 @@ if (conf.identities || conf.L) {
   -o, --output [APP.IPA]        Path to the output IPA filename
   -p, --parallel                Run layered signing dependencies in parallel
   -r, --replace                 Replace the input IPA file with the resigned one
+  -s, --single                  Sign a single file instead of an IPA
+  -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -u, --unfair                  Resign encrypted applications
   -v, --verify-twice            Verify after signing every file and at the end
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
