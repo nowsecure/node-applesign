@@ -7,7 +7,7 @@ const plist = require('simple-plist');
 const which = require('which');
 const fs = require('fs');
 
-const useOpenSSL = true;
+const useOpenSSL = false;
 
 const cmd = {
   zip: '/usr/bin/zip',
