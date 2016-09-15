@@ -24,6 +24,7 @@ module.exports = class Applesign {
       insertLibrary: opt.insertLibrary || undefined,
       entitlement: opt.entitlement || undefined,
       entry: opt.entry || undefined,
+      lipoArch: opt.lipoArch || undefined,
       bundleid: opt.bundleid || undefined,
       identity: opt.identity || undefined,
       replaceipa: opt.replaceipa || false,

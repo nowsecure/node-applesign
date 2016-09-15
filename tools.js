@@ -17,7 +17,8 @@ const cmd = {
   xcodebuild: '/usr/bin/xcodebuild',
   /* only when useOpenSSL is true */
   openssl: '/usr/local/bin/openssl',
-  insert_dylib: 'insert_dylib'
+  insert_dylib: 'insert_dylib',
+  lipo: '/usr/bin/lipo'
 };
 
 function execProgram (bin, arg, opt, cb) {
@@ -165,6 +166,12 @@ function getIdentities (cb) {
   });
 }
 
+function lipoFile (file, arch, cb) {
+  const args = [ file, '-thin', arch, '-output', file ];
+  console.log('[lipo]', arch, file);
+  execProgram(cmd.lipo, args, null, cb);
+}
+
 [ findInPath,
   codesign,
   verifyCodesign,
@@ -174,7 +181,8 @@ function getIdentities (cb) {
   unzip,
   xcaToIpa,
   getIdentities,
-  insertLibrary
+  insertLibrary,
+  lipoFile
 ].forEach(function (x) {
   module.exports[x.name] = x;
 });

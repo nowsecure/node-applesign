@@ -60,7 +60,9 @@ function insertLibrary (config, cb) {
 }
 
 function getResignedFilename (path) {
-  if (!path) return null;
+  if (!path) {
+    return null;
+  }
   const newPath = path.replace('.ipa', '-resigned.ipa');
   const pos = newPath.lastIndexOf(path.sep);
   if (pos !== -1) {
@@ -404,6 +406,16 @@ module.exports = class ApplesignSession {
   }
 
   signFile (file, next) {
+    if (this.config.lipoArch === undefined) {
+      return this.signFileContinuation(file, next);
+    }
+    tools.lipoFile(file, this.config.lipoArch, (_) => {
+      /* ignore error */
+      return this.signFileContinuation(file, next);
+    });
+  }
+
+  signFileContinuation (file, next) {
     function codesignHasFailed (config, error, errmsg) {
       if (error && error.message.indexOf('Error:')) {
         return true;

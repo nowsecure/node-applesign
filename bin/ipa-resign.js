@@ -32,6 +32,7 @@ const options = {
   mobileprovision: conf.mobileprovision || conf.m,
   cloneEntitlements: conf.c || conf['clone-entitlements'],
   replaceipa: conf.replace || conf.r,
+  lipoArch: conf.lipo || conf.l,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   keychain: conf.keychain || conf.k,
   parallel: conf.parallel || conf.p,
@@ -75,6 +76,7 @@ if (conf.identities || conf.L) {
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
+  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
