@@ -409,6 +409,7 @@ module.exports = class ApplesignSession {
     if (this.config.lipoArch === undefined) {
       return this.signFileContinuation(file, next);
     }
+    this.emit('message', '[lipo] ' + this.config.lipoArch + ' ' + file);
     tools.lipoFile(file, this.config.lipoArch, (_) => {
       /* ignore error */
       return this.signFileContinuation(file, next);

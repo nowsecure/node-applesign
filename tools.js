@@ -168,7 +168,6 @@ function getIdentities (cb) {
 
 function lipoFile (file, arch, cb) {
   const args = [ file, '-thin', arch, '-output', file ];
-  console.log('[lipo]', arch, file);
   execProgram(cmd.lipo, args, null, cb);
 }
 
