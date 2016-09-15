@@ -70,33 +70,35 @@ function grabIPAs (file) {
   return (file.indexOf('resigned') === -1) && file.endsWith('.ipa');
 }
 
+/*
 function grabResignedIPAs (file) {
   return (file.indexOf('resigned') !== -1) && file.endsWith('.ipa');
 }
+*/
 
-function processIPA (file, parallel)  {
- describe((parallel? 'Parallel': 'Serial') + ' signing', function () {
-   this.timeout(mochaTimeout);
-   it(file, function (done) {
-     let hasData = false;
-     const ipaFile = path.resolve(path.join(ipaDir, file));
-     const ipaResign = spawn('bin/ipa-resign.js', parallel
-         ? ['-p', '-i', developerCertificate, ipaFile]
-         : ['-i', developerCertificate, ipaFile]);
-     ipaResign.stdout.on('data', (text) => {
-       hasData = true;
-     });
-     ipaResign.stderr.on('data', (text) => {
-       console.error(text.toString());
-     });
-     ipaResign.on('close', (code) => {
-       assert.equal(hasData, true);
-       assert.equal(code, 0);
-       done();
-     });
-   });
- });
-};
+function processIPA (file, parallel) {
+  describe((parallel ? 'Parallel' : 'Serial') + ' signing', function () {
+    this.timeout(mochaTimeout);
+    it(file, function (done) {
+      let hasData = false;
+      const ipaFile = path.resolve(path.join(ipaDir, file));
+      const ipaResign = spawn('bin/ipa-resign.js', parallel
+          ? ['-p', '-i', developerCertificate, ipaFile]
+          : ['-i', developerCertificate, ipaFile]);
+      ipaResign.stdout.on('data', (text) => {
+        hasData = true;
+      });
+      ipaResign.stderr.on('data', (text) => {
+        console.error(text.toString());
+      });
+      ipaResign.on('close', (code) => {
+        assert.equal(hasData, true);
+        assert.equal(code, 0);
+        done();
+      });
+    });
+  });
+}
 
 const deployIPA = (file) => {
   describe('Deploy ' + file, function () {
@@ -122,9 +124,9 @@ const deployIPA = (file) => {
 describe('Commandline IPA signing', function () {
   fs.readdir(ipaDir, function (err, files) {
     assert.equal(err, undefined);
-    describe('Processing', function() {
+    describe('Processing', function () {
       files.filter(grabIPAs).forEach(function (file) {
-        it(file, function() {
+        it(file, function () {
           processIPA(file, false);
           processIPA(file, true);
           deployIPA(file);

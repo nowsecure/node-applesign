@@ -12,22 +12,25 @@ const EventEmitter = require('events').EventEmitter;
 const isEncryptedSync = require('macho-is-encrypted');
 const machoEntitlements = require('macho-entitlements');
 
+/* experimental */
+const forceTaskAllow = true;
+
 const entitlementTemplate = `
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>application-identifier</key>
-	<string>FILLME.APPID</string>
-	<key>com.apple.developer.team-identifier</key>
-	<string>FILLME</string>
-	<key>get-task-allow</key>
-	<true/>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>FILLME.APPID</string>
-	</array>
-</dict>
+  <dict>
+    <key>application-identifier</key>
+    <string>FILLME.APPID</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>FILLME</string>
+    <key>get-task-allow</key>
+    <true/>
+    <key>keychain-access-groups</key>
+    <array>
+      <string>FILLME.APPID</string>
+    </array>
+  </dict>
 </plist>
 `;
 
@@ -317,7 +320,7 @@ module.exports = class ApplesignSession {
         }
       });
     }
-    if (true) {
+    if (forceTaskAllow === true) {
       if (entMacho['get-task-allow'] !== true) {
         entMacho['get-task-allow'] = true;
         changed = true;
