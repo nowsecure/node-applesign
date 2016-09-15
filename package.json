@@ -10,7 +10,7 @@
     "test": "$(npm bin)/mocha"
   },
   "devDependencies": {
-    "semistandard": "8.0.0"
+    "semistandard": "9.0.0"
   },
   "dependencies": {
     "simple-plist": "0.1.4",
@@ -19,15 +19,15 @@
     "fs-extra": "0.30.0",
     "is-array": "1.0.1",
     "minimist": "1.2.0",
-    "plist": "1.2.0",
+    "plist": "2.0.1",
     "uniq": "1.0.1",
     "colors": "1.1.2",
     "mocha": "3.0.2",
-    "macho": "1.0.0",
+    "macho": "1.1.0",
     "fatmacho": "0.1.1",
     "macho-is-encrypted": "0.1.0",
     "macho-entitlements": "0.2.2",
-    "which": "1.2.10"
+    "which": "1.2.11"
   },
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
