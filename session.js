@@ -41,6 +41,24 @@ function defaultEntitlements (appid, devid) {
   return plistBuild(ent).toString();
 }
 
+function insertLibrary (config, cb) {
+  const appDir = config.appdir;
+  const targetLib = config.insertLibrary;
+  const libraryName = path.basename(targetLib);
+  try {
+    fs.mkdirSync(path.join(appDir, 'Frameworks'));
+  } catch (_) {
+  }
+  const outputLib = path.join(appDir, 'Frameworks', libraryName);
+  try {
+    fs.createReadStream(targetLib).pipe(fs.createWriteStream(outputLib));
+  } catch (e) {
+    console.error(e);
+  }
+  const insertedLibraryName = '@rpath/' + path.basename(targetLib);
+  return tools.insertLibrary(insertedLibraryName, config.appbin, outputLib, cb);
+}
+
 function getResignedFilename (path) {
   if (!path) return null;
   const newPath = path.replace('.ipa', '-resigned.ipa');
@@ -158,6 +176,13 @@ module.exports = class ApplesignSession {
       } else {
         this.emit('message', 'Main IPA executable is not encrypted');
       }
+      if (this.config.insertLibrary !== undefined) {
+        insertLibrary(this.config, (err) => {
+          if (err) {
+            return this.emit('error', err, next);
+          }
+        });
+      }
       this.removeWatchApp(() => {
         const infoPlist = path.join(this.config.appdir, 'Info.plist');
         this.fixPlist(infoPlist, this.config.bundleid, (err) => {
@@ -220,7 +245,7 @@ module.exports = class ApplesignSession {
           const mainBin = path.join(this.config.appdir, getExecutable(this.config.appdir));
           let ent = machoEntitlements.parseFile(mainBin);
           if (ent === null) {
-            console.log('Cannot find entitlements in binary. Using defaults');
+            console.error('Cannot find entitlements in binary. Using defaults');
             const entMobProv = data['Entitlements'];
             const teamId = entMobProv['com.apple.developer.team-identifier'];
             const appId = entMobProv['application-identifier'];
@@ -243,7 +268,7 @@ module.exports = class ApplesignSession {
     /* TODO: check if this supports binary plist too */
     let ent = machoEntitlements.parseFile(file);
     if (ent === null) {
-      console.log('Cannot find entitlements in binary. Using defaults');
+      console.error('Cannot find entitlements in binary. Using defaults');
       ent = defaultEntitlements(appId, teamId);
       // return next();
     }

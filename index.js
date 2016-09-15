@@ -21,6 +21,7 @@ module.exports = class Applesign {
       cloneEntitlements: opt.cloneEntitlements || false,
       ignoreVerificationErrors: true,
       ignoreCodesignErrors: true,
+      insertLibrary: opt.insertLibrary || undefined,
       entitlement: opt.entitlement || undefined,
       entry: opt.entry || undefined,
       bundleid: opt.bundleid || undefined,

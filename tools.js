@@ -16,7 +16,8 @@ const cmd = {
   security: '/usr/bin/security',
   xcodebuild: '/usr/bin/xcodebuild',
   /* only when useOpenSSL is true */
-  openssl: '/usr/local/bin/openssl'
+  openssl: '/usr/local/bin/openssl',
+  insert_dylib: 'insert_dylib'
 };
 
 function execProgram (bin, arg, opt, cb) {
@@ -112,6 +113,32 @@ function xcaToIpa (ifile, odir, cb) {
   execProgram(cmd.xcodebuild, args, null, cb);
 }
 
+function insertLibrary (lib, bin, out, cb) {
+  try {
+    const machoMangle = require('macho-mangle');
+    try {
+      const src = fs.readFileSync(bin);
+      const dst = machoMangle(src, {
+        type: 'load_dylib',
+        name: lib
+      });
+      fs.writeFileSync(out, dst);
+      console.log('Library inserted');
+      cb();
+    } catch (error) {
+      return cb(error);
+    }
+  } catch (_) {
+    const args = [ '--all-yes', lib, bin, bin ];
+    execProgram(cmd.insert_dylib, args, null, (error, stdout) => {
+      if (error) {
+        return cb(error);
+      }
+      cb();
+    });
+  }
+}
+
 function getIdentities (cb) {
   const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
   execProgram(cmd.security, args, null, (error, stdout) => {
@@ -146,7 +173,8 @@ function getIdentities (cb) {
   zip,
   unzip,
   xcaToIpa,
-  getIdentities
+  getIdentities,
+  insertLibrary
 ].forEach(function (x) {
   module.exports[x.name] = x;
 });

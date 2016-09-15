@@ -23,6 +23,7 @@ const conf = require('minimist')(process.argv.slice(2), {
 
 const options = {
   file: conf._[0] || 'undefined',
+  insertLibrary: conf.I || conf.insert,
   outfile: conf.output || conf.o,
   entitlement: conf.entitlement || conf.e,
   entry: conf['entry-entitlement'] || conf.E,
@@ -72,6 +73,7 @@ if (conf.identities || conf.L) {
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+  -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
