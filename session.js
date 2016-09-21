@@ -302,23 +302,25 @@ module.exports = class ApplesignSession {
         changed = true;
         entMacho['keychain-access-groups'][0] = appId;
       }
-      [
-        'com.apple.developer.icloud-container-identifiers',
-        'com.apple.developer.icloud-container-environment',
-        'com.apple.developer.icloud-services',
-        'com.apple.developer.payment-pass-provisioning',
-        'com.apple.developer.default-data-protection',
-        'com.apple.networking.vpn.configuration',
-        'com.apple.developer.associated-domains',
-        'com.apple.security.application-groups',
-        'com.apple.developer.in-app-payments',
-        'aps-environment'
-      ].forEach((id) => {
-        if (typeof entMacho[id] !== undefined) {
-          delete entMacho[id];
-          changed = true;
-        }
-      });
+      if (this.config.massageEntitlements === true) {
+        [
+          'com.apple.developer.icloud-container-identifiers',
+          'com.apple.developer.icloud-container-environment',
+          'com.apple.developer.icloud-services',
+          'com.apple.developer.payment-pass-provisioning',
+          'com.apple.developer.default-data-protection',
+          'com.apple.networking.vpn.configuration',
+          'com.apple.developer.associated-domains',
+          'com.apple.security.application-groups',
+          'com.apple.developer.in-app-payments',
+          'aps-environment'
+        ].forEach((id) => {
+          if (typeof entMacho[id] !== undefined) {
+            delete entMacho[id];
+            changed = true;
+          }
+        });
+      }
     }
     if (forceTaskAllow === true) {
       if (entMacho['get-task-allow'] !== true) {

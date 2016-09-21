@@ -35,6 +35,7 @@ Usage
 	  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
 	  -L, --identities              List local codesign identities
 	  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+	  -M, --massage-entitlements    Massage entitlements to remove privileged ones
 	  -o, --output [APP.IPA]        Path to the output IPA filename
 	  -p, --parallel                Run layered signing dependencies in parallel
 	  -r, --replace                 Replace the input IPA file with the resigned one

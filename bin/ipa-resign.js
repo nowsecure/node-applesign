@@ -14,6 +14,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'p', 'parallel',
     'w', 'without-watchapp',
     'u', 'unfair',
+    'M', 'massage-entitlements',
     'f', 'force-family',
     's', 'single',
     'S', 'self-signed-provision',
@@ -38,6 +39,7 @@ const options = {
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
   keychain: conf.keychain || conf.k,
   parallel: conf.parallel || conf.p,
+  massageEntitlements: conf['massage-entitlements'] || conf.M,
   verifyTwice: conf.verifyTwice || !!conf.v,
   unfairPlay: conf.unfair || conf.u,
   forceFamily: conf['force-family'] || conf.f,
@@ -83,6 +85,7 @@ if (conf.identities || conf.L) {
   -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -M, --massage-entitlements    Massage entitlements to remove privileged ones
   -o, --output [APP.IPA]        Path to the output IPA filename
   -p, --parallel                Run layered signing dependencies in parallel
   -r, --replace                 Replace the input IPA file with the resigned one
