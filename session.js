@@ -460,13 +460,14 @@ module.exports = class ApplesignSession {
     let found = false;
     walk.walkSync(appdir, (basedir, filename, stat) => {
       const file = path.join(basedir, filename);
+      /* only walk on files. Symlinks and other special files are forbidden */
+      if (!fs.lstatSync(file).isFile()) {
+        return;
+      }
       if (file.endsWith(exe)) {
         this.emit('message', 'Executable found at ' + file);
         libraries.push(file);
         found = true;
-        return;
-      }
-      if (!fs.lstatSync(file).isFile()) {
         return;
       }
       try {
@@ -531,10 +532,10 @@ module.exports = class ApplesignSession {
           peek(cb);
         });
       };
-      if (this.config.dontVerify) {
-        return next();
-      }
       peek(() => {
+        if (this.config.dontVerify) {
+          return next();
+        }
         libsCopy = libs.slice(0);
         const verify = (cb) => {
           if (libsCopy.length === 0) {

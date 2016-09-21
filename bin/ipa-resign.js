@@ -103,6 +103,7 @@ Example:
 
   ${cmd} -L # enumerate codesign identities, grab one and use it with -i
   ${cmd} -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
+  ${cmd} -i AD71EB4... -c --lipo arm64 -w -V test-app.ipa
 `);
 } else {
   const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
