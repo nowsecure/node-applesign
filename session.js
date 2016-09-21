@@ -433,7 +433,7 @@ module.exports = class ApplesignSession {
       if (error && codesignHasFailed(this.config, error, stderr)) {
         return this.emit('end', error, next);
       }
-      if (this.config.verifyTwice) {
+      if (this.config.verifyTwice && !this.config.dontVerify) {
         this.emit('message', 'Verify ' + file);
         tools.verifyCodesign(file, this.config.keychain, (error, stdout, stderr) => {
           if (error) {
@@ -486,6 +486,9 @@ module.exports = class ApplesignSession {
       next('Cannot find any MACH0 binary to sign');
     }
     const parallelVerify = (libs, next) => {
+      if (this.config.dontVerify) {
+        return next();
+      }
       let depsCount = libs.length;
       for (let lib of libs) {
         this.emit('message', 'Verifying ' + lib);
@@ -528,6 +531,9 @@ module.exports = class ApplesignSession {
           peek(cb);
         });
       };
+      if (this.config.dontVerify) {
+        return next();
+      }
       peek(() => {
         libsCopy = libs.slice(0);
         const verify = (cb) => {

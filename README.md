@@ -43,6 +43,7 @@ Usage
 	  -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
 	  -u, --unfair                  Resign encrypted applications
 	  -v, --verify-twice            Verify after signing every file and at the end
+	  -V, --dont-verify             Avoid verification step of codesigning
 	  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
 	      --version                 Show applesign version
 	  [input-ipafile]               Path to the IPA file to resign
@@ -112,6 +113,15 @@ Allows to insert a dynamic library in the main executable. This is how Frida can
 Thinifies an IPA by removing all fatmach0s to only contain binaries for one specified architecture. Also this is helpful to identify non-arm binaries embedded inside IPA that can be leaked from development or pre-production environments.
 
 In order to thinify the final IPA even more, applesign allows to drop the watchapp extensions which would not be necessary for non Apple Watch users.
+
+Performance
+-----------
+
+Sometimes the time required to run the codesigning step matters, so applesign allows to skip some steps and speedup the process.
+
+See `--dont-verify` and `--parallel` commandline flags.
+
+Enabling those options can result on a 35% speedup on ~60MB IPAs.
 
 API usage
 ---------

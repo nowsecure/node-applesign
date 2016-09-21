@@ -35,7 +35,8 @@ module.exports = class Applesign {
       parallel: opt.parallel || false,
       verifyTwice: opt.verifyTwice || false,
       unfairPlay: opt.unfairPlay || false,
-      selfSignedProvision: opt.selfSignedProvision || false
+      selfSignedProvision: opt.selfSignedProvision || false,
+      dontVerify: opt.dontVerify || false
     };
   }
 

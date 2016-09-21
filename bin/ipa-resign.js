@@ -44,6 +44,7 @@ const options = {
   unfairPlay: conf.unfair || conf.u,
   forceFamily: conf['force-family'] || conf.f,
   single: conf.single || conf.s,
+  dontVerify: conf['dont-verify'] || conf.V,
   selfSignedProvision: conf.S || conf['self-signed-provision']
 };
 
@@ -93,6 +94,7 @@ if (conf.identities || conf.L) {
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -u, --unfair                  Resign encrypted applications
   -v, --verify-twice            Verify after signing every file and at the end
+  -V, --dont-verify             Do not perform any codesign verification
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
       --version                 Show applesign version
   [input-ipafile]               Path to the IPA file to resign
