@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const packageJson = require('../package.json');
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
@@ -17,7 +18,8 @@ const conf = require('minimist')(process.argv.slice(2), {
     's', 'single',
     'S', 'self-signed-provision',
     'c', 'clone-entitlements',
-    'u', 'unsigned-provision'
+    'u', 'unsigned-provision',
+    'V', 'dont-verify'
   ]
 });
 
@@ -61,6 +63,8 @@ if (conf.identities || conf.L) {
       });
     }
   });
+} else if (conf.version) {
+  console.log(packageJson.version);
 } else if (conf.h || conf.help || conf._.length === 0) {
   const cmd = process.argv[1].split('/').pop();
   console.error(
@@ -87,6 +91,7 @@ if (conf.identities || conf.L) {
   -u, --unfair                  Resign encrypted applications
   -v, --verify-twice            Verify after signing every file and at the end
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+      --version                 Show applesign version
   [input-ipafile]               Path to the IPA file to resign
 
 Example:

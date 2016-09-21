@@ -30,7 +30,9 @@ Usage
 	  -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
 	  -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
 	  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+	  -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
 	  -k, --keychain [KEYCHAIN]     Specify alternative keychain file
+	  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
 	  -L, --identities              List local codesign identities
 	  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
 	  -o, --output [APP.IPA]        Path to the output IPA filename
@@ -41,6 +43,7 @@ Usage
 	  -u, --unfair                  Resign encrypted applications
 	  -v, --verify-twice            Verify after signing every file and at the end
 	  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+	      --version                 Show applesign version
 	  [input-ipafile]               Path to the IPA file to resign
 
 	Example:
@@ -91,6 +94,23 @@ The default signing method does as follow:
 After some testing we will probably go for having -c or -E as default.
 
 In addition, for performance reasons, applesign supports -p for parallel signing. The order of signing the binaries inside an IPA matters, so applesign creates a dependency list of all the bins and signs them in order. The parallel signing aims to run in parallel as much tasks as possible without breaking the dependency list.
+
+Mangling
+--------
+
+It is possible with `--force-family` to remove the UISupportedDevices from the Info.plist and replace the entitlement information found in the mobileprovisioning and then carefully massage the rest of entitlements to drop the privileged ones (`--massage-entitlements`).
+
+Other interesting manipulations that can be done in the IPA are:
+
+**-I, --insert [frida.dylib]**
+
+Allows to insert a dynamic library in the main executable. This is how Frida can be injected to introspect iOS applications without jailbreak.
+
+**-l, --lipo [arm64|armv7]**
+
+Thinifies an IPA by removing all fatmach0s to only contain binaries for one specified architecture. Also this is helpful to identify non-arm binaries embedded inside IPA that can be leaked from development or pre-production environments.
+
+In order to thinify the final IPA even more, applesign allows to drop the watchapp extensions which would not be necessary for non Apple Watch users.
 
 API usage
 ---------
