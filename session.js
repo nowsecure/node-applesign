@@ -35,7 +35,7 @@ const entitlementTemplate = `
 `;
 
 function defaultEntitlements (appid, devid) {
-  const ent = plist.parse(entitlementTemplate);
+  const ent = plist.parse(entitlementTemplate.trim());
   // console.log('appid', appid);
   // console.log('devid', devid);
   ent['application-identifier'] = appid;
@@ -256,7 +256,7 @@ module.exports = class ApplesignSession {
             const appId = entMobProv['application-identifier'];
             ent = defaultEntitlements(appId, teamId);
           }
-          data['Entitlements'] = plist.parse(ent.toString());
+          data['Entitlements'] = plist.parse(ent.toString().trim());
           fs.writeFileSync(mobileProvision, plistBuild(data).toString());
           /* TODO: self-sign mobile provisioning */
           next();
@@ -277,7 +277,7 @@ module.exports = class ApplesignSession {
       ent = defaultEntitlements(appId, teamId);
       // return next();
     }
-    let entMacho = plist.parse(ent.toString());
+    let entMacho = plist.parse(ent.toString().trim());
     if (this.config.selfSignedProvision) { /* */
       this.emit('message', 'Using an unsigned provisioning');
       const newEntitlementsFile = file + '.entitlements';
