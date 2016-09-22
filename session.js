@@ -54,12 +54,15 @@ function insertLibrary (config, cb) {
   }
   const outputLib = path.join(appDir, 'Frameworks', libraryName);
   try {
-    fs.createReadStream(targetLib).pipe(fs.createWriteStream(outputLib));
+    const writeStream = fs.createWriteStream(outputLib);
+    writeStream.on('finish', () => {
+      const insertedLibraryName = '@rpath/' + path.basename(targetLib);
+      return tools.insertLibrary(insertedLibraryName, config.appbin, outputLib, cb);
+    });
+    fs.createReadStream(targetLib).pipe(writeStream);
   } catch (e) {
     console.error(e);
   }
-  const insertedLibraryName = '@rpath/' + path.basename(targetLib);
-  return tools.insertLibrary(insertedLibraryName, config.appbin, outputLib, cb);
 }
 
 function getResignedFilename (path) {
