@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const uuid = require('uuid');
 const fs = require('fs-extra');
 const walk = require('fs-walk');
 const rimraf = require('rimraf');
@@ -616,7 +617,7 @@ module.exports = class ApplesignSession {
   setFile (name) {
     if (typeof name === 'string') {
       this.config.file = path.resolve(name);
-      this.config.outdir = this.config.file + '.d';
+      this.config.outdir = this.config.file + '.' + uuid.v4();
       if (!this.config.outfile) {
         this.setOutputFile(getResignedFilename(this.config.file));
       }
