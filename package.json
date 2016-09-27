@@ -22,12 +22,13 @@
     "plist": "2.0.1",
     "uniq": "1.0.1",
     "colors": "1.1.2",
-    "mocha": "3.0.2",
+    "mocha": "3.1.0",
     "macho": "1.1.0",
     "fatmacho": "0.1.1",
     "macho-is-encrypted": "0.1.0",
     "macho-entitlements": "0.2.2",
-    "which": "1.2.11"
+    "which": "1.2.11",
+    "uuid": "2.0.3"
   },
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
@@ -63,5 +64,5 @@
     ]
   },
   "name": "applesign",
-  "version": "1.1.0"
+  "version": "1.1.1"
 }
