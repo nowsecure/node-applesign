@@ -66,16 +66,22 @@ function insertLibrary (config, cb) {
   }
 }
 
-function getResignedFilename (path) {
-  if (!path) {
+function getResignedFilename (input) {
+  if (!input) {
     return null;
   }
-  const newPath = path.replace('.ipa', '-resigned.ipa');
-  const pos = newPath.lastIndexOf(path.sep);
+  const pos = input.lastIndexOf(path.sep);
   if (pos !== -1) {
-    return newPath.substring(pos + 1);
+    const tmp = input.substring(pos + 1);
+    const dot = tmp.lastIndexOf('.');
+    input = (dot !== -1) ? tmp.substring(0, dot) : tmp;
+  } else {
+    const dot = input.lastIndexOf('.');
+    if (dot !== -1) {
+      input = input.substring(0, dot);
+    }
   }
-  return newPath;
+  return input + '-resigned.ipa';
 }
 
 function parentDirectory (root) {
