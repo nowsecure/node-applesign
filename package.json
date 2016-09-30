@@ -6,8 +6,8 @@
     "ipa-resign": "bin/ipa-resign.js"
   },
   "scripts": {
-    "semi": "$(npm bin)/semistandard",
-    "test": "$(npm bin)/mocha"
+    "semi": "semistandard",
+    "test": "mocha"
   },
   "devDependencies": {
     "semistandard": "9.0.0"
