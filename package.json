@@ -25,7 +25,7 @@
     "mocha": "3.1.0",
     "macho": "1.1.0",
     "fatmacho": "0.1.1",
-    "macho-is-encrypted": "0.1.0",
+    "macho-is-encrypted": "0.1.2",
     "macho-entitlements": "0.2.2",
     "which": "1.2.11",
     "uuid": "2.0.3"
