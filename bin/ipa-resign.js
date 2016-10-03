@@ -28,6 +28,7 @@ const conf = require('minimist')(process.argv.slice(2), {
 const options = {
   file: conf._[0] || 'undefined',
   use7zip: conf['7'] || conf['use-7zip'],
+  useOpenSSL: conf['use-openssl'],
   insertLibrary: conf.I || conf.insert,
   outfile: conf.output || conf.o,
   entitlement: conf.entitlement || conf.e,
@@ -78,6 +79,7 @@ if (conf.identities || conf.L) {
   ${cmd} [--options ...] [input-ipafile]
 
   -7, --use-7zip                Use 7zip instead of unzip
+      --use-openssl             Use OpenSSL cms instead of Apple's security tool
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
