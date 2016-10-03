@@ -23,7 +23,8 @@ Usage
 	Usage:
 
 	  ipa-resign.js [--options ...] [input-ipafile]
-
+	  -7, --use-7zip                Use 7zip instead of unzip
+	      --use-openssl             Use OpenSSL cms instead of Apple's security tool
 	  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
 	  -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
 	  -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
