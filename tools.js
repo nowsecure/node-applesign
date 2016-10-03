@@ -7,9 +7,11 @@ const plist = require('simple-plist');
 const which = require('which');
 const fs = require('fs');
 
-const useOpenSSL = false;
+var use7zip = false;
+var useOpenSSL = false;
 
 const cmd = {
+  sevenZip: '/usr/local/bin/7z',
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
@@ -98,15 +100,33 @@ function getEntitlementsFromMobileProvision (file, cb) {
 }
 
 function zip (cwd, ofile, src, cb) {
-  fs.unlink(ofile, () => {
-    const args = [ '-qry', ofile, src ];
-    execProgram(cmd.zip, args, { cwd: cwd }, cb);
-  });
+  if (use7zip) {
+    fs.unlink(ofile, () => {
+      const zipFile = ofile + '.zip';
+      const args = [ 'a', zipFile, src ];
+      execProgram(cmd.sevenZip, args, { cwd: cwd }, (error, message) => {
+        if (error) {
+          return cb(error, message);
+        }
+        fs.rename(zipFile, ofile, cb);
+      });
+    });
+  } else {
+    fs.unlink(ofile, () => {
+      const args = [ '-qry', ofile, src ];
+      execProgram(cmd.zip, args, { cwd: cwd }, cb);
+    });
+  }
 }
 
 function unzip (ifile, odir, cb) {
-  const args = [ '-o', ifile, '-d', odir ];
-  execProgram(cmd.unzip, args, null, cb);
+  if (use7zip) {
+    const args = [ 'x', '-o' + odir, ifile ];
+    execProgram(cmd.sevenZip, args, null, cb);
+  } else {
+    const args = [ '-o', ifile, '-d', odir ];
+    execProgram(cmd.unzip, args, null, cb);
+  }
 }
 
 function xcaToIpa (ifile, odir, cb) {
@@ -171,6 +191,15 @@ function lipoFile (file, arch, cb) {
   execProgram(cmd.lipo, args, null, cb);
 }
 
+function setOptions (obj) {
+  if (typeof obj.use7zip !== 'undefined') {
+    use7zip = obj.use7zip;
+  }
+  if (typeof obj.useOpenSSL !== 'undefined') {
+    useOpenSSL = obj.useOpenSSL;
+  }
+}
+
 [ findInPath,
   codesign,
   verifyCodesign,
@@ -181,7 +210,8 @@ function lipoFile (file, arch, cb) {
   xcaToIpa,
   getIdentities,
   insertLibrary,
-  lipoFile
+  lipoFile,
+  setOptions
 ].forEach(function (x) {
   module.exports[x.name] = x;
 });

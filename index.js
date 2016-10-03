@@ -15,6 +15,7 @@ module.exports = class Applesign {
     }
     return {
       file: opt.file ? path.resolve(opt.file) : undefined,
+      use7zip: opt.use7zip === true,
       outdir: undefined,
       outfile: opt.outfile,
       keychain: opt.keychain,

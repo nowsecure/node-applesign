@@ -141,6 +141,10 @@ module.exports = class ApplesignSession {
       this.events.removeAllListeners('end');
       this.events.on('end', cb);
     }
+    tools.setOptions({
+      use7zip: this.config.use7zip,
+      useOpenSSL: this.config.useOpenSSL
+    });
     this.unzip(this.config.file, this.config.outdir, (error) => {
       if (error) { return this.emit('end', error); }
       this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
