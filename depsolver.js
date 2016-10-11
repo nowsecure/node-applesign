@@ -163,7 +163,17 @@ module.exports = function depSolver (executable, libs, parallel, cb) {
         if (parallel) {
           cb(null, layers);
         } else {
-          cb(null, flattenize(layers));
+          const finalLibs = flattenize(layers);
+          if (libs.length !== finalLibs.length) {
+            console.log('Orphaned libraries found');
+            libs.forEach(lib => {
+              if (finalLibs.indexOf(lib) === -1) {
+                console.log(' *', lib);
+                finalLibs.push(lib);
+              }
+            });
+          }
+          cb(null, finalLibs);
         }
       } else {
         peek();
