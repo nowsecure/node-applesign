@@ -57,7 +57,14 @@ function insertLibrary (config, cb) {
   try {
     const writeStream = fs.createWriteStream(outputLib);
     writeStream.on('finish', () => {
-      const insertedLibraryName = '@rpath/' + path.basename(targetLib);
+      /* XXX: if binary doesnt contains an LC_RPATH load command this will not work */
+      // const insertedLibraryName = '@rpath/' + path.basename(targetLib);
+      /* Just copy the library via USB on the DCIM directory */
+      const insertedLibraryName = '/var/mobile/Media/DCIM/' + path.basename(targetLib);
+      /* useful on jailbroken devices where we can write in /usr/lib */
+      // const insertedLibraryName = '/usr/lib/' + path.basename(targetLib);
+      /* forbidden in iOS */
+      // const insertedLibraryName = '@executable_path/Frameworks/' + path.basename(targetLib);
       return tools.insertLibrary(insertedLibraryName, config.appbin, outputLib, cb);
     });
     fs.createReadStream(targetLib).pipe(writeStream);
