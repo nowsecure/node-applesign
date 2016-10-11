@@ -57,6 +57,7 @@ function insertLibrary (config, cb) {
   try {
     const writeStream = fs.createWriteStream(outputLib);
     writeStream.on('finish', () => {
+      fs.chmodSync(outputLib, 0x1ed); // 0755
       /* XXX: if binary doesnt contains an LC_RPATH load command this will not work */
       // const insertedLibraryName = '@rpath/' + path.basename(targetLib);
       /* Just copy the library via USB on the DCIM directory */
