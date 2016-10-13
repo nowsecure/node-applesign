@@ -150,7 +150,7 @@ function insertLibrary (lib, bin, out, cb) {
       return cb(error);
     }
   } catch (_) {
-    const args = [ '--all-yes', lib, bin, bin ];
+    const args = [ '--strip-codesig', '--all-yes', lib, bin, bin ];
     execProgram(cmd.insert_dylib, args, null, (error, stdout) => {
       if (error) {
         return cb(error);
