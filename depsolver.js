@@ -74,7 +74,7 @@ function getMachoLibs (file, cb) {
       }
     }
     const libs = exec.cmds.filter((x) => {
-      return x.type === 'load_dylib';
+      return x.type === 'load_dylib' || x.type === 'load_weak_dylib';
     }).map((x) => {
       return x.name;
     });
@@ -166,12 +166,16 @@ module.exports = function depSolver (executable, libs, parallel, cb) {
           const finalLibs = flattenize(layers);
           if (libs.length !== finalLibs.length) {
             console.log('Orphaned libraries found');
-            libs.forEach(lib => {
-              if (finalLibs.indexOf(lib) === -1) {
+            const orphaned = libs.filter(lib => finalLibs.indexOf(lib) === -1);
+            orphaned.forEach(lib => {
                 console.log(' *', lib);
-                finalLibs.push(lib);
-              }
             });
+
+            /*
+             * sign those anyways, just ensure to
+             * sign them before the app executable
+             */
+            finalLibs.unshift(...orphaned);
           }
           cb(null, finalLibs);
         }
