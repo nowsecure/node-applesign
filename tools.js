@@ -138,12 +138,22 @@ function insertLibrary (lib, bin, out, cb) {
   try {
     const machoMangle = require('macho-mangle');
     try {
-      const src = fs.readFileSync(bin);
+      let src = fs.readFileSync(bin);
+      if (lib.indexOf('@rpath') === 0) {
+        src = machoMangle(src, {
+          type: 'rpath',
+          name: '@executable_path/Frameworks'
+        });
+      }
       const dst = machoMangle(src, {
         type: 'load_dylib',
-        name: lib
+        name: lib,
+        version: {
+          current: '1.0.0',
+          compat: '0.0.0'
+        }
       });
-      fs.writeFileSync(out, dst);
+      fs.writeFileSync(bin, dst);
       console.log('Library inserted');
       cb();
     } catch (error) {
