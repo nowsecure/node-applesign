@@ -59,9 +59,9 @@ function insertLibrary (config, cb) {
     writeStream.on('finish', () => {
       fs.chmodSync(outputLib, 0x1ed); // 0755
       /* XXX: if binary doesnt contains an LC_RPATH load command this will not work */
-      // const insertedLibraryName = '@rpath/' + path.basename(targetLib);
+      const insertedLibraryName = '@rpath/' + path.basename(targetLib);
       /* Just copy the library via USB on the DCIM directory */
-      const insertedLibraryName = '/var/mobile/Media/DCIM/' + path.basename(targetLib);
+      // const insertedLibraryName = '/var/mobile/Media/DCIM/' + path.basename(targetLib);
       /* useful on jailbroken devices where we can write in /usr/lib */
       // const insertedLibraryName = '/usr/lib/' + path.basename(targetLib);
       /* forbidden in iOS */
