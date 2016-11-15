@@ -357,6 +357,23 @@ module.exports = class ApplesignSession {
         : (this.config.entitlement)
           ? fs.readFileSync(this.config.entitlement)
           : plistBuild(entMacho).toString();
+      const ent = plist.parse(newEntitlements.trim());
+      if (ent['com.apple.security.application-groups']) {
+        const ids = appId.split('.');
+        ids.shift();
+	const id = ids.join('.');
+        const groups = [];
+        for (let group of ent['com.apple.security.application-groups']) {
+          const cols = group.split('.');
+          if (cols.length === 4) {
+            groups.push('group.' + id);
+          } else {
+            groups.push('group.' + id + '.' + cols.pop());
+          }
+        }
+        ent['com.apple.security.application-groups'] = groups;
+        newEntitlements = plistBuild(ent).toString();
+      }
       fs.writeFileSync(newEntitlementsFile, newEntitlements);
       this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
       this.config.entitlement = newEntitlementsFile;
