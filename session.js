@@ -375,6 +375,7 @@ module.exports = class ApplesignSession {
         ent['com.apple.security.application-groups'] = groups;
       }
       delete ent['beta-reports-active']; /* our entitlements doesnt support beta */
+      delete ent['com.apple.developer.ubiquity-container-identifiers']; // TODO should be massaged
       newEntitlements = plistBuild(ent).toString();
       fs.writeFileSync(newEntitlementsFile, newEntitlements);
       this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
