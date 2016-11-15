@@ -335,6 +335,7 @@ module.exports = class ApplesignSession {
           'com.apple.developer.associated-domains',
           'com.apple.security.application-groups',
           'com.apple.developer.in-app-payments',
+          'beta-reports-active', /* our entitlements doesnt support beta */
           'aps-environment'
         ].forEach((id) => {
           if (typeof entMacho[id] !== undefined) {
@@ -355,7 +356,7 @@ module.exports = class ApplesignSession {
       let newEntitlements = (appId && teamId && this.config.entry)
         ? defaultEntitlements(appId, teamId)
         : (this.config.entitlement)
-          ? fs.readFileSync(this.config.entitlement)
+          ? fs.readFileSync(this.config.entitlement).toString()
           : plistBuild(entMacho).toString();
       const ent = plist.parse(newEntitlements.trim());
       if (ent['com.apple.security.application-groups']) {
@@ -372,8 +373,9 @@ module.exports = class ApplesignSession {
           }
         }
         ent['com.apple.security.application-groups'] = groups;
-        newEntitlements = plistBuild(ent).toString();
       }
+      delete ent['beta-reports-active']; /* our entitlements doesnt support beta */
+      newEntitlements = plistBuild(ent).toString();
       fs.writeFileSync(newEntitlementsFile, newEntitlements);
       this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
       this.config.entitlement = newEntitlementsFile;
