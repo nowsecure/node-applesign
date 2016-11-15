@@ -168,7 +168,7 @@ module.exports = function depSolver (executable, libs, parallel, cb) {
             console.log('Orphaned libraries found');
             const orphaned = libs.filter(lib => finalLibs.indexOf(lib) === -1);
             orphaned.forEach(lib => {
-                console.log(' *', lib);
+              console.log(' *', lib);
             });
 
             /*

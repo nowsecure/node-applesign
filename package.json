@@ -10,24 +10,24 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "semistandard": "9.0.0"
+    "semistandard": "9.1.0"
   },
   "dependencies": {
-    "simple-plist": "0.1.4",
+    "simple-plist": "0.2.1",
     "rimraf": "2.5.4",
     "fs-walk": "trufae/fs-walk.git#patch-1",
-    "fs-extra": "0.30.0",
+    "fs-extra": "1.0.0",
     "is-array": "1.0.1",
     "minimist": "1.2.0",
     "plist": "2.0.1",
     "uniq": "1.0.1",
     "colors": "1.1.2",
-    "mocha": "3.1.0",
+    "mocha": "3.1.2",
     "macho": "nowsecure/macho.git",
     "fatmacho": "0.1.1",
     "macho-is-encrypted": "0.1.2",
     "macho-entitlements": "0.2.2",
-    "which": "1.2.11",
+    "which": "1.2.12",
     "uuid": "2.0.3"
   },
   "description": "API to resign IPA files",

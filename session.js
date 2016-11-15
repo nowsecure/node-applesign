@@ -362,7 +362,7 @@ module.exports = class ApplesignSession {
       if (ent['com.apple.security.application-groups']) {
         const ids = appId.split('.');
         ids.shift();
-	const id = ids.join('.');
+        const id = ids.join('.');
         const groups = [];
         for (let group of ent['com.apple.security.application-groups']) {
           const cols = group.split('.');
