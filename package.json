@@ -23,7 +23,7 @@
     "uniq": "1.0.1",
     "colors": "1.1.2",
     "mocha": "3.1.2",
-    "macho": "nowsecure/macho.git",
+    "macho": "1.2.1",
     "fatmacho": "0.1.1",
     "macho-is-encrypted": "0.1.2",
     "macho-entitlements": "0.2.2",

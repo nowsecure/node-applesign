@@ -595,7 +595,9 @@ module.exports = class ApplesignSession {
 
     this.emit('message', 'Resolving signing order using layered list');
     depSolver(bpath, libraries, this.config.parallel, (err, libs) => {
-      if (err) { return next(err); }
+      if (err) {
+        return next(err);
+      }
       if (libs.length === 0) {
         libs.push(bpath);
       }
