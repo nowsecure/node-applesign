@@ -517,10 +517,11 @@ module.exports = class ApplesignSession {
       }
       try {
         const fd = fs.openSync(file, 'r');
-        let buffer = new Buffer(4);
-        fs.readSync(fd, buffer, 0, 4);
-        if (isMacho(buffer)) {
-          libraries.push(file);
+        let buffer = Buffer.alloc(4);
+        if (fs.readSync(fd, buffer, 0, 4) === 4) {
+          if (isMacho(buffer)) {
+            libraries.push(file);
+          }
         }
         fs.close(fd);
       } catch (e) {
