@@ -55,30 +55,35 @@ function resolvePath (executable, file, lib, libs) {
 
 function getMachoLibs (file, cb) {
   try {
-    const data = fs.readFileSync(file);
-    try {
-      var exec = macho.parse(data);
-    } catch (e) {
-      try {
-        var fat = fatmacho.parse(data);
-      } catch (e2) {
-        return cb(e2);
+    fs.readFile(file, (err, data) => {
+      if (err) {
+        console.error(err);
+        return cb(err);
       }
-      for (let i = 0; i < fat.length; i++) {
+      try {
+        var exec = macho.parse(data);
+      } catch (e) {
         try {
-          exec = macho.parse(fat[0].data);
-          break;
+          var fat = fatmacho.parse(data);
         } catch (e2) {
-          /* ignore exceptions here */
+          return cb(e2);
+        }
+        for (let i = 0; i < fat.length; i++) {
+          try {
+            exec = macho.parse(fat[0].data);
+            break;
+          } catch (e2) {
+            /* ignore exceptions here */
+          }
         }
       }
-    }
-    const libs = exec.cmds.filter((x) => {
-      return x.type === 'load_dylib' || x.type === 'load_weak_dylib';
-    }).map((x) => {
-      return x.name;
+      const libs = exec.cmds.filter((x) => {
+        return x.type === 'load_dylib' || x.type === 'load_weak_dylib';
+      }).map((x) => {
+        return x.name;
+      });
+      cb(null, libs);
     });
-    cb(null, libs);
   } catch (e) {
     cb(e);
   }
