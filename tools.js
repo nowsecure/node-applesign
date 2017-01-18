@@ -179,7 +179,9 @@ function getIdentities (cb) {
     const lines = stdout.split('\n');
     lines.pop(); // remove last line
     let ids = [];
-    lines.forEach((line) => {
+    lines.filter(entry => {
+      return entry.indexOf('CSSMERR_TP_CERT_REVOKED') === -1;
+    }).forEach((line) => {
       const tok = line.indexOf(') ');
       if (tok !== -1) {
         const msg = line.substring(tok + 2).trim();
