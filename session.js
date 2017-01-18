@@ -115,6 +115,9 @@ function isMacho (buffer) {
     [0xcf, 0xfa, 0xed, 0xfe], // 64bit
     [0xfe, 0xed, 0xfa, 0xce]  // big-endian
   ];
+  if (buffer.length < 4) {
+    return false;
+  }
   for (let a of magics) {
     if (!buffer.compare(Buffer.from(a))) {
       return true;
