@@ -6,6 +6,8 @@ const uniq = require('uniq');
 const fs = require('fs');
 const isArray = require('is-array');
 
+const MACH0_MIN_SIZE = 1024 * 4;
+
 function resolveRpath (libs, file, lib) {
   const realLib = lib.substring(6); /* chop @rpath */
   const rpaths = uniq(libs.filter((x) => {
@@ -59,6 +61,9 @@ function getMachoLibs (file, cb) {
       if (err) {
         console.error(err);
         return cb(err);
+      }
+      if (data.length < MACH0_MIN_SIZE) {
+        return cb(new Error('mach0 files can\'t be that small'));
       }
       try {
         var exec = macho.parse(data);
