@@ -3,7 +3,7 @@
     "name": "Sergi Alvarez"
   },
   "bin": {
-    "ipa-resign": "bin/ipa-resign.js"
+    "applesign": "bin/applesign.js"
   },
   "scripts": {
     "semi": "semistandard",

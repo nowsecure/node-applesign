@@ -1,7 +1,7 @@
 const Applesign = require('./');
 
 const as = new Applesign({
-  /* bin/ipa-resign -L to list all available identities in your system */
+  /* bin/applesign -L to list all available identities in your system */
   identity: 'A5A2C300FE2A8EAC99A9601FDAAEA811CC80586F',
   /* clone the entitlements from the mobile provisioning */
   cloneEntitlements: false,

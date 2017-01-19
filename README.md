@@ -19,10 +19,10 @@ Program Dependencies
 Usage
 -----
 
-	$ bin/ipa-resign.js
+	$ bin/applesign.js
 	Usage:
 
-	  ipa-resign.js [--options ...] [input-ipafile]
+	  applesign.js [--options ...] [input-ipafile]
 	  -7, --use-7zip                Use 7zip instead of unzip
 	      --use-openssl             Use OpenSSL cms instead of Apple's security tool
 	  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
@@ -51,8 +51,8 @@ Usage
 
 	Example:
 
-	  ipa-resign.js -L # enumerate codesign identities, grab one and use it with -i
-	  ipa-resign.js -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
+	  applesign.js -L # enumerate codesign identities, grab one and use it with -i
+	  applesign.js -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
 
 List local codesign identities:
 

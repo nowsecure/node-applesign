@@ -24,10 +24,10 @@ describe('API', function () {
 });
 
 describe('Commandline', function () {
-  describe('bin/ipa-resign.js', function () {
-    it('should fail when ipa-resign cannot be executed', function (done) {
+  describe('bin/applesign.js', function () {
+    it('should fail when applesign cannot be executed', function (done) {
       var data = '';
-      const ipaResign = spawn('bin/ipa-resign.js');
+      const ipaResign = spawn('bin/applesign.js');
       ipaResign.stdout.on('data', (text) => {
         data += text;
       });
@@ -38,19 +38,19 @@ describe('Commandline', function () {
       });
     });
   });
-  describe('bin/ipa-resign.js missing.ipa', function () {
+  describe('bin/applesign.js missing.ipa', function () {
     it('should fail when passing an unexistent IPA', function (done) {
-      const ipaResign = spawn('bin/ipa-resign.js', ['missing.ipa']);
+      const ipaResign = spawn('bin/applesign.js', ['missing.ipa']);
       ipaResign.on('close', (code) => {
         assert.equal(code, 1);
         done();
       });
     });
   });
-  describe('bin/ipa-resign.js -L', function () {
+  describe('bin/applesign.js -L', function () {
     it('checking for developer certificates', function (done) {
       var data = '';
-      const ipaResign = spawn('bin/ipa-resign.js', ['-L']);
+      const ipaResign = spawn('bin/applesign.js', ['-L']);
       ipaResign.stdout.on('data', (text) => {
         if (developerCertificate === undefined) {
           developerCertificate = text.toString().split(' ')[0];
@@ -82,7 +82,7 @@ function processIPA (file, parallel) {
     it(file, function (done) {
       let hasData = false;
       const ipaFile = path.resolve(path.join(ipaDir, file));
-      const ipaResign = spawn('bin/ipa-resign.js', parallel
+      const ipaResign = spawn('bin/applesign.js', parallel
           ? ['-p', '-i', developerCertificate, ipaFile]
           : ['-i', developerCertificate, ipaFile]);
       ipaResign.stdout.on('data', (text) => {
