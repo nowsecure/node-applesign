@@ -38,7 +38,9 @@ module.exports = class Applesign {
       verifyTwice: opt.verifyTwice || false,
       unfairPlay: opt.unfairPlay || false,
       selfSignedProvision: opt.selfSignedProvision || false,
-      dontVerify: opt.dontVerify || false
+      dontVerify: opt.dontVerify || false,
+      bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
+      customKeychainGroup: opt.customKeychainGroup || undefined
     };
   }
 
