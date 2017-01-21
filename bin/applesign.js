@@ -21,7 +21,8 @@ const conf = require('minimist')(process.argv.slice(2), {
     'S', 'self-signed-provision',
     'c', 'clone-entitlements',
     'u', 'unsigned-provision',
-    'V', 'dont-verify'
+    'V', 'dont-verify',
+    'B', 'bundleid-access-group'
   ]
 });
 
@@ -48,7 +49,9 @@ const options = {
   forceFamily: conf['force-family'] || conf.f,
   single: conf.single || conf.s,
   dontVerify: conf['dont-verify'] || conf.V,
-  selfSignedProvision: conf.S || conf['self-signed-provision']
+  selfSignedProvision: conf.S || conf['self-signed-provision'],
+  customKeychainGroup: conf.K || conf['add-access-group'],
+  bundleIdKeychainGroup: conf.B || conf['bundleid-access-group']
 };
 
 colors.setTheme({
@@ -81,6 +84,7 @@ if (conf.identities || conf.L) {
   -7, --use-7zip                Use 7zip instead of unzip
       --use-openssl             Use OpenSSL cms instead of Apple's security tool
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -B, --bundleid-access-group   Add $(TeamIdentifier).bundleid to keychain-access-groups
   -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
@@ -88,6 +92,7 @@ if (conf.identities || conf.L) {
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
+  -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
   -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use

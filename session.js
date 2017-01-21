@@ -354,6 +354,30 @@ module.exports = class ApplesignSession {
         changed = true;
       }
     }
+    const additionalKeychainGroups = [];
+    if (typeof this.config.customKeychainGroup === 'string') {
+      additionalKeychainGroups.push(this.config.customKeychainGroup);
+    }
+    if (this.config.bundleIdKeychainGroup) {
+      if (typeof this.config.bundleid === 'string') {
+        additionalKeychainGroups.push(this.config.bundleid);
+      } else {
+        const infoPlist = path.join(this.config.appdir, 'Info.plist');
+        const plistData = plist.readFileSync(infoPlist);
+        const bundleid = plistData['CFBundleIdentifier'];
+        additionalKeychainGroups.push(bundleid);
+      }
+    }
+    if (additionalKeychainGroups.length > 0) {
+      const newGroups = additionalKeychainGroups.map(group => `${teamId}.${group}`);
+      const groups = entMacho['keychain-access-groups'];
+      if (typeof groups === 'undefined') {
+        entMacho['keychain-access-groups'] = newGroups;
+      } else {
+        groups.push(...newGroups);
+      }
+      changed = true;
+    }
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + '.entitlements';
       let newEntitlements = (appId && teamId && this.config.entry)
