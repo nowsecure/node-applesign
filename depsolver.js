@@ -65,8 +65,9 @@ function getMachoLibs (file, cb) {
       if (data.length < MACH0_MIN_SIZE) {
         return cb(new Error('mach0 files can\'t be that small'));
       }
+      var exec = null;
       try {
-        var exec = macho.parse(data);
+        exec = macho.parse(data);
       } catch (e) {
         try {
           var fat = fatmacho.parse(data);
@@ -79,8 +80,15 @@ function getMachoLibs (file, cb) {
             break;
           } catch (e2) {
             /* ignore exceptions here */
+            console.error(file);
+            console.error(e2);
+            return cb(null, []);
           }
         }
+      }
+      if (exec === null) {
+        /* skip fat file here*/
+        return cb(null, []);
       }
       const libs = exec.cmds.filter((x) => {
         return x.type === 'load_dylib' || x.type === 'load_weak_dylib';
