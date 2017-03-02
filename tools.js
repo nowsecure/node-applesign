@@ -75,18 +75,26 @@ function verifyCodesign (file, keychain, cb) {
 }
 
 function getMobileProvisionPlist (file, cb) {
+  function parseMobileProvisioning (error, stdout) {
+    if (stdout === '') {
+      const msg = `Empty entitlements for ${file}.\nAre you providing a mobile provisioning with -m?`;
+      cb(new Error(msg));
+    } else {
+      try {
+        cb(error, plist.parse(stdout));
+      } catch (e) {
+        cb(e);
+      }
+    }
+  }
   if (useOpenSSL === true) {
     /* portable using openssl */
     const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
-    execProgram(cmd.openssl, args, null, (error, stdout) => {
-      cb(error, plist.parse(stdout));
-    });
+    execProgram(cmd.openssl, args, null, parseMobileProvisioning);
   } else {
     /* OSX specific using security */
     const args = [ 'cms', '-D', '-i', file ];
-    execProgram(cmd.security, args, null, (error, stdout) => {
-      cb(error, plist.parse(stdout));
-    });
+    execProgram(cmd.security, args, null, parseMobileProvisioning);
   }
 }
 

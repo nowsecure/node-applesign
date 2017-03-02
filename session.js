@@ -416,7 +416,7 @@ module.exports = class ApplesignSession {
       const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       tools.getEntitlementsFromMobileProvision(pathToProvision, (error, newEntitlements) => {
         if (error) {
-          return next();
+          return next(error);
         }
         this.emit('message', 'Using the entitlements from the mobileprovision');
         return this.adjustEntitlements(file, newEntitlements, next);
