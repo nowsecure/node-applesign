@@ -244,9 +244,14 @@ module.exports = class ApplesignSession {
 
     rimraf(watchdir, () => {
       const plugdir = path.join(this.config.appdir, 'PlugIns');
-      const tests = fs.readdirSync(plugdir).filter((x) => {
-        return x.indexOf('.xctest') !== -1;
-      });
+      let tests = [];
+      try {
+        tests = fs.readdirSync(plugdir).filter((x) => {
+          return x.indexOf('.xctest') !== -1;
+        });
+      } catch (err) {
+        console.error(err);
+      }
       if (keepTests) {
         if (tests.length > 0) {
           this.emit('message', 'Dont strip the xctest plugins');
@@ -260,11 +265,15 @@ module.exports = class ApplesignSession {
       this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
       rimraf(plugdir, (err, res) => {
         if (keepTests) {
-          fs.mkdirSync(plugdir);
-          for (let t of tests) {
-            const oldName = path.join(this.config.appdir, '__' + t);
-            const newName = path.join(plugdir, t);
-            fs.renameSync(oldName, newName);
+          try {
+            fs.mkdirSync(plugdir);
+            for (let t of tests) {
+              const oldName = path.join(this.config.appdir, '__' + t);
+              const newName = path.join(plugdir, t);
+              fs.renameSync(oldName, newName);
+            }
+          } catch (err) {
+            console.error(err);
           }
         }
         return cb(err, res);
