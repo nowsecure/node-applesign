@@ -189,7 +189,7 @@ module.exports = class ApplesignSession {
     }
     this.emit('message', 'Payload found');
     const files = fs.readdirSync(ipadir).filter((x) => {
-      return x.indexOf('.app') === x.length - 4;
+      return x.endsWith('.app');
     });
     if (files.length !== 1) {
       return next(new Error('Invalid IPA'));
@@ -238,12 +238,37 @@ module.exports = class ApplesignSession {
     if (!this.config.withoutWatchapp) {
       return cb();
     }
+    const keepTests = true;
     const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
+
     rimraf(watchdir, () => {
       const plugdir = path.join(this.config.appdir, 'PlugIns');
+      const tests = fs.readdirSync(plugdir).filter((x) => {
+        return x.indexOf('.xctest') !== -1;
+      });
+      if (keepTests) {
+        if (tests.length > 0) {
+          this.emit('message', 'Dont strip the xctest plugins');
+        }
+        for (let t of tests) {
+          const oldName = path.join(plugdir, t);
+          const newName = path.join(this.config.appdir, '__' + t);
+          fs.renameSync(oldName, newName);
+        }
+      }
       this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
-      rimraf(plugdir, cb);
+      rimraf(plugdir, (err, res) => {
+        if (keepTests) {
+          fs.mkdirSync(plugdir);
+          for (let t of tests) {
+            const oldName = path.join(this.config.appdir, '__' + t);
+            const newName = path.join(plugdir, t);
+            fs.renameSync(oldName, newName);
+          }
+        }
+        return cb(err, res);
+      });
     });
   }
   /*
@@ -670,6 +695,8 @@ module.exports = class ApplesignSession {
         next(error);
       });
     };
+    continuation();
+/*
     if (this.config.withoutWatchapp) {
       const watchdir = path.join(this.config.appdir, 'Watch');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
@@ -680,6 +707,7 @@ module.exports = class ApplesignSession {
     } else {
       continuation();
     }
+*/
   }
 
   setFile (name) {
