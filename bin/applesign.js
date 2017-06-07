@@ -11,7 +11,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'L', 'identities',
     'v', 'verify-twice',
     'E', 'entry-entitlement',
-    'f', 'without-fairplay',
+    'f', 'force-family',
     'p', 'parallel',
     'w', 'without-watchapp',
     'u', 'unfair',
