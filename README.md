@@ -56,15 +56,15 @@ Usage
 
 List local codesign identities:
 
-	$ bin/ipa-resign -I
+	$ bin/applesign -I
 
 Resign an IPA with a specific identity:
 
-	$ bin/ipa-resign -i 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
+	$ bin/applesign -i 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
 
 Change bundleid:
 
-	$ bin/ipa-resign -b org.nowsecure.testapp path/to/ipa
+	$ bin/applesign -b org.nowsecure.testapp path/to/ipa
 
 Signing methods
 ---------------
