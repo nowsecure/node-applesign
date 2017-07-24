@@ -245,12 +245,14 @@ module.exports = class ApplesignSession {
     rimraf(watchdir, () => {
       const plugdir = path.join(this.config.appdir, 'PlugIns');
       let tests = [];
-      try {
-        tests = fs.readdirSync(plugdir).filter((x) => {
-          return x.indexOf('.xctest') !== -1;
-        });
-      } catch (err) {
-        console.error(err);
+      if (fs.existsSync(plugdir)) {
+        try {
+          tests = fs.readdirSync(plugdir).filter((x) => {
+            return x.indexOf('.xctest') !== -1;
+          });
+        } catch (err) {
+          console.error(err);
+        }
       }
       if (keepTests) {
         if (tests.length > 0) {
