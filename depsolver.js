@@ -119,7 +119,7 @@ function layerize (state) {
       }
       let allDepsSolved = true;
       for (let dep of deps) {
-        const depLayer = state[dep].layer;
+        const depLayer = state[dep]? state[dep].layer: 0;
         if (depLayer === -1 || depLayer === currentLayer) {
           allDepsSolved = false;
           break;
