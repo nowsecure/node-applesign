@@ -197,41 +197,49 @@ module.exports = class ApplesignSession {
     this.config.appdir = path.join(ipadir, files[0]);
     const binname = getExecutable(this.config.appdir, files[0].replace('.app', ''));
     this.config.appbin = path.join(this.config.appdir, binname);
-    if (fs.lstatSync(this.config.appbin).isFile()) {
-      if (isEncryptedSync.path(this.config.appbin)) {
-        if (!this.config.unfairPlay) {
-          return next(new Error('This IPA is encrypted'));
+    try {
+      if (!fs.lstatSync(this.config.appbin).isFile()) {
+        throw new Error('This was suposed to be a file');
+      }
+    } catch (e) {
+      const folders = this.config.appdir.split(path.sep);
+      const binName = folders[folders.length - 1].replace('.app', '');
+      this.config.appbin = path.join(this.config.appdir, binName);
+      if (!fs.lstatSync(this.config.appbin).isFile()) {
+        throw new Error('This was suposed to be a file');
+      }
+    }
+    if (isEncryptedSync.path(this.config.appbin)) {
+      if (!this.config.unfairPlay) {
+        return next(new Error('This IPA is encrypted'));
+      }
+      this.emit('message', 'Main IPA executable is encrypted');
+    } else {
+      this.emit('message', 'Main IPA executable is not encrypted');
+    }
+    if (this.config.insertLibrary !== undefined) {
+      insertLibrary(this.config, (err) => {
+        if (err) {
+          return this.emit('error', err, next);
         }
-        this.emit('message', 'Main IPA executable is encrypted');
-      } else {
-        this.emit('message', 'Main IPA executable is not encrypted');
-      }
-      if (this.config.insertLibrary !== undefined) {
-        insertLibrary(this.config, (err) => {
-          if (err) {
-            return this.emit('error', err, next);
-          }
-        });
-      }
-      this.removeWatchApp(() => {
-        const infoPlist = path.join(this.config.appdir, 'Info.plist');
-        this.fixPlist(infoPlist, this.config.bundleid, (err) => {
-          if (err) return this.events.emit('error', err, next);
-          this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
+      });
+    }
+    this.removeWatchApp(() => {
+      const infoPlist = path.join(this.config.appdir, 'Info.plist');
+      this.fixPlist(infoPlist, this.config.bundleid, (err) => {
+        if (err) return this.events.emit('error', err, next);
+        this.checkProvision(this.config.appdir, this.config.mobileprovision, (err) => {
+          if (err) return this.emit('error', err, next);
+          this.fixEntitlements(this.config.appbin, (err) => {
             if (err) return this.emit('error', err, next);
-            this.fixEntitlements(this.config.appbin, (err) => {
+            this.signLibraries(this.config.appbin, this.config.appdir, (err) => {
               if (err) return this.emit('error', err, next);
-              this.signLibraries(this.config.appbin, this.config.appdir, (err) => {
-                if (err) return this.emit('error', err, next);
-                next(null, next);
-              });
+              next(null, next);
             });
           });
         });
       });
-    } else {
-      next(new Error('Invalid path'));
-    }
+    });
   }
 
   removeWatchApp (cb) {
@@ -561,6 +569,8 @@ module.exports = class ApplesignSession {
 
     const libraries = [];
     const exe = path.sep + getExecutable(this.config.appdir);
+    const folders = this.config.appbin.split(path.sep);
+    const exe2 = path.sep + folders[folders.length - 1];
 
     let found = false;
     walk.walkSync(appdir, (basedir, filename, stat) => {
@@ -569,7 +579,7 @@ module.exports = class ApplesignSession {
       if (!fs.lstatSync(file).isFile()) {
         return;
       }
-      if (file.endsWith(exe)) {
+      if (file.endsWith(exe) || file.endsWith(exe2)) {
         this.emit('message', 'Executable found at ' + file);
         libraries.push(file);
         found = true;
