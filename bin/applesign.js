@@ -12,6 +12,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'v', 'verify-twice',
     'E', 'entry-entitlement',
     'f', 'force-family',
+    'z', 'ignore-zip-errors',
     'p', 'parallel',
     'w', 'without-watchapp',
     'u', 'unfair',
@@ -38,6 +39,7 @@ const options = {
   identity: conf.identity || conf.i,
   mobileprovision: conf.mobileprovision || conf.m,
   cloneEntitlements: conf.c || conf['clone-entitlements'],
+  ignoreZipErrors: conf.z || conf['ignore-zip-errors'],
   replaceipa: conf.replace || conf.r,
   lipoArch: conf.lipo || conf.l,
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
@@ -107,6 +109,7 @@ if (conf.identities || conf.L) {
   -V, --dont-verify             Do not perform any codesign verification
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
       --version                 Show applesign version
+  -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
   [input-ipafile]               Path to the IPA file to resign
 
 Example:

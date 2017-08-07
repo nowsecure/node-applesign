@@ -757,7 +757,7 @@ module.exports = class ApplesignSession {
     this.cleanup(() => {
       this.events.emit('message', 'Unzipping ' + file);
       tools.unzip(file, outdir, (error, stdout) => {
-        if (error) {
+        if (error && !this.config.ignoreZipErrors) {
           this.cleanup(() => { cb(error); });
         } else {
           cb(undefined, stdout);
