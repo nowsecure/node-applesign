@@ -129,12 +129,11 @@ function zip (cwd, ofile, src, cb) {
 
 function unzip (ifile, odir, cb) {
   if (use7zip) {
-    const args = [ 'x', '-o' + odir, ifile ];
-    execProgram(cmd.sevenZip, args, null, cb);
-  } else {
-    const args = [ '-o', ifile, '-d', odir ];
-    execProgram(cmd.unzip, args, null, cb);
+    const args = [ 'x', '-y', '-o' + odir, ifile ];
+    return execProgram(cmd.sevenZip, args, null, cb);
   }
+  const args = [ '-o', ifile, '-d', odir ];
+  execProgram(cmd.unzip, args, null, cb);
 }
 
 function xcaToIpa (ifile, odir, cb) {
