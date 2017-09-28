@@ -95,6 +95,7 @@ if (conf.identities || conf.L) {
   -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
+      --keep                    keep temporary files when signing error happens
   -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
@@ -123,7 +124,13 @@ Example:
   const session = cs[target](options.file, (error, data) => {
     if (error) {
       console.error(error, data);
-      process.exit(1);
+      if (conf.keep) {
+        process.exit(1);
+      } else {
+        session.cleanup(_ => {
+          process.exit(1);
+        });
+      }
     }
     console.log('Target is now signed:', session.config.outfile || options.file);
   }).on('message', (msg) => {
