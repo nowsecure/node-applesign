@@ -90,11 +90,19 @@ function getMobileProvisionPlist (file, cb) {
   if (useOpenSSL === true) {
     /* portable using openssl */
     const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
-    execProgram(cmd.openssl, args, null, parseMobileProvisioning);
+    try {
+      execProgram(cmd.openssl, args, null, parseMobileProvisioning);
+    } catch (e) {
+      cb(e);
+    }
   } else {
     /* OSX specific using security */
     const args = [ 'cms', '-D', '-i', file ];
-    execProgram(cmd.security, args, null, parseMobileProvisioning);
+    try {
+      execProgram(cmd.security, args, null, parseMobileProvisioning);
+    } catch (e) {
+      cb(e);
+    }
   }
 }
 
