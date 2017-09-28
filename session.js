@@ -488,16 +488,39 @@ module.exports = class ApplesignSession {
     let changed = false;
     const data = plist.readFileSync(file);
     if (this.config.forceFamily) {
+      const have = {
+        iPhone: false,
+        iPad: false
+      };
+      const check = (type) => {
+        const types = [ null, 'iPhone', 'iPad' ];
+        const name = types[+type];
+        if (name) {
+          have[name] = true;
+        } else {
+          this.emit('message', 'Unknown device type: ' + type);
+        }
+      }
       const oldSupportedDevices = data['UISupportedDevices'];
       if (oldSupportedDevices) {
         this.emit('message', 'Empty UISupportedDevices');
+        if (typeof oldSupportedDevices === 'array') {
+          oldSupportedDevices.forEach(check);
+        } else {
+          check(oldSupportedDevices);
+        }
         delete data['UISupportedDevices'];
         changed = true;
       }
       const oldFamily = +data['UIDeviceFamily'];
-      if (oldFamily === 2) {
-        this.emit('message', 'UIDeviceFamily forced to iPhone');
-        data['UIDeviceFamily'] = 1;
+      if (!have.iPhone) {
+        if (have.iPad) {
+          this.emit('message', 'UIDeviceFamily forced to iPad/iPhone/iPod');
+          data['UIDeviceFamily'] = [1, 2];
+        } else {
+          this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
+          data['UIDeviceFamily'] = 1;
+        }
         changed = true;
       }
     }
