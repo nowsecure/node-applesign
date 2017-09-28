@@ -314,7 +314,7 @@ module.exports = class ApplesignSession {
         /* update entitlements */
         return tools.getMobileProvisionPlist(this.config.mobileprovision, (err, data) => {
           if (err) {
-            next(err);
+            return next(err);
           }
           const mainBin = path.join(this.config.appdir, getExecutable(this.config.appdir));
           let ent = machoEntitlements.parseFile(mainBin);
