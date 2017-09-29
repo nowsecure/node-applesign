@@ -76,12 +76,15 @@ function verifyCodesign (file, keychain, cb) {
 
 function getMobileProvisionPlist (file, cb) {
   function parseMobileProvisioning (error, stdout) {
+    if (error) {
+      return cb(error);
+    }
     if (stdout === '') {
       const msg = `Empty entitlements for ${file}.\nAre you providing a mobile provisioning with -m?`;
       cb(new Error(msg));
     } else {
       try {
-        cb(error, plist.parse(stdout));
+        cb(null, plist.parse(stdout));
       } catch (e) {
         cb(e);
       }
