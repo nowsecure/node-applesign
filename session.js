@@ -146,6 +146,13 @@ module.exports = class ApplesignSession {
     return this;
   }
 
+  finalize (cb, error) {
+    if (error && !this.config.keep) {
+      return this.mrproper (_ => { cb(error); });
+    }
+    return cb (error);
+  }
+
   /* Public API */
   signIPA (cb) {
     if (typeof cb === 'function') {
@@ -713,6 +720,15 @@ module.exports = class ApplesignSession {
     } catch (e) {
       this.emit('message', e);
     }
+  }
+
+  mrproper (cb) {
+    this.cleanup(err => {
+      if (err) {
+        this.emit('error', err);
+      }
+      rimraf(this.config.outfile, cb);
+    });
   }
 
   zip (next) {
