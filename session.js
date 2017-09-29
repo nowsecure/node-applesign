@@ -164,11 +164,11 @@ module.exports = class ApplesignSession {
       useOpenSSL: this.config.useOpenSSL
     });
     this.unzip(this.config.file, this.config.outdir, (error) => {
-      if (error) { return this.emit('end', error); }
+      if (error) { return this.finalize(cb, error); }
       this.signAppDirectory(this.config.outdir + '/Payload', (error, res) => {
-        if (error) { return this.emit('end', error); }
+        if (error) { return this.finalize(cb, error); }
         this.zip((error, res) => {
-          if (error) { return this.emit('end', error); }
+          if (error) { return this.finalize(cb, error); }
           this.cleanup((_) => {
             this.emit('end');
           });
@@ -567,15 +567,16 @@ module.exports = class ApplesignSession {
   signFileContinuation (file, next) {
     function codesignHasFailed (config, error, errmsg) {
       if (error && error.message.indexOf('Error:')) {
+        next(error);
         return true;
       }
       return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
     }
     tools.codesign(this.config.identity, this.config.entitlement, this.config.keychain, file, (error, stdout, stderr) => {
-      this.emit('message', 'Signed ' + file);
       if (error && codesignHasFailed(this.config, error, stderr)) {
         return this.emit('end', error, next);
       }
+      this.emit('message', 'Signed ' + file);
       if (this.config.verifyTwice && !this.config.dontVerify) {
         this.emit('message', 'Verify ' + file);
         tools.verifyCodesign(file, this.config.keychain, (error, stdout, stderr) => {
@@ -603,7 +604,11 @@ module.exports = class ApplesignSession {
     const exe2 = path.sep + folders[folders.length - 1];
 
     let found = false;
+    let failure = false;
     walk.walkSync(appdir, (basedir, filename, stat) => {
+      if (failure) {
+        return;
+      }
       const file = path.join(basedir, filename);
       /* only walk on files. Symlinks and other special files are forbidden */
       if (!fs.lstatSync(file).isFile()) {
@@ -626,11 +631,12 @@ module.exports = class ApplesignSession {
         fs.close(fd);
       } catch (e) {
         console.error(basedir, filename, e);
-        next(e);
+        failure = true;
+        return next(e);
       }
     });
     if (!found) {
-      next('Cannot find any MACH0 binary to sign');
+      return next('Cannot find any MACH0 binary to sign');
     }
     const parallelVerify = (libs, next) => {
       if (this.config.dontVerify) {
@@ -649,6 +655,7 @@ module.exports = class ApplesignSession {
 
     const layeredSigning = (libs, next) => {
       let libsCopy = libs.slice(0).reverse();
+      let failure = false;
       const peel = () => {
         if (libsCopy.length === 0) {
           return parallelVerify(libraries, next);
@@ -656,7 +663,15 @@ module.exports = class ApplesignSession {
         const deps = libsCopy.pop();
         let depsCount = deps.length;
         for (let d of deps) {
-          this.signFile(d, () => {
+          this.signFile(d, (err) => {
+            if (failure) {
+              return;
+            }
+            if (err) {
+              failure = true;
+              console.error(err);
+              return next(err);
+            }
             if (--depsCount === 0) {
               peel();
             }
@@ -668,13 +683,18 @@ module.exports = class ApplesignSession {
 
     const serialSigning = (libs, next) => {
       let libsCopy = libs.slice(0).reverse();
+      let failure = false;
       const peek = (cb) => {
         if (libsCopy.length === 0) {
           libsCopy = libs.slice(0);
           return cb();
         }
         const lib = libsCopy.pop();
-        this.signFile(lib, () => {
+        this.signFile(lib, (err) => {
+          if (err) {
+            failure = true;
+            return err;
+          }
           peek(cb);
         });
       };

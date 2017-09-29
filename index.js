@@ -41,7 +41,8 @@ module.exports = class Applesign {
       selfSignedProvision: opt.selfSignedProvision || false,
       dontVerify: opt.dontVerify || false,
       bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
-      customKeychainGroup: opt.customKeychainGroup || undefined
+      customKeychainGroup: opt.customKeychainGroup || undefined,
+      keep: opt.keep || false
     };
   }
 
@@ -52,7 +53,9 @@ module.exports = class Applesign {
     } else {
       s.setFile(file);
     }
-    return s.signIPA(cb);
+    return s.signIPA((err) => {
+      s.finalize(cb, err)
+    });
   }
 
   signFile (file, cb) {

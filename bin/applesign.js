@@ -124,15 +124,10 @@ Example:
   const session = cs[target](options.file, (error, data) => {
     if (error) {
       console.error(error, data);
-      if (conf.keep) {
-        process.exit(1);
-      } else {
-        session.cleanup(_ => {
-          process.exit(1);
-        });
-      }
+      process.exitCode = 1;
+    } else {
+      console.log('Target is now signed:', session.config.outfile || options.file);
     }
-    console.log('Target is now signed:', session.config.outfile || options.file);
   }).on('message', (msg) => {
     console.log(colors.msg(msg));
   }).on('warning', (msg) => {
