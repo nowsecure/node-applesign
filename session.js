@@ -405,6 +405,10 @@ module.exports = class ApplesignSession {
             changed = true;
           }
         });
+      } else {
+        delete entMacho['com.apple.developer.icloud-container-identifiers'];
+        delete entMacho['com.apple.developer.icloud-container-environment'];
+        delete entMacho['com.apple.developer.icloud-services'];
       }
     }
     if (forceTaskAllow === true) {
