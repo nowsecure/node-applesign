@@ -42,6 +42,7 @@ function defaultEntitlements (appid, devid) {
   ent['application-identifier'] = appid;
   ent['com.apple.developer.team-identifier'] = devid;
   ent['keychain-access-groups'] = [ appid ];
+  ent['com.apple.developer.icloud-container-identifiers'] = 'iCloud.' + devid;
   return plistBuild(ent).toString();
 }
 
@@ -368,6 +369,10 @@ module.exports = class ApplesignSession {
       entMacho = entMobProv;
       changed = true;
     } else {
+      const k = 'com.apple.developer.icloud-container-identifiers';
+      if (entMacho[k]) {
+        entMacho[k] = 'iCloud.' + appId;
+      }
       ['application-identifier', 'com.apple.developer.team-identifier'].forEach((id) => {
         if (entMacho[id] !== entMobProv[id]) {
           changed = true;
@@ -376,10 +381,13 @@ module.exports = class ApplesignSession {
       });
       if (typeof entMacho['keychain-access-groups'] === 'object') {
         changed = true;
-        entMacho['keychain-access-groups'][0] = appId;
+        // keychain access groups makes the resigning fail with -M
+        delete entMacho['keychain-access-groups'];
+        // entMacho['keychain-access-groups'][0] = appId;
       }
       if (this.config.massageEntitlements === true) {
         [
+          'com.apple.developer.ubiquity-container-identifiers',
           'com.apple.developer.icloud-container-identifiers',
           'com.apple.developer.icloud-container-environment',
           'com.apple.developer.icloud-services',

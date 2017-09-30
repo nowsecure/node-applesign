@@ -91,17 +91,17 @@ function getMobileProvisionPlist (file, cb) {
     }
   }
   if (useOpenSSL === true) {
-    /* portable using openssl */
-    const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
     try {
+      /* portable using openssl */
+      const args = [ 'cms', '-in', file, '-inform', 'der', '-verify' ];
       execProgram(cmd.openssl, args, null, parseMobileProvisioning);
     } catch (e) {
       cb(e);
     }
   } else {
-    /* OSX specific using security */
-    const args = [ 'cms', '-D', '-i', file ];
     try {
+      /* OSX specific using security */
+      const args = [ 'cms', '-D', '-i', file ];
       execProgram(cmd.security, args, null, parseMobileProvisioning);
     } catch (e) {
       cb(e);
@@ -111,10 +111,7 @@ function getMobileProvisionPlist (file, cb) {
 
 function getEntitlementsFromMobileProvision (file, cb) {
   return getMobileProvisionPlist(file, (e, o) => {
-    if (e) {
-      return cb(e, o);
-    }
-    return cb(e, o['Entitlements']);
+    return e? cb(e, o): cb(e, o['Entitlements']);
   });
 }
 
