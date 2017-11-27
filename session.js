@@ -42,6 +42,8 @@ function defaultEntitlements (appid, devid) {
   ent['application-identifier'] = appid;
   ent['com.apple.developer.team-identifier'] = devid;
   ent['keychain-access-groups'] = [ appid ];
+  ent['com.apple.developer.ubiquity-kvstore-identifier'] = appid;
+  delete ent['aps-environment'];
   ent['com.apple.developer.icloud-container-identifiers'] = 'iCloud.' + devid;
   return plistBuild(ent).toString();
 }
@@ -387,6 +389,7 @@ module.exports = class ApplesignSession {
       }
       if (this.config.massageEntitlements === true) {
         [
+          'com.apple.developer.ubiquity-kvstore-identifier',
           'com.apple.developer.ubiquity-container-identifiers',
           'com.apple.developer.icloud-container-identifiers',
           'com.apple.developer.icloud-container-environment',
@@ -396,7 +399,9 @@ module.exports = class ApplesignSession {
           'com.apple.networking.vpn.configuration',
           'com.apple.developer.associated-domains',
           'com.apple.security.application-groups',
+          'com.apple.developer.team-identifier',
           'com.apple.developer.in-app-payments',
+          'com.apple.developer.siri',
           'beta-reports-active', /* our entitlements doesnt support beta */
           'aps-environment'
         ].forEach((id) => {
@@ -408,7 +413,14 @@ module.exports = class ApplesignSession {
       } else {
         delete entMacho['com.apple.developer.icloud-container-identifiers'];
         delete entMacho['com.apple.developer.icloud-container-environment'];
+        delete entMacho['com.apple.developer.ubiquity-kvstore-identifier'];
         delete entMacho['com.apple.developer.icloud-services'];
+        delete entMacho['com.apple.developer.siri'];
+        delete entMacho['com.apple.developer.in-app-payments'];
+        delete entMacho['aps-environment'];
+        delete entMacho['com.apple.security.application-groups'];
+        delete entMacho['com.apple.developer.associated-domains'];
+        delete entMacho['com.apple.developer.team-identifier'];
       }
     }
     if (forceTaskAllow === true) {
