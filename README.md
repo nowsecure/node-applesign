@@ -146,7 +146,7 @@ const s = as.signIPA('/path/to/app.ipa', onEnd)
     console.log('msg', msg);
   });
 
-function onEnd(err, data) => {
+function onEnd(err, data) {
   if (err) {
     console.error(err);
     s.cleanup();
