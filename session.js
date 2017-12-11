@@ -449,7 +449,7 @@ module.exports = class ApplesignSession {
       if (typeof groups === 'undefined') {
         entMacho['keychain-access-groups'] = newGroups;
       } else {
-        groups.push(...newGroups);
+        groups.push(newGroups);
       }
       changed = true;
     }

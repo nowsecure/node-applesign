@@ -193,7 +193,7 @@ module.exports = function depSolver (executable, libs, parallel, cb) {
              * sign those anyways, just ensure to
              * sign them before the app executable
              */
-            finalLibs.unshift(...orphaned);
+            finalLibs.unshift(orphaned);
           }
           cb(null, finalLibs);
         }
