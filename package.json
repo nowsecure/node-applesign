@@ -5,6 +5,9 @@
   "bin": {
     "applesign": "bin/applesign.js"
   },
+  "engines" : {
+    "node" : ">=5.12"
+  },
   "scripts": {
     "semi": "semistandard",
     "test": "mocha"
