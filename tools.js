@@ -11,7 +11,7 @@ var use7zip = false;
 var useOpenSSL = false;
 
 const cmd = {
-  sevenZip: '/usr/local/bin/7z',
+  '7z': '/usr/local/bin/7z',
   zip: '/usr/bin/zip',
   unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
@@ -33,7 +33,7 @@ function execProgram (bin, arg, opt, cb) {
 
 /* public */
 
-function findInPath (cb) {
+function findInPath (cb, user) {
   const keys = Object.keys(cmd);
   let pending = keys.length;
   for (let key of keys) {
@@ -41,7 +41,7 @@ function findInPath (cb) {
       if (err !== undefined) {
         cmd[key] = loc;
         if (--pending === 0) {
-          cb(null, cmd);
+          cb(err, user);
         }
       }
     });
@@ -120,7 +120,7 @@ function zip (cwd, ofile, src, cb) {
     fs.unlink(ofile, () => {
       const zipFile = ofile + '.zip';
       const args = [ 'a', zipFile, src ];
-      execProgram(cmd.sevenZip, args, { cwd: cwd }, (error, message) => {
+      execProgram(cmd['7z'], args, { cwd: cwd }, (error, message) => {
         if (error) {
           return cb(error, message);
         }
@@ -138,7 +138,7 @@ function zip (cwd, ofile, src, cb) {
 function unzip (ifile, odir, cb) {
   if (use7zip) {
     const args = [ 'x', '-y', '-o' + odir, ifile ];
-    return execProgram(cmd.sevenZip, args, null, cb);
+    return execProgram(cmd['7z'], args, null, cb);
   }
   const args = [ '-o', ifile, '-d', odir ];
   execProgram(cmd.unzip, args, null, cb);

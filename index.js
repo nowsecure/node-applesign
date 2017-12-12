@@ -5,8 +5,11 @@ const path = require('path');
 const ApplesignSession = require('./session');
 
 module.exports = class Applesign {
-  constructor (options) {
+  constructor (options, cb) {
     this.config = this.withConfig(options);
+    if (typeof cb === 'function') {
+      tools.findInPath(cb, this);
+    }
   }
 
   withConfig (opt) {

@@ -62,26 +62,47 @@ colors.setTheme({
   msg: 'yellow'
 });
 
-const cs = new Applesign(options);
+new Applesign(options, (err, asInstance) => {
+  if (err) {
+    console.error(err);
+  }
+  if (conf.identities || conf.L) {
+    asInstance.getIdentities((err, ids) => {
+      if (err) {
+        console.error(colors.error(err));
+      } else {
+        ids.forEach((id) => {
+          console.log(id.hash, id.name);
+        });
+      }
+    });
+  } else if (conf.version) {
+    console.log(packageJson.version);
+  } else if (conf.h || conf.help || conf._.length === 0) {
+    const cmd = process.argv[1].split('/').pop();
+    console.error(usageMessage);
+  } else {
+    const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
+    const session = asInstance[target](options.file, (error, data) => {
+      if (error) {
+        console.error(error, data);
+        process.exitCode = 1;
+      } else {
+        console.log('Target is now signed:', session.config.outfile || options.file);
+      }
+    }).on('message', (msg) => {
+      console.log(colors.msg(msg));
+    }).on('warning', (msg) => {
+      console.error(colors.error('error'), msg);
+    }).on('error', (msg) => {
+      console.error(colors.msg(msg));
+    });
+  }
+});
 
-if (conf.identities || conf.L) {
-  cs.getIdentities((err, ids) => {
-    if (err) {
-      console.error(colors.error(err));
-    } else {
-      ids.forEach((id) => {
-        console.log(id.hash, id.name);
-      });
-    }
-  });
-} else if (conf.version) {
-  console.log(packageJson.version);
-} else if (conf.h || conf.help || conf._.length === 0) {
-  const cmd = process.argv[1].split('/').pop();
-  console.error(
-`Usage:
+const usageMessage = `Usage:
 
-  ${cmd} [--options ...] [input-ipafile]
+  applesign [--options ...] [input-ipafile]
 
   -7, --use-7zip                Use 7zip instead of unzip
       --use-openssl             Use OpenSSL cms instead of Apple's security tool
@@ -115,24 +136,7 @@ if (conf.identities || conf.L) {
 
 Example:
 
-  ${cmd} -L # enumerate codesign identities, grab one and use it with -i
-  ${cmd} -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
-  ${cmd} -i AD71EB4... -c --lipo arm64 -w -V test-app.ipa
-`);
-} else {
-  const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
-  const session = cs[target](options.file, (error, data) => {
-    if (error) {
-      console.error(error, data);
-      process.exitCode = 1;
-    } else {
-      console.log('Target is now signed:', session.config.outfile || options.file);
-    }
-  }).on('message', (msg) => {
-    console.log(colors.msg(msg));
-  }).on('warning', (msg) => {
-    console.error(colors.error('error'), msg);
-  }).on('error', (msg) => {
-    console.error(colors.msg(msg));
-  });
-}
+  applesign -L # enumerate codesign identities, grab one and use it with -i
+  applesign -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
+  applesign -i AD71EB4... -c --lipo arm64 -w -V test-app.ipa
+`;
