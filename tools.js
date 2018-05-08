@@ -27,7 +27,7 @@ function execProgram (bin, arg, opt, cb) {
   if (!opt) {
     opt = {};
   }
-  opt.maxBuffer = 1024 * 1024;
+  opt.maxBuffer = 1024 * 1024 * 8;
   return childproc.execFile(bin, arg, opt, cb);
 }
 
