@@ -10,6 +10,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'i', 'identity'
   ],
   boolean: [
+    'n', 'noclean',
     '7', 'use-7zip',
     'r', 'replace',
     'L', 'identities',
@@ -42,6 +43,7 @@ const options = {
   entry: conf['entry-entitlement'] || conf.E,
   bundleid: conf.bundleid || conf.b,
   identity: conf.identity || conf.i,
+  noclean: conf.n || conf.noclean,
   mobileprovision: conf.mobileprovision || conf.m,
   cloneEntitlements: conf.c || conf['clone-entitlements'],
   ignoreZipErrors: conf.z || conf['ignore-zip-errors'],
@@ -121,11 +123,11 @@ const usageMessage = `Usage:
   -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
-      --keep                    keep temporary files when signing error happens
   -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -M, --massage-entitlements    Massage entitlements to remove privileged ones
+  -n, --noclean                 keep temporary files when signing error happens
   -o, --output [APP.IPA]        Path to the output IPA filename
   -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
   -p, --parallel                Run layered signing dependencies in parallel

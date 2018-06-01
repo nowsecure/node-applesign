@@ -45,7 +45,7 @@ module.exports = class Applesign {
       dontVerify: opt.dontVerify || false,
       bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
       customKeychainGroup: opt.customKeychainGroup || undefined,
-      keep: opt.keep || false
+      noclean: opt.noclean || false
     };
   }
 

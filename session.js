@@ -150,7 +150,7 @@ module.exports = class ApplesignSession {
   }
 
   finalize (cb, error) {
-    if (error && !this.config.keep) {
+    if (error && !this.config.noclean) {
       return this.mrproper (_ => { cb(error); });
     }
     return cb (error);
@@ -764,6 +764,9 @@ module.exports = class ApplesignSession {
   }
 
   cleanup (cb) {
+    if (this.config.noclean) {
+      return cb();
+    }
     const outdir = this.config.outdir;
     this.emit('message', 'Cleaning up ' + outdir);
     try {
@@ -774,6 +777,9 @@ module.exports = class ApplesignSession {
   }
 
   mrproper (cb) {
+    if (this.config.noclean) {
+      return cb();
+    }
     this.cleanup(err => {
       if (err) {
         this.emit('error', err);
