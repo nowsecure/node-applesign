@@ -5,6 +5,10 @@ const packageJson = require('../package.json');
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
+  string: [
+    'O', 'osversion',
+    'i', 'identity'
+  ],
   boolean: [
     '7', 'use-7zip',
     'r', 'replace',
@@ -33,6 +37,7 @@ const options = {
   useOpenSSL: conf['use-openssl'],
   insertLibrary: conf.I || conf.insert,
   outfile: conf.output || conf.o,
+  osversion: conf.osversion || conf.O,
   entitlement: conf.entitlement || conf.e,
   entry: conf['entry-entitlement'] || conf.E,
   bundleid: conf.bundleid || conf.b,
@@ -122,6 +127,7 @@ const usageMessage = `Usage:
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -M, --massage-entitlements    Massage entitlements to remove privileged ones
   -o, --output [APP.IPA]        Path to the output IPA filename
+  -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
   -p, --parallel                Run layered signing dependencies in parallel
   -r, --replace                 Replace the input IPA file with the resigned one
   -s, --single                  Sign a single file instead of an IPA

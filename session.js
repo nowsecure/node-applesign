@@ -443,6 +443,13 @@ module.exports = class ApplesignSession {
         additionalKeychainGroups.push(bundleid);
       }
     }
+    if (this.config.osversion !== undefined) {
+      const infoPlist = path.join(this.config.appdir, 'Info.plist');
+      const plistData = plist.readFileSync(infoPlist);
+      plistData['MinimumOSVersion'] = this.config.osversion;
+      // DTPlatformVersion
+      plist.writeFileSync(infoPlist, plistData);
+    }
     if (additionalKeychainGroups.length > 0) {
       const newGroups = additionalKeychainGroups.map(group => `${teamId}.${group}`);
       const groups = entMacho['keychain-access-groups'];
