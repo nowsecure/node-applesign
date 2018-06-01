@@ -24,27 +24,26 @@ const cmd = {
 };
 
 function execProgram (bin, arg, opt, cb) {
-  // new code
   let _out = Buffer.alloc(0);
   let _err = Buffer.alloc(0);
-  const child = childproc.spawn(bin, arg);
+  const child = childproc.spawn(bin, arg, opt || {});
   child.stdout.on('data', data => {
     _out = Buffer.concat([_out, data]);
   });
   child.stderr.on('data', data => {
     _err = Buffer.concat([_err, data]);
   });
-  child.stdin.end(); // ^D works fine for unzip (y/n/^C)
+  child.stdin.end();
   child.on('close', code => {
     if (code !== 0) {
       let msg = 'stdout: ' + _out.toString('utf8');
       msg += '\nstderr: ' + _err.toString('utf8');
+      msg += '\ncommand: ' + bin + ' ' + arg.join(' ');
       msg += '\ncode: ' + code;
       return cb(new Error(msg));
     }
     cb(null, _out, _err);
   });
-  return;
 }
 
 /* public */
