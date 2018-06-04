@@ -626,10 +626,27 @@ module.exports = class ApplesignSession {
     return this;
   }
 
+  filterLibraries (libraries) {
+    return libraries.filter(_ => {
+      // we want to resign all frameworks. even if not referenced :?
+      if (_.indexOf('Frameworks/') !== -1) {
+        return true;
+      }
+      // check if there's a Plist to inform us which is the right executable
+      const plist = path.join(path.dirname(_), 'Info.plist');
+      const exe = getExecutable(path.dirname(_), path.basename(_));
+      if (path.basename(_) !== exe) {
+        console.error('Not signing', _);
+        return false;
+      }
+      return true;
+    });
+  }
+
   signLibraries (bpath, appdir, next) {
     this.emit('message', 'Signing libraries and frameworks');
 
-    const libraries = [];
+    let libraries = [];
     const exe = path.sep + getExecutable(this.config.appdir);
     const folders = this.config.appbin.split(path.sep);
     const exe2 = path.sep + folders[folders.length - 1];
@@ -749,6 +766,7 @@ module.exports = class ApplesignSession {
     };
 
     this.emit('message', 'Resolving signing order using layered list');
+    libraries = this.filterLibraries(libraries);
     depSolver(bpath, libraries, this.config.parallel, (err, libs) => {
       if (err) {
         return next(err);
