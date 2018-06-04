@@ -40,9 +40,9 @@ function execProgram (bin, arg, opt, cb) {
       msg += '\nstderr: ' + _err.toString('utf8');
       msg += '\ncommand: ' + bin + ' ' + arg.join(' ');
       msg += '\ncode: ' + code;
-      return cb(new Error(msg));
+      return cb(new Error(msg), '', '');
     }
-    cb(null, _out, _err);
+    cb(null, _out.toString(), _err.toString());
   });
 }
 
