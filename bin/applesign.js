@@ -86,7 +86,6 @@ new Applesign(options, (err, asInstance) => {
   } else if (conf.version) {
     console.log(packageJson.version);
   } else if (conf.h || conf.help || conf._.length === 0) {
-    const cmd = process.argv[1].split('/').pop();
     console.error(usageMessage);
   } else {
     const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';

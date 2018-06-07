@@ -224,7 +224,7 @@ function getIdentities (cb) {
         }
       }
     });
-    cb(undefined, ids);
+    cb(null, ids);
   });
 }
 

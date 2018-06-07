@@ -409,7 +409,7 @@ module.exports = class ApplesignSession {
           'beta-reports-active', /* our entitlements doesnt support beta */
           'aps-environment'
         ].forEach((id) => {
-          if (typeof entMacho[id] !== undefined) {
+          if (typeof entMacho[id] !== 'undefined') {
             delete entMacho[id];
             changed = true;
           }
@@ -546,7 +546,7 @@ module.exports = class ApplesignSession {
       const oldSupportedDevices = data['UISupportedDevices'];
       if (oldSupportedDevices) {
         this.emit('message', 'Empty UISupportedDevices');
-        if (typeof oldSupportedDevices === 'array') {
+        if (Array.isArray(oldSupportedDevices)) {
           oldSupportedDevices.forEach(check);
         } else {
           check(oldSupportedDevices);
@@ -554,7 +554,6 @@ module.exports = class ApplesignSession {
         delete data['UISupportedDevices'];
         changed = true;
       }
-      const oldFamily = +data['UIDeviceFamily'];
       if (!have.iPhone) {
         if (have.iPad) {
           this.emit('message', 'UIDeviceFamily forced to iPad/iPhone/iPod');
@@ -637,7 +636,6 @@ module.exports = class ApplesignSession {
         return true;
       }
       // check if there's a Plist to inform us which is the right executable
-      const plist = path.join(path.dirname(_), 'Info.plist');
       const exe = getExecutable(path.dirname(_), path.basename(_));
       if (path.basename(_) !== exe) {
         console.error('Not signing', _);
@@ -735,7 +733,6 @@ module.exports = class ApplesignSession {
 
     const serialSigning = (libs, next) => {
       let libsCopy = libs.slice(0).reverse();
-      let failure = false;
       const peek = (cb) => {
         if (libsCopy.length === 0) {
           libsCopy = libs.slice(0);
@@ -744,7 +741,6 @@ module.exports = class ApplesignSession {
         const lib = libsCopy.pop();
         this.signFile(lib, (err) => {
           if (err) {
-            failure = true;
             return err;
           }
           peek(cb);
@@ -878,7 +874,7 @@ module.exports = class ApplesignSession {
         if (error && !this.config.ignoreZipErrors) {
           this.cleanup(() => { cb(error); });
         } else {
-          cb(undefined, stdout);
+          cb(null, stdout);
         }
       });
     });
