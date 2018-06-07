@@ -29,4 +29,3 @@ function onEnd (error) {
     console.log('ios-deploy -b', s.config.outfile);
   }
 }
-

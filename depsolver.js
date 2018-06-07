@@ -87,7 +87,7 @@ function getMachoLibs (file, cb) {
         }
       }
       if (exec === null) {
-        /* skip fat file here*/
+        /* skip fat file here */
         return cb(null, []);
       }
       const libs = exec.cmds.filter((x) => {
@@ -119,7 +119,7 @@ function layerize (state) {
       }
       let allDepsSolved = true;
       for (let dep of deps) {
-        const depLayer = state[dep]? state[dep].layer: 0;
+        const depLayer = state[dep] ? state[dep].layer : 0;
         if (depLayer === -1 || depLayer === currentLayer) {
           allDepsSolved = false;
           break;

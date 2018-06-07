@@ -57,7 +57,7 @@ module.exports = class Applesign {
       s.setFile(file);
     }
     return s.signIPA((err) => {
-      s.finalize(cb, err)
+      s.finalize(cb, err);
     });
   }
 

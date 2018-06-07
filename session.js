@@ -102,10 +102,14 @@ function parentDirectory (root) {
 function getExecutable (appdir, exename) {
   if (appdir) {
     const plistPath = path.join(appdir, 'Info.plist');
-    const plistData = plist.readFileSync(plistPath);
-    const cfBundleExecutable = plistData['CFBundleExecutable'];
-    if (cfBundleExecutable) {
-      return cfBundleExecutable;
+    try {
+      const plistData = plist.readFileSync(plistPath);
+      const cfBundleExecutable = plistData['CFBundleExecutable'];
+      if (cfBundleExecutable) {
+        return cfBundleExecutable;
+      }
+    } catch (e) {
+  // do nothing
     }
   }
   return exename;
@@ -151,9 +155,9 @@ module.exports = class ApplesignSession {
 
   finalize (cb, error) {
     if (error && !this.config.noclean) {
-      return this.mrproper (_ => { cb(error); });
+      return this.mrproper(_ => { cb(error); });
     }
-    return cb (error);
+    return cb(error);
   }
 
   /* Public API */
@@ -538,7 +542,7 @@ module.exports = class ApplesignSession {
         } else {
           this.emit('message', 'Unknown device type: ' + type);
         }
-      }
+      };
       const oldSupportedDevices = data['UISupportedDevices'];
       if (oldSupportedDevices) {
         this.emit('message', 'Empty UISupportedDevices');

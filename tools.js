@@ -126,7 +126,7 @@ function getMobileProvisionPlist (file, cb) {
 
 function getEntitlementsFromMobileProvision (file, cb) {
   return getMobileProvisionPlist(file, (e, o) => {
-    return e? cb(e, o): cb(e, o['Entitlements']);
+    return e ? cb(e, o) : cb(e, o['Entitlements']);
   });
 }
 
