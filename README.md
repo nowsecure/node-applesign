@@ -56,7 +56,7 @@ Usage
 
 List local codesign identities:
 
-	$ bin/applesign -I
+	$ bin/applesign -L
 
 Resign an IPA with a specific identity:
 
