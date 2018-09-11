@@ -38,6 +38,7 @@ module.exports = class Applesign {
       mobileprovision: opt.mobileprovision || undefined,
       massageEntitlements: opt.massageEntitlements || false,
       forceFamily: opt.forceFamily || false,
+      allowHttp: opt.allowHttp || false,
       parallel: opt.parallel || false,
       verifyTwice: opt.verifyTwice || false,
       unfairPlay: opt.unfairPlay || false,

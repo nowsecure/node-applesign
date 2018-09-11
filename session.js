@@ -529,6 +529,14 @@ module.exports = class ApplesignSession {
     }
     let changed = false;
     const data = plist.readFileSync(file);
+    if (this.config.allowHttp) {
+      this.emit('message', 'Adding NSAllowArbitraryLoads');
+      if (!Object.isObject(data['NSAppTransportSecurity'])) {
+        data['NSAppTransportSecurity'] = {};
+      }
+      data['NSAppTransportSecurity']['NSAllowsArbitraryLoads'] = true;
+      changed = true;
+    }
     if (this.config.forceFamily) {
       const have = {
         iPhone: false,

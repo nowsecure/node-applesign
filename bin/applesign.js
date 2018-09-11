@@ -21,6 +21,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'p', 'parallel',
     'w', 'without-watchapp',
     'u', 'unfair',
+    'H', 'allow-http',
     'M', 'massage-entitlements',
     'f', 'force-family',
     's', 'single',
@@ -56,6 +57,7 @@ const options = {
   verifyTwice: conf.verifyTwice || !!conf.v,
   unfairPlay: conf.unfair || conf.u,
   forceFamily: conf['force-family'] || conf.f,
+  allowHttp: conf['allow-http'] || conf.H,
   single: conf.single || conf.s,
   dontVerify: conf['dont-verify'] || conf.V,
   selfSignedProvision: conf.S || conf['self-signed-provision'],
@@ -118,6 +120,8 @@ const usageMessage = `Usage:
   -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
+  -h, --help                    Show this help message
+  -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
   -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
   -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
