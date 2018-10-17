@@ -639,6 +639,9 @@ module.exports = class ApplesignSession {
 
   filterLibraries (libraries) {
     return libraries.filter(_ => {
+      if (this.config.all) {
+        return true;
+      }
       // we want to resign all frameworks. even if not referenced :?
       if (_.indexOf('Frameworks/') !== -1) {
         return true;

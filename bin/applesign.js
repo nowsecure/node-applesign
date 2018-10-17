@@ -116,6 +116,7 @@ const usageMessage = `Usage:
 
   -7, --use-7zip                Use 7zip instead of unzip
       --use-openssl             Use OpenSSL cms instead of Apple's security tool
+  -a, --all                     Resign all binaries, even it unrelated to the app
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -B, --bundleid-access-group   Add $(TeamIdentifier).bundleid to keychain-access-groups
   -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
