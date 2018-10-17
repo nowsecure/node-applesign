@@ -56,7 +56,7 @@ function findInPath (cb, user) {
       if (err !== undefined) {
         cmd[key] = loc;
         if (--pending === 0) {
-          cb(err, user);
+          cb('Warning: tools.findInPath: ' + err, user);
         }
       }
     });
