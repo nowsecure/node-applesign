@@ -12,15 +12,15 @@ var useOpenSSL = false;
 
 const cmd = {
   '7z': '/usr/local/bin/7z',
-  zip: '/usr/bin/zip',
-  unzip: '/usr/bin/unzip',
   codesign: '/usr/bin/codesign',
-  security: '/usr/bin/security',
-  xcodebuild: '/usr/bin/xcodebuild',
+  insert_dylib: 'insert_dylib',
+  lipo: '/usr/bin/lipo',
   /* only when useOpenSSL is true */
   openssl: '/usr/local/bin/openssl',
-  insert_dylib: 'insert_dylib',
-  lipo: '/usr/bin/lipo'
+  security: '/usr/bin/security',
+  unzip: '/usr/bin/unzip',
+  xcodebuild: '/usr/bin/xcodebuild',
+  zip: '/usr/bin/zip',
 };
 
 function execProgram (bin, arg, opt, cb) {
