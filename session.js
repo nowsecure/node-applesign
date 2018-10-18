@@ -472,7 +472,8 @@ module.exports = class ApplesignSession {
           ? fs.readFileSync(this.config.entitlement).toString()
           : plistBuild(entMacho).toString();
       const ent = plist.parse(newEntitlements.trim());
-      if (ent['com.apple.security.application-groups']) {
+      const shouldRenameGroups = !this.config.mobileprovision && !this.config.cloneEntitlements;
+      if (shouldRenameGroups && ent['com.apple.security.application-groups']) {
         const ids = appId.split('.');
         ids.shift();
         const id = ids.join('.');
