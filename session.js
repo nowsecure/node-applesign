@@ -227,8 +227,6 @@ module.exports = class ApplesignSession {
     if (isBitcodeSync.path(this.config.appbin)) {
       return next(new Error('This IPA contains only bitcode. Must be transpiled for the target device to run.'));
       this.emit('message', 'Main IPA executable contains only bitcode');
-    } else {
-      this.emit('message', 'Main IPA executable is not encrypted');
     }
     if (isEncryptedSync.path(this.config.appbin)) {
       if (!this.config.unfairPlay) {
