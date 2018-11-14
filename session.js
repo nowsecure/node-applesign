@@ -214,14 +214,14 @@ module.exports = class ApplesignSession {
     this.config.appbin = path.join(this.config.appdir, binname);
     try {
       if (!fs.lstatSync(this.config.appbin).isFile()) {
-        throw new Error('This was suposed to be a file');
+        return next(new Error('This was suposed to be a file'));
       }
     } catch (e) {
       const folders = this.config.appdir.split(path.sep);
       const binName = folders[folders.length - 1].replace('.app', '');
       this.config.appbin = path.join(this.config.appdir, binName);
       if (!fs.lstatSync(this.config.appbin).isFile()) {
-        throw new Error('This was suposed to be a file');
+        return next(new Error('This was suposed to be a file'));
       }
     }
     if (isBitcodeSync.path(this.config.appbin)) {
