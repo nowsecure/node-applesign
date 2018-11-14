@@ -12,6 +12,7 @@ const conf = require('minimist')(process.argv.slice(2), {
   boolean: [
     '7', 'use-7zip',
     'a', 'all',
+    'A', 'all-dirs',
     'B', 'bundleid-access-group',
     'c', 'clone-entitlements',
     'E', 'entry-entitlement',
@@ -22,6 +23,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'M', 'massage-entitlements',
     'n', 'noclean',
     'p', 'parallel',
+    'A', 'parallel',
     'r', 'replace',
     'S', 'self-signed-provision',
     's', 'single',
@@ -36,6 +38,7 @@ const conf = require('minimist')(process.argv.slice(2), {
 
 const options = {
   all: conf.a || conf.all || false,
+  allDirs: conf['all-dirs'] || conf.A,
   allowHttp: conf['allow-http'] || conf.H,
   bundleIdKeychainGroup: conf.B || conf['bundleid-access-group'],
   bundleid: conf.bundleid || conf.b,
@@ -117,6 +120,7 @@ const usageMessage = `Usage:
   -7, --use-7zip                Use 7zip instead of unzip
       --use-openssl             Use OpenSSL cms instead of Apple's security tool
   -a, --all                     Resign all binaries, even it unrelated to the app
+  -A, --all-dirs                Archive all directories, not just Payload/
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
   -B, --bundleid-access-group   Add $(TeamIdentifier).bundleid to keychain-access-groups
   -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin

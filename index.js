@@ -26,6 +26,7 @@ module.exports = class Applesign {
       dontVerify: opt.dontVerify || false,
       entitlement: opt.entitlement || undefined,
       entry: opt.entry || undefined,
+      allDirs: opt.allDirs || true,
       file: opt.file ? path.resolve(opt.file) : undefined,
       forceFamily: opt.forceFamily || false,
       identity: opt.identity || undefined,

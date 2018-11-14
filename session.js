@@ -838,7 +838,8 @@ module.exports = class ApplesignSession {
     }
     const continuation = () => {
       this.events.emit('message', 'Zipifying into ' + ipaOut + ' ...');
-      tools.zip(this.config.outdir, ipaOut, 'Payload', (error) => {
+      const rootFolder = this.config.payloadOnly? 'Payload': '.';
+      tools.zip(this.config.outdir, ipaOut, rootFolder, (error) => {
         if (!error && this.config.replaceipa) {
           this.events.emit('message', 'mv into ' + ipaIn);
           return fs.rename(ipaOut, ipaIn, next);
