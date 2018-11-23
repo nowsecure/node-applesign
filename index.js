@@ -22,7 +22,11 @@ module.exports = class Applesign {
         throw new Error('Version passed to -O must be numeric');
       }
     }
-    if (opt.mobileprovision && !opt.identity) {
+    if (opt.mobileprovision && opt.identity) {
+      if (idprov(opt.mobileprovision) !== opt.identity) {
+        throw new Error('MobileProvisioningVersion doesn\'t match the given identity');
+      }
+    } else if (opt.mobileprovision && !opt.identity) {
       opt.identity = idprov(opt.mobileprovision);
     }
     return {
