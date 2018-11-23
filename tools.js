@@ -219,7 +219,7 @@ function getIdentities (cb) {
         if (tok2 !== -1) {
           ids.push({
             'hash': msg.substring(0, tok2),
-            'name': msg.substring(tok2 + 1)
+            'name': msg.substring(tok2 + 1).replace(/^"/, '').replace(/"$/, '')
           });
         }
       }
