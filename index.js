@@ -3,6 +3,7 @@
 const tools = require('./tools');
 const path = require('path');
 const ApplesignSession = require('./session');
+const idprov = require('./idprov');
 
 module.exports = class Applesign {
   constructor (options, cb) {
@@ -20,6 +21,9 @@ module.exports = class Applesign {
       if (isNaN(+opt.osversion)) {
         throw new Error('Version passed to -O must be numeric');
       }
+    }
+    if (opt.mobileprovision && !opt.identity) {
+      opt.identity = idprov(opt.mobileprovision);
     }
     return {
       all: opt.all || false,

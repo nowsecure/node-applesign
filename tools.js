@@ -3,6 +3,7 @@
 /* private */
 
 const childproc = require('child_process');
+const execSync = childproc.execSync;
 const plist = require('simple-plist');
 const which = require('which');
 const fs = require('fs');
@@ -200,31 +201,37 @@ function insertLibrary (lib, bin, out, cb) {
   }
 }
 
+function getIdentitiesFromString (stdout) {
+  const lines = stdout.split('\n');
+  lines.pop(); // remove last line
+  let ids = [];
+  lines.filter(entry => {
+    return entry.indexOf('CSSMERR_TP_CERT_REVOKED') === -1;
+  }).forEach((line) => {
+    const tok = line.indexOf(') ');
+    if (tok !== -1) {
+      const msg = line.substring(tok + 2).trim();
+      const tok2 = msg.indexOf(' ');
+      if (tok2 !== -1) {
+        ids.push({
+          'hash': msg.substring(0, tok2),
+          'name': msg.substring(tok2 + 1).replace(/^"/, '').replace(/"$/, '')
+        });
+      }
+    }
+  });
+  return ids;
+}
+
+function getIdentitiesSync (bin, arg) {
+  const command = [ cmd.security, 'find-identity', '-v', '-p', 'codesigning' ];
+  return getIdentitiesFromString(execSync(command.join(' ')).toString());
+}
+
 function getIdentities (cb) {
   const args = [ 'find-identity', '-v', '-p', 'codesigning' ];
   execProgram(cmd.security, args, null, (error, stdout) => {
-    if (error) {
-      return cb(error);
-    }
-    const lines = stdout.split('\n');
-    lines.pop(); // remove last line
-    let ids = [];
-    lines.filter(entry => {
-      return entry.indexOf('CSSMERR_TP_CERT_REVOKED') === -1;
-    }).forEach((line) => {
-      const tok = line.indexOf(') ');
-      if (tok !== -1) {
-        const msg = line.substring(tok + 2).trim();
-        const tok2 = msg.indexOf(' ');
-        if (tok2 !== -1) {
-          ids.push({
-            'hash': msg.substring(0, tok2),
-            'name': msg.substring(tok2 + 1).replace(/^"/, '').replace(/"$/, '')
-          });
-        }
-      }
-    });
-    cb(null, ids);
+    cb(error, getIdentitiesFromString(stdout));
   });
 }
 
@@ -251,6 +258,7 @@ function setOptions (obj) {
   unzip,
   xcaToIpa,
   getIdentities,
+  getIdentitiesSync,
   insertLibrary,
   lipoFile,
   setOptions
