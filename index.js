@@ -16,9 +16,15 @@ module.exports = class Applesign {
     if (typeof opt !== 'object') {
       opt = {};
     }
+    if (opt.osversion !== undefined) {
+      if (isNaN(+opt.osversion)) {
+        throw new Error('Version passed to -O must be numeric');
+      }
+    }
     return {
       all: opt.all || false,
       allowHttp: opt.allowHttp || false,
+      osversion: opt.osversion || undefined,
       bundleid: opt.bundleid || undefined,
       bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
       cloneEntitlements: opt.cloneEntitlements || false,
