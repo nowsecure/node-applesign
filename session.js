@@ -110,7 +110,7 @@ function getExecutable (appdir, exename) {
         return cfBundleExecutable;
       }
     } catch (e) {
-  // do nothing
+      // do nothing
     }
   }
   return exename;
@@ -121,7 +121,7 @@ function isMacho (buffer) {
     [0xca, 0xfe, 0xba, 0xbe], // fat
     [0xce, 0xfa, 0xed, 0xfe], // 32bit
     [0xcf, 0xfa, 0xed, 0xfe], // 64bit
-    [0xfe, 0xed, 0xfa, 0xce]  // big-endian
+    [0xfe, 0xed, 0xfa, 0xce] // big-endian
   ];
   if (buffer.length < 4) {
     return false;
@@ -543,38 +543,7 @@ module.exports = class ApplesignSession {
       changed = true;
     }
     if (this.config.forceFamily) {
-      const have = {
-        iPhone: false,
-        iPad: false
-      };
-      const check = (type) => {
-        const types = [ null, 'iPhone', 'iPad' ];
-        const name = types[+type];
-        if (name) {
-          have[name] = true;
-        } else {
-          this.emit('message', 'Unknown device type: ' + type);
-        }
-      };
-      const oldSupportedDevices = data['UISupportedDevices'];
-      if (oldSupportedDevices) {
-        this.emit('message', 'Empty UISupportedDevices');
-        if (Array.isArray(oldSupportedDevices)) {
-          oldSupportedDevices.forEach(check);
-        } else {
-          check(oldSupportedDevices);
-        }
-        delete data['UISupportedDevices'];
-        changed = true;
-      }
-      if (!have.iPhone) {
-        if (have.iPad) {
-          this.emit('message', 'UIDeviceFamily forced to iPad/iPhone/iPod');
-          data['UIDeviceFamily'] = [1, 2];
-        } else {
-          this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
-          data['UIDeviceFamily'] = 1;
-        }
+      if (this.performForceFamily(data)) {
         changed = true;
       }
     }
@@ -838,7 +807,7 @@ module.exports = class ApplesignSession {
     }
     const continuation = () => {
       this.events.emit('message', 'Zipifying into ' + ipaOut + ' ...');
-      const rootFolder = this.config.payloadOnly? 'Payload': '.';
+      const rootFolder = this.config.payloadOnly ? 'Payload' : '.';
       tools.zip(this.config.outdir, ipaOut, rootFolder, (error) => {
         if (!error && this.config.replaceipa) {
           this.events.emit('message', 'mv into ' + ipaIn);
@@ -848,7 +817,7 @@ module.exports = class ApplesignSession {
       });
     };
     continuation();
-/*
+    /*
     if (this.config.withoutWatchapp) {
       const watchdir = path.join(this.config.appdir, 'Watch');
       this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
@@ -896,4 +865,57 @@ module.exports = class ApplesignSession {
       });
     });
   }
+
+  performForceFamily (data) {
+    const have = supportedDevices(data);
+    const df = [];
+    if (have.iPhone.length > 0) {
+      df.push(1);
+    }
+    if (have.iPad.length > 0) {
+      df.push(2);
+    }
+    if (df.length === 0) {
+      this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
+      df.push(1);
+    }
+    if (df.length === 2) {
+      this.emit('message', 'No UIDeviceFamily changes required');
+      return false;
+    }
+    this.emit('message', 'UIDeviceFamily set to ' + JSON.stringify(df));
+    data.UIDeviceFamily = df;
+    return true;
+  }
 };
+
+function supportedDevices (data) {
+  const have = { iPhone: [], iPad: [] };
+  const sd = data.UISupportedDevices;
+  if (Array.isArray(sd)) {
+    sd.forEach(model => {
+      for (let type in ['iPhone', 'iPad']) {
+        if (model.indexOf(type) !== -1) {
+          have[type].push(model);
+          break;
+        }
+      }
+    });
+  } else if (sd !== undefined) {
+    console.error('Warning: Invalid UISupportedDevices in Info.plist?');
+  }
+  const df = data.UIDeviceFamily;
+  if (Array.isArray(df)) {
+    df.forEach(family => {
+      switch (family) {
+        case 1:
+          have.iPhone.push('iPhone');
+          break;
+        case 2:
+          have.iPad.push('iPad');
+          break;
+      }
+    });
+  }
+  return have;
+}
