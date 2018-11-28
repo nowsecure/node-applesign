@@ -548,25 +548,29 @@ module.exports = class ApplesignSession {
       }
     }
     if (bundleid) {
-      const oldBundleId = data['CFBundleIdentifier'];
-      this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleId + ' into ' + bundleid);
-      if (oldBundleId) {
-        data['CFBundleIdentifier'] = bundleid;
-      }
-      if (data['basebundleidentifier']) {
-        data['basebundleidentifier'] = bundleid;
-      }
-      try {
-        data['CFBundleURLTypes'][0]['CFBundleURLName'] = bundleid;
-      } catch (e) {
-        /* do nothing */
-      }
+      this.setBundleId(data, bundleid);
       changed = true;
     }
     if (changed) {
       plist.writeFileSync(file, data);
     }
     next();
+  }
+
+  setBundleId(data, bundleid) {
+    const oldBundleId = data['CFBundleIdentifier'];
+    this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleId + ' into ' + bundleid);
+    if (oldBundleId) {
+      data['CFBundleIdentifier'] = bundleid;
+    }
+    if (data['basebundleidentifier']) {
+      data['basebundleidentifier'] = bundleid;
+    }
+    try {
+      data['CFBundleURLTypes'][0]['CFBundleURLName'] = bundleid;
+    } catch (e) {
+      /* do nothing */
+    }
   }
 
   signFile (file, next) {
