@@ -38,8 +38,6 @@ const entitlementTemplate = `
 
 function defaultEntitlements (appid, devid) {
   const ent = plist.parse(entitlementTemplate.trim());
-  // console.log('appid', appid);
-  // console.log('devid', devid);
   ent['application-identifier'] = appid;
   ent['com.apple.developer.team-identifier'] = devid;
   ent['keychain-access-groups'] = [ appid ];
@@ -618,18 +616,18 @@ module.exports = class ApplesignSession {
   }
 
   filterLibraries (libraries) {
-    return libraries.filter(_ => {
+    return libraries.filter(library => {
+      // Resign all frameworks. even if not referenced :?
       if (this.config.all) {
         return true;
       }
-      // we want to resign all frameworks. even if not referenced :?
-      if (_.indexOf('Frameworks/') !== -1) {
+      if (library.indexOf('Frameworks/') !== -1) {
         return true;
       }
       // check if there's a Plist to inform us which is the right executable
-      const exe = getExecutable(path.dirname(_), path.basename(_));
-      if (path.basename(_) !== exe) {
-        console.error('Not signing', _);
+      const exe = getExecutable(path.dirname(library), path.basename(library));
+      if (path.basename(library) !== exe) {
+        this.emit('debug', 'Not signing ' + library);
         return false;
       }
       return true;
@@ -651,7 +649,7 @@ module.exports = class ApplesignSession {
         return;
       }
       const file = path.join(basedir, filename);
-      /* only walk on files. Symlinks and other special files are forbidden */
+      // only walk on files. Symlinks and other special files are forbidden
       if (!fs.lstatSync(file).isFile()) {
         return;
       }
@@ -748,7 +746,7 @@ module.exports = class ApplesignSession {
           }
           const lib = libsCopy.pop();
           this.emit('message', 'Verifying ' + lib);
-          tools.verifyCodesign(lib, null, () => {
+          tools.verifyCodesign(lib, null, _ => {
             verify(cb);
           });
         };
@@ -797,6 +795,7 @@ module.exports = class ApplesignSession {
     });
   }
 
+  /* TODO: move to tools.js */
   zip (next) {
     function getOutputPath (cwd, ofile) {
       if (ofile.startsWith(path.sep)) {
@@ -811,30 +810,15 @@ module.exports = class ApplesignSession {
     } catch (e) {
       /* do nothing */
     }
-    const continuation = () => {
-      this.events.emit('message', 'Zipifying into ' + ipaOut + ' ...');
-      const rootFolder = this.config.payloadOnly ? 'Payload' : '.';
-      tools.zip(this.config.outdir, ipaOut, rootFolder, (error) => {
-        if (!error && this.config.replaceipa) {
-          this.events.emit('message', 'mv into ' + ipaIn);
-          return fs.rename(ipaOut, ipaIn, next);
-        }
-        next(error);
-      });
-    };
-    continuation();
-    /*
-    if (this.config.withoutWatchapp) {
-      const watchdir = path.join(this.config.appdir, 'Watch');
-      this.emit('message', 'Stripping out the WatchApp: ' + watchdir);
-      rimraf(watchdir, () => {
-        const plugdir = path.join(this.config.appdir, 'PlugIns');
-        rimraf(plugdir, continuation);
-      });
-    } else {
-      continuation();
-    }
-*/
+    this.events.emit('message', 'Zipifying into ' + ipaOut + ' ...');
+    const rootFolder = this.config.payloadOnly ? 'Payload' : '.';
+    tools.zip(this.config.outdir, ipaOut, rootFolder, (error) => {
+      if (!error && this.config.replaceipa) {
+        this.events.emit('message', 'mv into ' + ipaIn);
+        return fs.rename(ipaOut, ipaIn, next);
+      }
+      next(error);
+    });
   }
 
   setFile (name) {
