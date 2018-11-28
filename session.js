@@ -242,7 +242,7 @@ module.exports = class ApplesignSession {
         }
       });
     }
-    this.removeWatchApp(() => {
+    const continuation = () => {
       const infoPlist = path.join(this.config.appdir, 'Info.plist');
       this.fixPlist(infoPlist, this.config.bundleid, (err) => {
         if (err) return this.events.emit('error', err, next);
@@ -257,13 +257,15 @@ module.exports = class ApplesignSession {
           });
         });
       });
-    });
+    };
+    if (this.config.withoutWatchapp) {
+      this.removeWatchApp(continuation);
+    } else {
+      continuation();
+    }
   }
 
   removeWatchApp (cb) {
-    if (!this.config.withoutWatchapp) {
-      return cb();
-    }
     const keepTests = true;
     const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
