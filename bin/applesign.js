@@ -73,7 +73,7 @@ const options = {
 colors.setTheme({
   error: 'red',
   msg: 'yellow',
-  warn: 'green',
+  warning: 'green',
 });
 
 new Applesign(options, (err, asInstance) => {
@@ -106,7 +106,7 @@ new Applesign(options, (err, asInstance) => {
     }).on('message', (msg) => {
       console.log(colors.msg(msg));
     }).on('warning', (msg) => {
-      console.error(colors.error('error'), msg);
+      console.error(colors.warning('warning'), msg);
     }).on('error', (msg) => {
       console.error(colors.msg(msg));
     });

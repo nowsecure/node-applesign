@@ -627,7 +627,7 @@ module.exports = class ApplesignSession {
       // check if there's a Plist to inform us which is the right executable
       const exe = getExecutable(path.dirname(library), path.basename(library));
       if (path.basename(library) !== exe) {
-        this.emit('debug', 'Not signing ' + library);
+        this.emit('warning', 'Not signing ' + library);
         return false;
       }
       return true;
