@@ -14,9 +14,6 @@ const isEncryptedSync = require('macho-is-encrypted');
 const isBitcodeSync = require('./macho-is-bitcode');
 const machoEntitlements = require('macho-entitlements');
 
-/* experimental */
-const forceTaskAllow = true;
-
 const entitlementTemplate = `
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -431,8 +428,9 @@ module.exports = class ApplesignSession {
         delete entMacho['com.apple.developer.team-identifier'];
       }
     }
-    if (forceTaskAllow === true) {
+    if (this.config.withGetTaskAllow) {
       if (entMacho['get-task-allow'] !== true) {
+        this.emit('message', 'get-task-allow set to true');
         entMacho['get-task-allow'] = true;
         changed = true;
       }

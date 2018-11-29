@@ -27,6 +27,7 @@ const conf = require('minimist')(process.argv.slice(2), {
     'r', 'replace',
     'S', 'self-signed-provision',
     's', 'single',
+    't', 'without-get-task-allow',
     'u', 'unfair',
     'u', 'unsigned-provision',
     'V', 'dont-verify',
@@ -49,6 +50,7 @@ const options = {
   entry: conf['entry-entitlement'] || conf.E,
   file: conf._[0] || 'undefined',
   forceFamily: conf['force-family'] || conf.f,
+  withGetTaskAllow: !(conf['without-get-task-allow'] || conf.t),
   identity: conf.identity || conf.i,
   ignoreZipErrors: conf.z || conf['ignore-zip-errors'],
   insertLibrary: conf.I || conf.insert,
@@ -144,6 +146,7 @@ const usageMessage = `Usage:
   -r, --replace                 Replace the input IPA file with the resigned one
   -s, --single                  Sign a single file instead of an IPA
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
+  -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
   -u, --unfair                  Resign encrypted applications
   -v, --verify-twice            Verify after signing every file and at the end
   -V, --dont-verify             Do not perform any codesign verification
@@ -152,9 +155,10 @@ const usageMessage = `Usage:
   -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
   [input-ipafile]               Path to the IPA file to resign
 
-Example:
+Examples:
 
   applesign -L # enumerate codesign identities, grab one and use it with -i
+  applesign -m embedded.mobileprovision test-app.ipa
   applesign -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
   applesign -i AD71EB4... -c --lipo arm64 -w -V test-app.ipa
 `;

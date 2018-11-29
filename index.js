@@ -44,6 +44,7 @@ module.exports = class Applesign {
       file: opt.file ? path.resolve(opt.file) : undefined,
       forceFamily: opt.forceFamily || false,
       identity: opt.identity || undefined,
+      withGetTaskAllow: opt.withGetTaskAllow,
       ignoreCodesignErrors: true,
       ignoreVerificationErrors: true,
       ignoreZipErrors: opt.ignoreZipErrors || false,
