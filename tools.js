@@ -189,14 +189,18 @@ function insertLibrary (lib, bin, out, cb) {
     } catch (error) {
       return cb(error);
     }
-  } catch (_) {
-    const args = [ '--strip-codesig', '--all-yes', lib, bin, bin ];
-    execProgram(cmd.insert_dylib, args, null, (error, stdout) => {
-      if (error) {
-        return cb(error);
-      }
-      cb();
-    });
+  } catch (e) {
+    if (cmd.insert_dylib) {
+      const args = [ '--strip-codesig', '--all-yes', lib, bin, bin ];
+      execProgram(cmd.insert_dylib, args, null, (error, stdout) => {
+        if (error) {
+          return cb(error);
+        }
+        cb();
+      });
+    } else {
+      cb(new Error('Cannot find insert_dylib or macho-mangle'));
+    }
   }
 }
 
