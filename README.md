@@ -6,15 +6,16 @@ NodeJS module and commandline utility for re-signing iOS applications (IPA files
 Author
 ------
 
-Sergi Alvarez aka pancake @ nowsecure.com
+Sergi Alvarez Capilla aka pancake @ nowsecure.com
 
 Program Dependencies
 --------------------
 
-* zip      - re-create IPA
-* unzip    - decompress IPA
-* codesign - sign and verify binary with new entitlements and identity
-* security - get entitlements from mobileprovision
+* zip          - re-create IPA
+* unzip        - decompress IPA
+* codesign     - sign and verify binary with new entitlements and identity
+* security     - get entitlements from mobileprovision
+* insert_dylib - only if you want to use the -I,--insert flag
 
 Usage
 -----
