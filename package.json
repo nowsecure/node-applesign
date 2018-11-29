@@ -11,7 +11,8 @@
   "scripts": {
     "semi": "semistandard",
     "test": "mocha",
-    "dist": "pkg bin/applesign.js ; for a in linux macos win.exe ; do rm -f applesign-$a.zip ; zip -9 applesign-$a.zip applesign-$a ; done"
+    "dist": "./dist.sh",
+    "dist-all": "./dist.sh macos linux freebsd alpine win"
   },
   "devDependencies": {
     "semistandard": "^13.0.1",
