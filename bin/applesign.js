@@ -79,7 +79,7 @@ colors.setTheme({
 });
 
 new Applesign(options, (err, asInstance) => {
-  if (err) {
+  if (err && err.indexOf('dylib_insert') !== -1) {
     console.error(err);
   }
   if (conf.identities || conf.L) {
