@@ -1,4 +1,4 @@
-const Applesign = require('./');
+const Applesign = require('.');
 
 const as = new Applesign({
   /* bin/applesign -L to list all available identities in your system */

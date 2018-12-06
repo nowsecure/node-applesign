@@ -1,9 +1,9 @@
 'use strict';
 
-const tools = require('./tools');
 const path = require('path');
-const ApplesignSession = require('./session');
-const idprov = require('./idprov');
+const tools = require('./lib/tools');
+const idprov = require('./lib/idprov');
+const ApplesignSession = require('./lib/session');
 
 module.exports = class Applesign {
   constructor (options, cb) {
@@ -23,8 +23,10 @@ module.exports = class Applesign {
       }
     }
     if (opt.mobileprovision && opt.identity) {
-      if (idprov(opt.mobileprovision) !== opt.identity) {
-        throw new Error('MobileProvisioningVersion doesn\'t match the given identity');
+      const id0 = idprov(opt.mobileprovision);
+      const id1 = opt.identity;
+      if (id0 !== id1) {
+        throw new Error('MobileProvisioningVersion doesn\'t match the given identity (' + id0 + ' vs ' + id1 + ')');
       }
     } else if (opt.mobileprovision && !opt.identity) {
       opt.identity = idprov(opt.mobileprovision);
@@ -63,7 +65,7 @@ module.exports = class Applesign {
       use7zip: opt.use7zip === true,
       useOpenSSL: opt.useOpenSSL === true,
       verifyTwice: opt.verifyTwice || false,
-      withoutWatchapp: opt.withoutWatchapp || false,
+      withoutWatchapp: opt.withoutWatchapp || false
     };
   }
 

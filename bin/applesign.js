@@ -69,21 +69,18 @@ const options = {
   use7zip: conf['7'] || conf['use-7zip'],
   useOpenSSL: conf['use-openssl'],
   verifyTwice: conf.verifyTwice || !!conf.v,
-  withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
+  withoutWatchapp: !!conf['without-watchapp'] || !!conf.w
 };
 
 colors.setTheme({
   error: 'red',
   msg: 'yellow',
-  warning: 'green',
+  warning: 'green'
 });
 
-new Applesign(options, (err, asInstance) => {
-  if (err && err.indexOf('dylib_insert') !== -1) {
-    console.error(err);
-  }
+new Applesign(options, (err, instance) => {
   if (conf.identities || conf.L) {
-    asInstance.getIdentities((err, ids) => {
+    instance.getIdentities((err, ids) => {
       if (err) {
         console.error(colors.error(err));
       } else {
@@ -97,8 +94,13 @@ new Applesign(options, (err, asInstance) => {
   } else if (conf.h || conf.help || conf._.length === 0) {
     console.error(usageMessage);
   } else {
+    if (options.insertLibrary !== undefined) {
+      if (err && err.indexOf('dylib_insert') !== -1) {
+        console.error(err);
+      }
+    }
     const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
-    const session = asInstance[target](options.file, (error, data) => {
+    const session = instance[target](options.file, (error, data) => {
       if (error) {
         console.error(error, data);
         process.exitCode = 1;
