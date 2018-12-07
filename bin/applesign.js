@@ -31,8 +31,8 @@ const conf = require('minimist')(process.argv.slice(2), {
     't', 'without-get-task-allow',
     'u', 'unfair',
     'u', 'unsigned-provision',
-    'V', 'dont-verify',
-    'v', 'verify-twice',
+    'v', 'verify',
+    'V', 'verify-twice',
     'w', 'without-watchapp',
     'z', 'ignore-zip-errors'
   ]
@@ -46,7 +46,7 @@ const options = {
   bundleid: conf.bundleid || conf.b,
   cloneEntitlements: conf.c || conf['clone-entitlements'],
   customKeychainGroup: conf.K || conf['add-access-group'],
-  dontVerify: conf['dont-verify'] || conf.V,
+  dontVerify: !conf.v && !conf.V && !conf.verify && !conf['verify-twice'],
   entitlement: conf.entitlement || conf.e,
   entry: conf['entry-entitlement'] || conf.E,
   file: conf._[0] || 'undefined',
@@ -69,7 +69,7 @@ const options = {
   unfairPlay: conf.unfair || conf.u,
   use7zip: conf['7'] || conf['use-7zip'],
   useOpenSSL: conf['use-openssl'],
-  verifyTwice: conf.verifyTwice || !!conf.v,
+  verifyTwice: conf.V || conf['verify-twice'],
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w
 };
 
@@ -167,8 +167,8 @@ const usageMessage = `Usage:
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
   -u, --unfair                  Resign encrypted applications
-  -v, --verify-twice            Verify after signing every file and at the end
-  -V, --dont-verify             Do not perform any codesign verification
+  -v, --verify                  Verify all the signed files at the end
+  -V, --verify-twice            Verify after signing every file and at the end
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
       --version                 Show applesign version
   -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
