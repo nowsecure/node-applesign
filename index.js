@@ -70,36 +70,53 @@ module.exports = class Applesign {
   }
 
   signDirectory (directory, cb) {
-    const s = new ApplesignSession(this.config);
-    s.signAppDirectory(directory, (error, res) => {
-      if (error) {
-        console.error(error);
+    return this.newSession(directory, cb, (err, cb, session) => {
+      if (err) {
+        console.error(err);
       }
-      s.finalize(cb, error);
+      session.signAppDirectory(directory, (error, res) => {
+        if (error) {
+          console.error(error);
+        }
+        session.finalize(cb, error);
+      });
     });
-    return s;
   }
 
   signIPA (file, cb) {
-    const s = new ApplesignSession(this.config);
-    if (tools.isDirectory(file)) {
-      console.error('This is a directory');
-    } else {
-      if (typeof file === 'function') {
-        cb = file;
-      } else {
-        s.setFile(file);
+    return this.newSession(file, cb, (err, cb, session) => {
+      if (err) {
+        return cb(err);
       }
-      s.signIPA((err) => {
-        s.finalize(cb, err);
+      if (tools.isDirectory(file)) {
+        return cb(new Error('This is a directory'));
+      }
+      session.signIPA((err) => {
+        session.finalize(cb, err);
       });
+    });
+  }
+
+  newSession (file, cb, action) {
+    const s = new ApplesignSession(this.config);
+    if (typeof file === 'function') {
+      cb = file;
+    } else {
+      s.setFile(file);
     }
-    return s;
+    return {
+      start: (cb) => { action(undefined, cb, s); },
+      session: s
+    };
   }
 
   signFile (file, cb) {
-    const s = new ApplesignSession(this.config);
-    return s.signFile(file, cb);
+    return this.newSession(file, cb, (err, cb, session) => {
+      if (err) {
+        return cb(err);
+      }
+      session.signFile(file, cb);
+    });
   }
 
   signXCarchive (file, cb) {

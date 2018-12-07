@@ -10,7 +10,7 @@
   },
   "scripts": {
     "semi": "semistandard",
-    "indent": "semistandard",
+    "indent": "semistandard --fix bin/*.js lib/*.js index.js",
     "test": "mocha",
     "dist": "./dist.sh",
     "dist-all": "./dist.sh macos linux freebsd alpine win"

@@ -2,13 +2,15 @@
 'use strict';
 
 const packageJson = require('../package.json');
+const { execSync } = require('child_process');
 const tools = require('../lib/tools');
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
   string: [
     'i', 'identity',
-    'O', 'osversion'
+    'O', 'osversion',
+    'R', 'run'
   ],
   boolean: [
     '7', 'use-7zip',
@@ -105,23 +107,60 @@ new Applesign(options, (err, instance) => {
       console.error('Cannot open file');
       process.exitCode = 1;
     } else {
-      const session = instance[target](options.file, (error, data) => {
-        if (error) {
-          console.error(error, data);
-          process.exitCode = 1;
-        } else {
-          console.log('Target is now signed:', session.config.outfile || options.file);
-        }
-      }).on('message', (msg) => {
+      const res = instance[target](options.file);
+      res.session.on('message', (msg) => {
         console.log(colors.msg(msg));
       }).on('warning', (msg) => {
         console.error(colors.warning('warning'), msg);
       }).on('error', (msg) => {
         console.error(colors.msg(msg));
       });
+      const run = (conf.R || conf.run);
+      if (run !== undefined) {
+        if (!runScript(run, res.session)) {
+          process.exitCode = 1;
+          process.exit(1);
+        }
+      }
+      if (process.exitCode !== 0) {
+        res.start((error, data) => {
+          if (error) {
+            console.error(error, data);
+            process.exitCode = 1;
+          } else {
+            console.log('Target is now signed:', res.session.config.outfile || options.file);
+          }
+        });
+      }
     }
   }
 });
+
+function runScript (script, session) {
+  if (script.endsWith('.js')) {
+    try {
+      const s = require(script);
+      return s(session);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  } else {
+    process.env['APPLESIGN_DIRECTORY'] = session.config.appdir;
+    process.env['APPLESIGN_MAINBIN'] = session.config.appbin;
+    process.env['APPLESIGN_OUTFILE'] = session.config.outfile;
+    process.env['APPLESIGN_OUTDIR'] = session.config.outdir;
+    process.env['APPLESIGN_FILE'] = session.config.file;
+    try {
+      const res = execSync(script);
+      console.error(res.toString());
+    } catch (e) {
+      console.error(e.toString());
+      return false;
+    }
+  }
+  return true;
+}
 
 function getTargetMethod (file, single) {
   try {
