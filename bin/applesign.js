@@ -96,7 +96,7 @@ new Applesign(options, (err, instance) => {
     console.error(usageMessage);
   } else {
     if (options.insertLibrary !== undefined) {
-      if (err && err.indexOf('dylib_insert') !== -1) {
+      if (err && err.toString().indexOf('dylib_insert') !== -1) {
         console.error(err);
       }
     }
