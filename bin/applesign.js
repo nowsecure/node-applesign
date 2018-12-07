@@ -2,6 +2,7 @@
 'use strict';
 
 const packageJson = require('../package.json');
+const tools = require('../lib/tools');
 const colors = require('colors');
 const Applesign = require('../');
 const conf = require('minimist')(process.argv.slice(2), {
@@ -99,23 +100,39 @@ new Applesign(options, (err, instance) => {
         console.error(err);
       }
     }
-    const target = (conf.s || conf.single) ? 'signFile' : 'signIPA';
-    const session = instance[target](options.file, (error, data) => {
-      if (error) {
-        console.error(error, data);
-        process.exitCode = 1;
-      } else {
-        console.log('Target is now signed:', session.config.outfile || options.file);
-      }
-    }).on('message', (msg) => {
-      console.log(colors.msg(msg));
-    }).on('warning', (msg) => {
-      console.error(colors.warning('warning'), msg);
-    }).on('error', (msg) => {
-      console.error(colors.msg(msg));
-    });
+    const target = getTargetMethod(options.file, (conf.s || conf.single));
+    if (target === undefined) {
+      console.error('Cannot open file');
+      process.exitCode = 1;
+    } else {
+      const session = instance[target](options.file, (error, data) => {
+        if (error) {
+          console.error(error, data);
+          process.exitCode = 1;
+        } else {
+          console.log('Target is now signed:', session.config.outfile || options.file);
+        }
+      }).on('message', (msg) => {
+        console.log(colors.msg(msg));
+      }).on('warning', (msg) => {
+        console.error(colors.warning('warning'), msg);
+      }).on('error', (msg) => {
+        console.error(colors.msg(msg));
+      });
+    }
   }
 });
+
+function getTargetMethod (file, single) {
+  try {
+    if (tools.isDirectory(file)) {
+      return 'signDirectory';
+    }
+    return (single) ? 'signFile' : 'signIPA';
+  } catch (e) {
+    return undefined;
+  }
+}
 
 const usageMessage = `Usage:
 

@@ -69,16 +69,32 @@ module.exports = class Applesign {
     };
   }
 
+  signDirectory (directory, cb) {
+    const s = new ApplesignSession(this.config);
+    s.signAppDirectory(directory, (error, res) => {
+      if (error) {
+        console.error(error);
+      }
+      s.finalize(cb, error);
+    });
+    return s;
+  }
+
   signIPA (file, cb) {
     const s = new ApplesignSession(this.config);
-    if (typeof file === 'function') {
-      cb = file;
+    if (tools.isDirectory(file)) {
+      console.error('This is a directory');
     } else {
-      s.setFile(file);
+      if (typeof file === 'function') {
+        cb = file;
+      } else {
+        s.setFile(file);
+      }
+      s.signIPA((err) => {
+        s.finalize(cb, err);
+      });
     }
-    return s.signIPA((err) => {
-      s.finalize(cb, err);
-    });
+    return s;
   }
 
   signFile (file, cb) {

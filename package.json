@@ -10,6 +10,7 @@
   },
   "scripts": {
     "semi": "semistandard",
+    "indent": "semistandard",
     "test": "mocha",
     "dist": "./dist.sh",
     "dist-all": "./dist.sh macos linux freebsd alpine win"
