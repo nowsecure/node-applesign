@@ -39,7 +39,6 @@ module.exports = class Applesign {
       bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
       cloneEntitlements: opt.cloneEntitlements || false,
       customKeychainGroup: opt.customKeychainGroup || undefined,
-      dontVerify: opt.dontVerify || false,
       entitlement: opt.entitlement || undefined,
       entry: opt.entry || undefined,
       allDirs: opt.allDirs || true,
@@ -64,6 +63,7 @@ module.exports = class Applesign {
       unfairPlay: opt.unfairPlay || false,
       use7zip: opt.use7zip === true,
       useOpenSSL: opt.useOpenSSL === true,
+      verify: opt.verify || false,
       verifyTwice: opt.verifyTwice || false,
       withoutWatchapp: opt.withoutWatchapp || false
     };

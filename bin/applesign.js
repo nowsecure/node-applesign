@@ -48,7 +48,6 @@ const options = {
   bundleid: conf.bundleid || conf.b,
   cloneEntitlements: conf.c || conf['clone-entitlements'],
   customKeychainGroup: conf.K || conf['add-access-group'],
-  dontVerify: !conf.v && !conf.V && !conf.verify && !conf['verify-twice'],
   entitlement: conf.entitlement || conf.e,
   entry: conf['entry-entitlement'] || conf.E,
   file: conf._[0] || 'undefined',
@@ -71,6 +70,7 @@ const options = {
   unfairPlay: conf.unfair || conf.u,
   use7zip: conf['7'] || conf['use-7zip'],
   useOpenSSL: conf['use-openssl'],
+  verify: conf.v || conf.V || conf.verify || conf['verify-twice'],
   verifyTwice: conf.V || conf['verify-twice'],
   withoutWatchapp: !!conf['without-watchapp'] || !!conf.w
 };
