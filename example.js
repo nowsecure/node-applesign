@@ -2,7 +2,7 @@ const Applesign = require('.');
 
 const as = new Applesign({
   /* bin/applesign -L to list all available identities in your system */
-  identity: 'A5A2C300FE2A8EAC99A9601FDAAEA811CC80586F',
+  identity: '67CF8DCD3BA1E7241FFCFCE66FA6C0F58D17F795',
   /* clone the entitlements from the mobile provisioning */
   cloneEntitlements: false,
   mobileProvisioning: '/tmp/embedded.mobileprovision'
@@ -13,19 +13,18 @@ if (process.argv.length < 3) {
   process.exit(1);
 }
 
-const s = as.signIPA(process.argv[2], onEnd)
-  .on('message', (msg) => {
-    console.log('message', msg);
-  })
+const s = as.signIPA(process.argv[2]);
+s.session.on('message', (msg) => {
+  console.log('message', msg);
+})
   .on('warning', (msg) => {
     console.error('warning', msg);
   });
 
-function onEnd (error) {
+s.start((error, session) => {
   if (error) {
     console.log('error', error);
     process.exit(1);
-  } else {
-    console.log('ios-deploy -b', s.config.outfile);
   }
-}
+  console.log('ios-deploy -b', s.session.config.outfile);
+});
