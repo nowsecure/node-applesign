@@ -151,40 +151,35 @@ const as = new Applesign({
   mobileprovision: '/path/to/dev.mobileprovision',
   withoutWatchapp: true
 });
+as.events.on('warning', (msg) => {
+  console.log('WARNING', msg);
+})
+.on('message', (msg) => {
+  console.log('msg', msg);
+});
 
-const s = as.signIPA('/path/to/app.ipa', onEnd)
-  .on('warning', (msg) => {
-    console.log('WARNING', msg);
-  })
-  .on('message', (msg) => {
-    console.log('msg', msg);
-  });
-
-function onEnd(err, data) {
-  if (err) {
-    console.error(err);
-    s.cleanup();
-    process.exit(1);
-  } else {
-    console.log('ios-deploy -b', as.config.outfile);
-    process.exit(0);
-  }
-}
+as.signIPA('/path/to/app.ipa')
+.then(_ => {
+  console.log('ios-deploy -b', as.config.outfile);
+})
+.catch(e => {
+  console.error(e);
+  process.exitCode = 1;
+});
 
 ```
 
 To list the developer identities available in the system:
 
 ```js
-as.getIdentities((err, ids) => {
-  if (err) {
-    console.error(err, ids);
-  } else {
-    ids.forEach((id) => {
-      console.log(id.hash, id.name);
-    });
-  }
-});
+try {
+  const ids = await as.getIdentities();
+  ids.forEach((id) => {
+    console.log(id.hash, id.name);
+  });
+} catch (err) {
+  console.error(err, ids);
+}
 ```
 
 Bear in mind that the Applesign object can tuned to use different

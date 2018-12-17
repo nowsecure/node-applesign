@@ -2,7 +2,6 @@
 'use strict';
 
 const packageJson = require('../package.json');
-const { execSync } = require('child_process');
 const tools = require('../lib/tools');
 const colors = require('colors');
 const Applesign = require('../');
@@ -56,6 +55,7 @@ const options = {
   identity: conf.identity || conf.i,
   ignoreZipErrors: conf.z || conf['ignore-zip-errors'],
   insertLibrary: conf.I || conf.insert,
+  run: conf.R || conf.run,
   keychain: conf.keychain || conf.k,
   lipoArch: conf.lipo || conf.l,
   massageEntitlements: conf['massage-entitlements'] || conf.M,
@@ -81,16 +81,14 @@ colors.setTheme({
   warning: 'green'
 });
 
-new Applesign(options, (err, instance) => {
+async function main () {
+  const instance = new Applesign(options);
+  // initialize
+  await tools.findInPath();
   if (conf.identities || conf.L) {
-    instance.getIdentities((err, ids) => {
-      if (err) {
-        console.error(colors.error(err));
-      } else {
-        ids.forEach((id) => {
-          console.log(id.hash, id.name);
-        });
-      }
+    const ids = await instance.getIdentities();
+    ids.forEach((id) => {
+      console.log(id.hash, id.name);
     });
   } else if (conf.version) {
     console.log(packageJson.version);
@@ -98,69 +96,30 @@ new Applesign(options, (err, instance) => {
     console.error(usageMessage);
   } else {
     if (options.insertLibrary !== undefined) {
-      if (err && err.toString().indexOf('dylib_insert') !== -1) {
-        console.error(err);
-      }
+      // if (err && err.toString().indexOf('dylib_insert') !== -1) {
+      // console.error(err);
+      // }
     }
     const target = getTargetMethod(options.file, (conf.s || conf.single));
     if (target === undefined) {
-      console.error('Cannot open file');
-      process.exitCode = 1;
-    } else {
-      const res = instance[target](options.file);
-      res.session.on('message', (msg) => {
-        console.log(colors.msg(msg));
-      }).on('warning', (msg) => {
-        console.error(colors.warning('warning'), msg);
-      }).on('error', (msg) => {
-        console.error(colors.msg(msg));
-      });
-      const run = (conf.R || conf.run);
-      if (run !== undefined) {
-        if (!runScript(run, res.session)) {
-          process.exitCode = 1;
-          process.exit(1);
-        }
-      }
-      if (process.exitCode !== 0) {
-        res.start((error, data) => {
-          if (error) {
-            console.error(error, data);
-            process.exitCode = 1;
-          } else {
-            console.log('Target is now signed:', res.session.config.outfile || options.file);
-          }
-        });
-      }
+      throw new Error('Cannot open file');
     }
-  }
-});
+    instance.events.on('message', (msg) => {
+      console.log(colors.msg(msg));
+    }).on('warning', (msg) => {
+      console.error(colors.warning('warning'), msg);
+    }).on('error', (msg) => {
+      console.error(colors.msg(msg));
+    });
 
-function runScript (script, session) {
-  if (script.endsWith('.js')) {
-    try {
-      const s = require(script);
-      return s(session);
-    } catch (e) {
-      console.error(e);
-      return false;
-    }
-  } else {
-    process.env['APPLESIGN_DIRECTORY'] = session.config.appdir;
-    process.env['APPLESIGN_MAINBIN'] = session.config.appbin;
-    process.env['APPLESIGN_OUTFILE'] = session.config.outfile;
-    process.env['APPLESIGN_OUTDIR'] = session.config.outdir;
-    process.env['APPLESIGN_FILE'] = session.config.file;
-    try {
-      const res = execSync(script);
-      console.error(res.toString());
-    } catch (e) {
-      console.error(e.toString());
-      return false;
-    }
+    await instance[target](options.file);
+    const outfile = (instance.config.outfile || options.file);
+    const message = 'Target is now signed: ' + outfile;
+    console.error(message);
   }
-  return true;
 }
+
+main().then(_ => {}).catch(console.error);
 
 function getTargetMethod (file, single) {
   try {

@@ -13,18 +13,12 @@ if (process.argv.length < 3) {
   process.exit(1);
 }
 
-const s = as.signIPA(process.argv[2]);
-s.session.on('message', (msg) => {
+as.events.on('message', (msg) => {
   console.log('message', msg);
-})
-  .on('warning', (msg) => {
+}).on('warning', (msg) => {
     console.error('warning', msg);
-  });
-
-s.start((error, session) => {
-  if (error) {
-    console.log('error', error);
-    process.exit(1);
-  }
-  console.log('ios-deploy -b', s.session.config.outfile);
 });
+as.signIPA(process.argv[2]).then(_=> {
+  console.log('ios-deploy -b', as.session.config.outfile);
+});
+
