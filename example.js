@@ -16,9 +16,8 @@ if (process.argv.length < 3) {
 as.events.on('message', (msg) => {
   console.log('message', msg);
 }).on('warning', (msg) => {
-    console.error('warning', msg);
+  console.error('warning', msg);
 });
-as.signIPA(process.argv[2]).then(_=> {
-  console.log('ios-deploy -b', as.session.config.outfile);
+as.signIPA(process.argv[2]).then(_ => {
+  console.log('ios-deploy -b', as.config.outfile);
 });
-
