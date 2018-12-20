@@ -796,7 +796,7 @@ function supportedDevices (data) {
   const df = data.UIDeviceFamily;
   if (Array.isArray(df)) {
     df.forEach(family => {
-      const families = ['Any', 'iPhone', 'iPad'];
+      const families = ['Any', 'iPhone', 'iPad', 'AppleTV', 'iWatch'];
       const fam = families[family];
       if (fam) {
         have[fam].push(fam);
