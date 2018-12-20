@@ -11,7 +11,7 @@
   "scripts": {
     "semi": "semistandard",
     "indent": "semistandard --fix bin/*.js lib/*.js *.js",
-    "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse && cmake . && CFLAGS=-DSFX make",
+    "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
     "test": "mocha",
     "dist": "./dist.sh",
     "dist-all": "./dist.sh macos linux freebsd alpine win"
