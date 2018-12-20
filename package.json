@@ -11,6 +11,7 @@
   "scripts": {
     "semi": "semistandard",
     "indent": "semistandard --fix bin/*.js lib/*.js *.js",
+    "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse && cmake . && CFLAGS=-DSFX make",
     "test": "mocha",
     "dist": "./dist.sh",
     "dist-all": "./dist.sh macos linux freebsd alpine win"
