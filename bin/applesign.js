@@ -16,11 +16,11 @@ colors.setTheme({
 async function main (argv) {
   const conf = config.parse(argv);
   const options = config.compile(conf);
-  const instance = new Applesign(options);
+  const as = new Applesign(options);
   // initialize
   await tools.findInPath();
   if (conf.identities || conf.L) {
-    const ids = await instance.getIdentities();
+    const ids = await as.getIdentities();
     ids.forEach((id) => {
       console.log(id.hash, id.name);
     });
@@ -38,7 +38,7 @@ async function main (argv) {
     if (target === undefined) {
       throw new Error('Cannot open file');
     }
-    instance.events.on('message', (msg) => {
+    as.events.on('message', (msg) => {
       console.log(colors.msg(msg));
     }).on('warning', (msg) => {
       console.error(colors.warning('warning'), msg);
@@ -46,10 +46,16 @@ async function main (argv) {
       console.error(colors.msg(msg));
     });
 
-    await instance[target](options.file);
-    const outfile = (instance.config.outfile || options.file);
-    const message = 'Target is now signed: ' + outfile;
-    console.error(message);
+    try {
+      await as[target](options.file);
+      const outfile = (as.config.outfile || options.file);
+      const message = 'Target is now signed: ' + outfile;
+      console.log(message);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      as.cleanup();
+    }
   }
 }
 

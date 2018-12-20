@@ -15,7 +15,7 @@ const bin = require('./lib/bin');
 const machoEntitlements = require('macho-entitlements');
 
 const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
-const objectFromEntries = (x) => Array.from(x, (k) => ({[k]:[]})); // ES7 is not yet here
+const objectFromEntries = (x) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
 
 module.exports = class Applesign {
   constructor (options) {
@@ -53,12 +53,14 @@ module.exports = class Applesign {
       use7zip: this.config.use7zip,
       useOpenSSL: this.config.useOpenSSL
     });
-    console.error('SIGNING ', this.config.file, this.config.outdir);
+    this.emit('message', 'Input: ' + this.config.file);
+    this.emit('message', 'Output: ' + this.config.outdir);
     if (tools.isDirectory(this.config.file)) {
       throw new Error('This is a directory');
     }
     await this.unzipIPA(this.config.file, this.config.outdir);
-    await this.signAppDirectory(this.config.outdir + '/Payload');
+    const appDirectory = path.join(this.config.outdir, '/Payload');
+    await this.signAppDirectory(appDirectory);
     await this.zipIPA();
     await this.cleanup();
     return this;
@@ -592,16 +594,8 @@ module.exports = class Applesign {
     }
     const outdir = this.config.outdir;
     this.emit('message', 'Cleaning up ' + outdir);
+    //  await tools.asyncRimraf(this.config.outfile);
     return tools.asyncRimraf(outdir);
-  }
-
-  // delete work directory and resigned ipa file
-  async mrproper () {
-    if (this.config.noclean) {
-      return;
-    }
-    await this.cleanup();
-    await tools.asyncRimraf(this.config.outfile);
   }
 
   async zipIPA () {
