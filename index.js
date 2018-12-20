@@ -14,6 +14,9 @@ const plistBuild = require('plist').build;
 const bin = require('./lib/bin');
 const machoEntitlements = require('macho-entitlements');
 
+const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
+const objectFromEntries = (x) => Array.from(x, (k) => ({[k]:[]})); // ES7 is not yet here
+
 module.exports = class Applesign {
   constructor (options) {
     this.config = config.fromOptions(options);
@@ -654,9 +657,14 @@ module.exports = class Applesign {
     if (have.iPad.length > 0) {
       df.push(2);
     }
+    let changes = false;
+    if (data.UISupportedDevices) {
+      delete data.UISupportedDevices;
+      changes = true;
+    }
     if (have.AppleWatch.length > 0 || have.AppleTV.length > 0) {
       this.emit('message', 'Apple{TV/Watch} apps do not require to be re-familied');
-      return false;
+      return changes;
     }
     if (df.length === 0) {
       this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
@@ -664,7 +672,7 @@ module.exports = class Applesign {
     }
     if (df.length === 2) {
       this.emit('message', 'No UIDeviceFamily changes required');
-      return false;
+      return changes;
     }
     this.emit('message', 'UIDeviceFamily set to ' + JSON.stringify(df));
     data.UIDeviceFamily = df;
@@ -780,11 +788,11 @@ function getOutputPath (cwd, ofile) {
 }
 
 function supportedDevices (data) {
-  const have = { iPhone: [], iPad: [] };
+  const have = objectFromEntries(appleDevices);
   const sd = data.UISupportedDevices;
   if (Array.isArray(sd)) {
     sd.forEach(model => {
-      for (let type in ['iPhone', 'iPad']) {
+      for (let type in appleDevices) {
         if (model.indexOf(type) !== -1) {
           if (!have[type]) {
             have[type] = [];
@@ -800,7 +808,7 @@ function supportedDevices (data) {
   const df = data.UIDeviceFamily;
   if (Array.isArray(df)) {
     df.forEach(family => {
-      const families = ['Any', 'iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
+      const families = ['Any', ...appleDevices];
       const fam = families[family];
       if (fam) {
         have[fam].push(fam);
