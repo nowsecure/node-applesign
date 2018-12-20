@@ -654,6 +654,10 @@ module.exports = class Applesign {
     if (have.iPad.length > 0) {
       df.push(2);
     }
+    if (have.AppleWatch.length > 0 || have.AppleTV.length > 0) {
+      this.emit('message', 'Apple{TV/Watch} apps do not require to be re-familied');
+      return false;
+    }
     if (df.length === 0) {
       this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
       df.push(1);
@@ -796,7 +800,7 @@ function supportedDevices (data) {
   const df = data.UIDeviceFamily;
   if (Array.isArray(df)) {
     df.forEach(family => {
-      const families = ['Any', 'iPhone', 'iPad', 'AppleTV', 'iWatch'];
+      const families = ['Any', 'iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
       const fam = families[family];
       if (fam) {
         have[fam].push(fam);
