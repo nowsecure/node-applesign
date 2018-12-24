@@ -9,13 +9,14 @@ const uuid = require('uuid');
 const fs = require('fs-extra');
 const walk = require('fs-walk');
 const plist = require('simple-plist');
+
 const depSolver = require('./lib/depsolver');
+
+const adjustInfoPlist = require('./lib/info-plist');
+const defaultEntitlements = require('./lib/entitlements');
+
 const plistBuild = require('plist').build;
 const bin = require('./lib/bin');
-const machoEntitlements = require('macho-entitlements');
-
-const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
-const objectFromEntries = (x) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
 
 module.exports = class Applesign {
   constructor (options) {
@@ -33,18 +34,6 @@ module.exports = class Applesign {
     return tools.getIdentities();
   }
 
-  //  session
-  /* Event Wrapper API with cb support */
-  emit (ev, msg) {
-    this.events.emit(ev, msg);
-  }
-
-  on (ev, cb) {
-    this.events.on(ev, cb);
-    return this;
-  }
-
-  /* Public API */
   async signIPA (file) {
     if (typeof file === 'string') {
       this.setFile(file);
@@ -53,66 +42,42 @@ module.exports = class Applesign {
       use7zip: this.config.use7zip,
       useOpenSSL: this.config.useOpenSSL
     });
-    this.emit('message', 'Input: ' + this.config.file);
-    this.emit('message', 'Output: ' + this.config.outdir);
+    this.emit('message', 'File: ' + this.config.file);
+    this.emit('message', 'Outdir: ' + this.config.outdir);
     if (tools.isDirectory(this.config.file)) {
       throw new Error('This is a directory');
     }
     await this.unzipIPA(this.config.file, this.config.outdir);
     const appDirectory = path.join(this.config.outdir, '/Payload');
+    this.config.appdir = getAppDirectory(appDirectory);
+    if (this.config.withoutWatchapp) {
+      await Promise.all([this.removeWatchApp(), this.removeXCTests(), this.removePlugins()]).catch((err) => {
+        console.error(err);
+      });
+    }
     await this.signAppDirectory(appDirectory);
     await this.zipIPA();
     await this.cleanup();
     return this;
   }
 
-  // move into index.js
+  pullMobileProvision () {
+    this.config.mobileprovision = this.config.mobileprovisions[0];
+    if (this.config.mobileprovisions.length > 1) {
+      this.config.mobileprovisions.slice(1);
+    }
+  }
+
   async signAppDirectory (ipadir, skipNested) {
+    this.pullMobileProvision();
     if (this.config.run) {
       runScriptSync(this.config.run, this);
     }
-    if (!ipadir) {
-      ipadir = path.join(this.config.outdir, 'Payload');
-    }
-    if (!tools.isDirectory(ipadir)) {
-      await this.cleanup();
-      throw new Error('Not a directory ' + ipadir);
-    }
-    this.emit('message', 'Payload found');
-    if (ipadir.endsWith('/')) {
-      ipadir = ipadir.substring(0, ipadir.length - 1);
-    }
-    let filename = 'ipadir';
-    if (ipadir.endsWith('.app')) {
-      this.config.appdir = ipadir;
-      const slash = ipadir.lastIndexOf('/');
-      if (slash !== -1) {
-        filename = ipadir.substring(slash + 1).replace('.app', '');
-      }
-    } else {
-      const files = fs.readdirSync(ipadir).filter((x) => {
-        return x.endsWith('.app');
-      });
-      if (files.length !== 1) {
-        throw new Error('Invalid IPA: ' + ipadir);
-      }
-      this.config.appdir = path.join(ipadir, files[0]);
-      filename = files[0].replace('.app', '');
-    }
-    const binname = getExecutable(this.config.appdir, filename);
-    this.emit('msg', 'BinName: ' + binname);
+    const binname = getExecutable(this.config.appdir);
+    this.emit('msg', 'Main Executable Name: ' + binname);
     this.config.appbin = path.join(this.config.appdir, binname);
-    try {
-      if (!fs.lstatSync(this.config.appbin).isFile()) {
-        throw new Error('This was suposed to be a file');
-      }
-    } catch (e) {
-      const folders = this.config.appdir.split(path.sep);
-      const binName = folders[folders.length - 1].replace('.app', '');
-      this.config.appbin = path.join(this.config.appdir, binName);
-      if (!fs.lstatSync(this.config.appbin).isFile()) {
-        throw new Error('This was suposed to be a file');
-      }
+    if (!fs.lstatSync(this.config.appbin).isFile()) {
+      throw new Error('This was suposed to be a file');
     }
     if (bin.isBitcode(this.config.appbin)) {
       throw new Error('This IPA contains only bitcode. Must be transpiled for the target device to run.');
@@ -128,84 +93,54 @@ module.exports = class Applesign {
     if (this.config.insertLibrary !== undefined) {
       await insertLibrary(this.config);
     }
-    if (this.config.withoutWatchapp) {
-      await this.removeWatchApp();
-    }
-    const infoPlist = path.join(this.config.appdir, 'Info.plist');
-    this.fixPlist(infoPlist, this.config.bundleid);
+    const infoPlistPath = path.join(this.config.appdir, 'Info.plist');
+    adjustInfoPlist(infoPlistPath, this.config, this.emit);
     await this.checkProvision(this.config.appdir, this.config.mobileprovision);
-    await this.fixEntitlements(this.config.appbin);
+    await this.adjustEntitlements(this.config.appbin);
     await this.signLibraries(this.config.appbin, this.config.appdir);
     if (skipNested !== true) {
-      console.error(this.nested);
-      for (let nest of this.nested) {
-        await this.signAppDirectory(nest, true);
+      if (this.nested.length > 0) {
+        console.error(this.nested);
+        for (let nest of this.nested) {
+          if (tools.isDirectory(nest)) {
+            await this.signAppDirectory(nest, true);
+          } else {
+            this.emit('warning', 'Cannot find ' + nest);
+          }
+        }
       }
-    }
-    // await this.signWatchApp(this.config.appdir);
-  }
-
-  async signWatchApp (ipadir) {
-    // TODO: find any sub directory ending with .app
-    const watchApp = path.join(ipadir, 'Watch');
-    try {
-      if (!tools.isDirectory(watchApp)) {
-        return false;
-      }
-    } catch (error) {
-      return false;
-    }
-    const files = fs.readdirSync(watchApp).filter((x) => {
-      return x.endsWith('.app');
-    });
-    if (files.length === 1) {
-      console.error('Found Watch app. Lets sign it');
-      await this.signAppDirectory(path.join(watchApp, files[0]));
     }
   }
 
+  //  this is also removing xctests and plugins
   async removeWatchApp () {
-    const keepTests = true;
     const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
-
     await tools.asyncRimraf(watchdir);
+  }
+
+  // wtf
+  async removeXCTests () {
+    const keepTests = true;
+    if (!keepTests) {
+      return;
+    }
+    const dir = this.config.appdir;
+    walk.walkSync(dir, (basedir, filename, stat) => {
+      if (filename.endsWith('.xctest')) {
+        const target = path.join(basedir, filename);
+        this.emit('message', 'Deleting ' + target);
+        fs.unlinkSync(target);
+      }
+    });
+  }
+
+  async removePlugins () {
     const plugdir = path.join(this.config.appdir, 'PlugIns');
-    let tests = [];
-    if (fs.existsSync(plugdir)) {
-      try {
-        tests = fs.readdirSync(plugdir).filter((x) => {
-          return x.indexOf('.xctest') !== -1;
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    if (keepTests) {
-      if (tests.length > 0) {
-        this.emit('message', 'Dont strip the xctest plugins');
-      }
-      for (let t of tests) {
-        const oldName = path.join(plugdir, t);
-        const newName = path.join(this.config.appdir, '__' + t);
-        fs.renameSync(oldName, newName);
-      }
-    }
     this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
     await tools.asyncRimraf(plugdir);
-    if (keepTests) {
-      try {
-        fs.mkdirSync(plugdir);
-        for (let t of tests) {
-          const oldName = path.join(this.config.appdir, '__' + t);
-          const newName = path.join(plugdir, t);
-          fs.renameSync(oldName, newName);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
   }
+
   /*
     TODO: verify is mobileprovision app-id glob string matches the bundleid
     read provision file in raw
@@ -215,7 +150,7 @@ module.exports = class Applesign {
     Read the one in Info.plist and compare with bundleid
   */
   async checkProvision (appdir, file) {
-    /* allow to generate an IPA file without the embedded.mobileprovision */
+    /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
       const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
@@ -227,10 +162,10 @@ module.exports = class Applesign {
       if (this.config.selfSignedProvision) {
         /* update entitlements */
         const data = await tools.getMobileProvisionPlist(this.config.mobileprovision);
-        const mainBin = path.join(this.config.appdir, getExecutable(this.config.appdir));
-        let ent = machoEntitlements.parseFile(mainBin);
+        const mainBin = path.join(appdir, getExecutable(appdir));
+        let ent = bin.entitlements(mainBin);
         if (ent === null) {
-          console.error('Cannot find entitlements in binary. Using defaults');
+          this.emit('warning', 'Cannot find entitlements in binary. Using defaults');
           const entMobProv = data['Entitlements'];
           const teamId = entMobProv['com.apple.developer.team-identifier'];
           const appId = entMobProv['application-identifier'];
@@ -247,12 +182,10 @@ module.exports = class Applesign {
   adjustEntitlementsSync (file, entMobProv) {
     const teamId = entMobProv['com.apple.developer.team-identifier'];
     const appId = entMobProv['application-identifier'];
-    /* TODO: check if this supports binary plist too */
-    let ent = machoEntitlements.parseFile(file);
+    let ent = bin.entitlements(file);
     if (ent === null) {
       console.error('Cannot find entitlements in binary. Using defaults');
       ent = defaultEntitlements(appId, teamId);
-      // return next();
     }
     let entMacho = plist.parse(ent.toString().trim());
     if (this.config.selfSignedProvision) { /* */
@@ -332,21 +265,19 @@ module.exports = class Applesign {
     if (typeof this.config.customKeychainGroup === 'string') {
       additionalKeychainGroups.push(this.config.customKeychainGroup);
     }
+    const infoPlist = path.join(this.config.appdir, 'Info.plist');
+    const plistData = plist.readFileSync(infoPlist);
     if (this.config.bundleIdKeychainGroup) {
       if (typeof this.config.bundleid === 'string') {
         additionalKeychainGroups.push(this.config.bundleid);
       } else {
-        const infoPlist = path.join(this.config.appdir, 'Info.plist');
-        const plistData = plist.readFileSync(infoPlist);
         const bundleid = plistData['CFBundleIdentifier'];
         additionalKeychainGroups.push(bundleid);
       }
     }
     if (this.config.osversion !== undefined) {
-      const infoPlist = path.join(this.config.appdir, 'Info.plist');
-      const plistData = plist.readFileSync(infoPlist);
-      plistData['MinimumOSVersion'] = this.config.osversion;
       // DTPlatformVersion
+      plistData['MinimumOSVersion'] = this.config.osversion;
       plist.writeFileSync(infoPlist, plistData);
     }
     if (additionalKeychainGroups.length > 0) {
@@ -392,7 +323,7 @@ module.exports = class Applesign {
     }
   }
 
-  async fixEntitlements (file) {
+  async adjustEntitlements (file) {
     if (!this.config.mobileprovision) {
       const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       const newEntitlements = await tools.getEntitlementsFromMobileProvision(pathToProvision);
@@ -405,53 +336,6 @@ module.exports = class Applesign {
     // fs.copySync(this.config.mobileprovision, pathToProvision);
     // plist.writeFileSync(pathToProvision, newEntitlements);
     this.adjustEntitlementsSync(file, newEntitlements);
-  }
-
-  /* Adjust Info.plist */
-  fixPlist (file, bundleid) {
-    const appdir = this.config.appdir;
-    if (!file || !appdir) {
-      throw new Error('Invalid parameters for fixPlist');
-    }
-    let changed = false;
-    const data = plist.readFileSync(file);
-    delete data[''];
-    if (this.config.allowHttp) {
-      this.emit('message', 'Adding NSAllowArbitraryLoads');
-      if (!Object.isObject(data['NSAppTransportSecurity'])) {
-        data['NSAppTransportSecurity'] = {};
-      }
-      data['NSAppTransportSecurity']['NSAllowsArbitraryLoads'] = true;
-      changed = true;
-    }
-    if (this.config.forceFamily) {
-      if (this.performForceFamily(data)) {
-        changed = true;
-      }
-    }
-    if (bundleid) {
-      this.setBundleId(file, data, bundleid);
-      changed = true;
-    }
-    if (changed) {
-      plist.writeFileSync(file, data);
-    }
-  }
-
-  setBundleId (file, data, bundleid) {
-    const oldBundleId = data['CFBundleIdentifier'];
-    this.emit('message', 'Rebundle ' + file + ' : ' + oldBundleId + ' into ' + bundleid);
-    if (oldBundleId) {
-      data['CFBundleIdentifier'] = bundleid;
-    }
-    if (data['basebundleidentifier']) {
-      data['basebundleidentifier'] = bundleid;
-    }
-    try {
-      data['CFBundleURLTypes'][0]['CFBundleURLName'] = bundleid;
-    } catch (e) {
-      /* do nothing */
-    }
   }
 
   async signFile (file) {
@@ -494,7 +378,7 @@ module.exports = class Applesign {
         return true;
       }
       // check if there's a Plist to inform us which is the right executable
-      const exe = getExecutable(path.dirname(library), path.basename(library));
+      const exe = getExecutable(path.dirname(library));
       if (path.basename(library) !== exe) {
         this.emit('warning', 'Not signing ' + library);
         return false;
@@ -620,13 +504,9 @@ module.exports = class Applesign {
       this.config.file = path.resolve(name);
       this.config.outdir = this.config.file + '.' + uuid.v4();
       if (!this.config.outfile) {
-        this.setOutputFile(getResignedFilename(this.config.file));
+        this.config.outfile = getResignedFilename(this.config.file);
       }
     }
-  }
-
-  setOutputFile (name) {
-    this.config.outfile = name;
   }
 
   async unzipIPA (file, outdir) {
@@ -641,38 +521,18 @@ module.exports = class Applesign {
     return tools.unzip(file, outdir);
   }
 
-  // must be static
-  performForceFamily (data) {
-    const have = supportedDevices(data);
-    const df = [];
-    if (have.iPhone.length > 0) {
-      df.push(1);
-    }
-    if (have.iPad.length > 0) {
-      df.push(2);
-    }
-    let changes = false;
-    if (data.UISupportedDevices) {
-      delete data.UISupportedDevices;
-      changes = true;
-    }
-    if (have.AppleWatch.length > 0 || have.AppleTV.length > 0) {
-      this.emit('message', 'Apple{TV/Watch} apps do not require to be re-familied');
-      return changes;
-    }
-    if (df.length === 0) {
-      this.emit('message', 'UIDeviceFamily forced to iPhone/iPod');
-      df.push(1);
-    }
-    if (df.length === 2) {
-      this.emit('message', 'No UIDeviceFamily changes required');
-      return changes;
-    }
-    this.emit('message', 'UIDeviceFamily set to ' + JSON.stringify(df));
-    data.UIDeviceFamily = df;
-    return true;
+  /* Event Wrapper API with cb support */
+  emit (ev, msg) {
+    this.events.emit(ev, msg);
+  }
+
+  on (ev, cb) {
+    this.events.on(ev, cb);
+    return this;
   }
 };
+
+// helper functions
 
 function getResignedFilename (input) {
   if (!input) {
@@ -692,7 +552,7 @@ function getResignedFilename (input) {
   return input + '-resigned.ipa';
 }
 
-function getExecutable (appdir, exename) {
+function getExecutable (appdir) {
   if (appdir) {
     const plistPath = path.join(appdir, 'Info.plist');
     try {
@@ -705,37 +565,9 @@ function getExecutable (appdir, exename) {
       // do nothing
     }
   }
-  return exename;
-}
-
-const entitlementTemplate = `
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>application-identifier</key>
-    <string>FILLME.APPID</string>
-    <key>com.apple.developer.team-identifier</key>
-    <string>FILLME</string>
-    <key>get-task-allow</key>
-    <true/>
-    <key>keychain-access-groups</key>
-    <array>
-      <string>FILLME.APPID</string>
-    </array>
-  </dict>
-</plist>
-`;
-
-function defaultEntitlements (appid, devid) {
-  const ent = plist.parse(entitlementTemplate.trim());
-  ent['application-identifier'] = appid;
-  ent['com.apple.developer.team-identifier'] = devid;
-  ent['keychain-access-groups'] = [ appid ];
-  ent['com.apple.developer.ubiquity-kvstore-identifier'] = appid;
-  delete ent['aps-environment'];
-  ent['com.apple.developer.icloud-container-identifiers'] = 'iCloud.' + devid;
-  return plistBuild(ent).toString();
+  const exename = path.basename(appdir);
+  const dotap = exename.indexOf('.app');
+  return (dotap === -1) ? exename : exename.substring(0, dotap);
 }
 
 async function insertLibrary (config) {
@@ -781,37 +613,6 @@ function getOutputPath (cwd, ofile) {
   return ofile.startsWith(path.sep) ? ofile : path.join(parentDirectory(cwd), ofile);
 }
 
-function supportedDevices (data) {
-  const have = objectFromEntries(appleDevices);
-  const sd = data.UISupportedDevices;
-  if (Array.isArray(sd)) {
-    sd.forEach(model => {
-      for (let type in appleDevices) {
-        if (model.indexOf(type) !== -1) {
-          if (!have[type]) {
-            have[type] = [];
-          }
-          have[type].push(model);
-          break;
-        }
-      }
-    });
-  } else if (sd !== undefined) {
-    console.error('Warning: Invalid UISupportedDevices in Info.plist?');
-  }
-  const df = data.UIDeviceFamily;
-  if (Array.isArray(df)) {
-    df.forEach(family => {
-      const families = ['Any', ...appleDevices];
-      const fam = families[family];
-      if (fam) {
-        have[fam].push(fam);
-      }
-    });
-  }
-  return have;
-}
-
 function runScriptSync (script, session) {
   if (script.endsWith('.js')) {
     try {
@@ -847,4 +648,28 @@ function nestedApp (file) {
     }
   }
   return false;
+}
+
+function getAppDirectory (ipadir) {
+  if (!ipadir) {
+    ipadir = path.join(this.config.outdir, 'Payload');
+  }
+  if (!tools.isDirectory(ipadir)) {
+    throw new Error('Not a directory ' + ipadir);
+  }
+  if (ipadir.endsWith('.app')) {
+    this.config.appdir = ipadir;
+  } else {
+    const files = fs.readdirSync(ipadir).filter((x) => {
+      return x.endsWith('.app');
+    });
+    if (files.length !== 1) {
+      throw new Error('Invalid IPA: ' + ipadir);
+    }
+    return path.join(ipadir, files[0]);
+  }
+  if (ipadir.endsWith('/')) {
+    ipadir = ipadir.substring(0, ipadir.length - 1);
+  }
+  return ipadir;
 }

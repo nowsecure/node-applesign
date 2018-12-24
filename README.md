@@ -12,7 +12,7 @@ Program Dependencies
 --------------------
 
 * zip          - re-create IPA
-* unzip        - decompress IPA
+* unzip        - decompress IPA (see `npm run unzip-lzfse`)
 * codesign     - sign and verify binary with new entitlements and identity
 * security     - get entitlements from mobileprovision
 * insert_dylib - only if you want to use the -I,--insert flag
@@ -43,7 +43,7 @@ Usage
 	  -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
 	  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
 	  -L, --identities              List local codesign identities
-	  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+	  -m, --mobileprovision [FILE]  Specify the mobileprovision file
 	  -M, --massage-entitlements    Massage entitlements to remove privileged ones
 	  -n, --noclean                 keep temporary files when signing error happens
 	  -o, --output [APP.IPA]        Path to the output IPA filename
