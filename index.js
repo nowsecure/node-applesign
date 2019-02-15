@@ -73,6 +73,9 @@ module.exports = class Applesign {
     if (this.config.run) {
       runScriptSync(this.config.run, this);
     }
+    if (this.config.appdir === undefined) {
+      this.config.appdir = ipadir;
+    }
     const binname = getExecutable(this.config.appdir);
     this.emit('msg', 'Main Executable Name: ' + binname);
     this.config.appbin = path.join(this.config.appdir, binname);
