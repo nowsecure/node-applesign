@@ -73,6 +73,7 @@ module.exports = class Applesign {
     if (this.config.run) {
       runScriptSync(this.config.run, this);
     }
+    this.config.appdir = ipadir;
     const binname = getExecutable(this.config.appdir);
     this.emit('msg', 'Main Executable Name: ' + binname);
     this.config.appbin = path.join(this.config.appdir, binname);
@@ -553,17 +554,18 @@ function getResignedFilename (input) {
 }
 
 function getExecutable (appdir) {
-  if (appdir) {
-    const plistPath = path.join(appdir, 'Info.plist');
-    try {
-      const plistData = plist.readFileSync(plistPath);
-      const cfBundleExecutable = plistData['CFBundleExecutable'];
-      if (cfBundleExecutable) {
-        return cfBundleExecutable;
-      }
-    } catch (e) {
-      // do nothing
+  if (!appdir) {
+    throw new Error('No application directory is provided');
+  }
+  const plistPath = path.join(appdir, 'Info.plist');
+  try {
+    const plistData = plist.readFileSync(plistPath);
+    const cfBundleExecutable = plistData['CFBundleExecutable'];
+    if (cfBundleExecutable) {
+      return cfBundleExecutable;
     }
+  } catch (e) {
+    // do nothing
   }
   const exename = path.basename(appdir);
   const dotap = exename.indexOf('.app');
