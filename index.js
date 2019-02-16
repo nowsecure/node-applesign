@@ -144,6 +144,20 @@ module.exports = class Applesign {
     await tools.asyncRimraf(plugdir);
   }
 
+  findProvisioningsSync () {
+    let files = [];
+    walk.walkSync(this.config.appdir, (basedir, filename, stat) => {
+      const file = path.join(basedir, filename);
+      // only walk on files. Symlinks and other special files are forbidden
+      if (!fs.lstatSync(file).isFile()) {
+        return;
+      }
+      if (filename === 'embedded.mobileprovision') {
+        files.push(file);
+      }
+    });
+    return files;
+  }
   /*
     TODO: verify is mobileprovision app-id glob string matches the bundleid
     read provision file in raw
@@ -156,10 +170,13 @@ module.exports = class Applesign {
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
-      const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
-      return fs.unlinkSync(mobileProvision);
+      const files = this.findProvisioningsSync ();
+      files.forEach( (file) => {
+        console.error('Deleting ', file);
+        fs.unlinkSync(file);
+      });
     }
-    if (file && appdir) {
+    if (appdir && file && !withoutMobileProvision) {
       this.emit('message', 'Embedding new mobileprovision');
       const mobileProvision = path.join(appdir, 'embedded.mobileprovision');
       if (this.config.selfSignedProvision) {
@@ -191,7 +208,7 @@ module.exports = class Applesign {
       ent = defaultEntitlements(appId, teamId);
     }
     let entMacho = plist.parse(ent.toString().trim());
-    if (this.config.selfSignedProvision) { /* */
+    if (this.config.selfSignedProvision) {
       this.emit('message', 'Using an unsigned provisioning');
       const newEntitlementsFile = file + '.entitlements';
       const newEntitlements = plistBuild(entMacho).toString();
