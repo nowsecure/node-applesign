@@ -97,7 +97,7 @@ module.exports = class Applesign {
       await insertLibrary(this.config);
     }
     const infoPlistPath = path.join(this.config.appdir, 'Info.plist');
-    adjustInfoPlist(infoPlistPath, this.config, this.emit);
+    adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
     await this.checkProvision(this.config.appdir, this.config.mobileprovision);
     await this.adjustEntitlements(this.config.appbin);
     await this.signLibraries(this.config.appbin, this.config.appdir);
