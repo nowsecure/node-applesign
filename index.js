@@ -485,39 +485,35 @@ module.exports = class Applesign {
     this.emit('message', 'Resolving signing order using layered list');
     let libs = [];
     const useAppDir = true;
-    if (useAppDir) {
+    if (this.config.parallel) {
+      // known to be buggy in some situations, must use AppDirectory
+      const libraries = this.findLibrariesSync();
+      libs = await depSolver(bpath, libraries, true);
+    } else {
       const ls = new AppDirectory();
       await ls.loadFromDirectory(appdir);
 
-      if (this.config.verify) {
-        console.error('Nested', ls.nestedApplications());
-        console.error('SystemLibraries', ls.systemLibraries());
-        console.error('DiskLibraries', ls.diskLibraries());
-        console.error('UnavailableLibraries', ls.unavailableLibraries());
-        console.error('AppLibraries', ls.appLibraries());
-        console.error('Orphan', ls.orphanedLibraries());
-      }
-      const libraries = ls.appLibraries(); // this.findLibrariesSync();
+      this.emit('message', 'Nested: ' + JSON.stringify(ls.nestedApplications()));
+      this.emit('message', 'SystemLibraries: '+ JSON.stringify(ls.systemLibraries()));
+      this.emit('message', 'DiskLibraries: ' + JSON.stringify(ls.diskLibraries()));
+      this.emit('message', 'UnavailableLibraries: ' + JSON.stringify(ls.unavailableLibraries()));
+      this.emit('message', 'AppLibraries: ' + JSON.stringify(ls.appLibraries()));
+      this.emit('message', 'Orphan: ' + JSON.stringify(ls.orphanedLibraries()));
+      const libraries = ls.appLibraries();
       if (this.config.all) {
         libraries.push(...ls.orphanedLibraries());
       }
-      // const libraries = ls.diskLibraries (); // this.findLibrariesSync();
+      // const libraries = ls.diskLibraries ();
       libs = libraries;
-    } else {
-      // old, buggy, deprecated method
-      const libraries = this.findLibrariesSync();
-      libs = await depSolver(bpath, libraries, this.config.parallel);
     }
     if (libs.length === 0) {
       libs.push(bpath);
     }
-    if (typeof libs[0] === 'object') {
-      return layeredSigning(libs);
-    }
-    return serialSigning(libs);
+    return (typeof libs[0] === 'object')
+      ? layeredSigning(libs)
+      : serialSigning(libs);
   }
 
-  // we probably dont want to have 2 separate functions for this
   async cleanup () {
     if (this.config.noclean) {
       return;
