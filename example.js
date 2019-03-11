@@ -1,3 +1,5 @@
+'use strict';
+
 const Applesign = require('.');
 
 const as = new Applesign({

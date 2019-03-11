@@ -30,7 +30,7 @@
     "macho-entitlements": "0.2.2",
     "macho-is-encrypted": "0.1.2",
     "minimist": "1.2.0",
-    "mocha": "^5.2.0",
+    "mocha": "^6.0.2",
     "plist": "github:trufae/plist.js#fix-null",
     "rimraf": "2.6.3",
     "simple-plist": "github:trufae/node-simple-plist#update",
