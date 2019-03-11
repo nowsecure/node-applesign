@@ -10,6 +10,8 @@ const fs = require('fs-extra');
 const walk = require('fs-walk');
 const plist = require('simple-plist');
 
+const { AppDirectory } = require('./lib/appdir');
+
 const depSolver = require('./lib/depsolver');
 
 const adjustInfoPlist = require('./lib/info-plist');
@@ -22,6 +24,7 @@ module.exports = class Applesign {
   constructor (options) {
     this.config = config.fromOptions(options);
     this.events = new EventEmitter();
+    this.nested = [];
   }
 
   async signXCarchive (file) {
@@ -101,15 +104,13 @@ module.exports = class Applesign {
     await this.checkProvision(this.config.appdir, this.config.mobileprovision);
     await this.adjustEntitlements(this.config.appbin);
     await this.signLibraries(this.config.appbin, this.config.appdir);
+
     if (skipNested !== true) {
-      if (this.nested.length > 0) {
-        console.error(this.nested);
-        for (let nest of this.nested) {
-          if (tools.isDirectory(nest)) {
-            await this.signAppDirectory(nest, true);
-          } else {
-            this.emit('warning', 'Cannot find ' + nest);
-          }
+      for (let nest of this.nested) {
+        if (tools.isDirectory(nest)) {
+          await this.signAppDirectory(nest, true);
+        } else {
+          this.emit('warning', 'Cannot find ' + nest);
         }
       }
     }
@@ -170,8 +171,8 @@ module.exports = class Applesign {
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
-      const files = this.findProvisioningsSync ();
-      files.forEach( (file) => {
+      const files = this.findProvisioningsSync();
+      files.forEach((file) => {
         console.error('Deleting ', file);
         fs.unlinkSync(file);
       });
@@ -444,12 +445,13 @@ module.exports = class Applesign {
     }
     console.error('Found nested', nested);
     this.nested = nested;
-    return this.filterLibraries(libraries);
+    // return this.filterLibraries(libraries);
+
+    return libraries;
   }
 
   async signLibraries (bpath, appdir) {
     this.emit('message', 'Signing libraries and frameworks');
-    const libraries = this.findLibrariesSync();
 
     const parallelVerify = async (libs) => {
       if (!this.config.verify) {
@@ -466,7 +468,7 @@ module.exports = class Applesign {
         const promises = deps.map(dep => { return this.signFile(dep); });
         await Promise.all(promises);
       }
-      await parallelVerify(libraries);
+      await parallelVerify(libs);
     };
 
     const serialSigning = async (libs) => {
@@ -481,7 +483,31 @@ module.exports = class Applesign {
     };
 
     this.emit('message', 'Resolving signing order using layered list');
-    const libs = await depSolver(bpath, libraries, this.config.parallel);
+    let libs = [];
+    const useAppDir = true;
+    if (useAppDir) {
+      const ls = new AppDirectory();
+      await ls.loadFromDirectory(appdir);
+
+      if (this.config.verify) {
+        console.error('Nested', ls.nestedApplications());
+        console.error('SystemLibraries', ls.systemLibraries());
+        console.error('DiskLibraries', ls.diskLibraries());
+        console.error('UnavailableLibraries', ls.unavailableLibraries());
+        console.error('AppLibraries', ls.appLibraries());
+        console.error('Orphan', ls.orphanedLibraries());
+      }
+      const libraries = ls.appLibraries(); // this.findLibrariesSync();
+      if (this.config.all) {
+        libraries.push(...ls.orphanedLibraries());
+      }
+      // const libraries = ls.diskLibraries (); // this.findLibrariesSync();
+      libs = libraries;
+    } else {
+      // old, buggy, deprecated method
+      const libraries = this.findLibrariesSync();
+      libs = await depSolver(bpath, libraries, this.config.parallel);
+    }
     if (libs.length === 0) {
       libs.push(bpath);
     }
