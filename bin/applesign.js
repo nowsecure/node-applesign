@@ -26,8 +26,10 @@ async function main (argv) {
     });
   } else if (conf.version) {
     console.log(packageJson.version);
-  } else if (conf.h || conf.help || conf._.length === 0) {
+  } else if (conf.h || conf.help) {
     console.error(config.helpMessage);
+  } else if (conf._.length === 0) {
+    console.error(config.shortHelpMessage);
   } else {
     if (options.insertLibrary !== undefined) {
       // if (err && err.toString().indexOf('dylib_insert') !== -1) {
