@@ -9,6 +9,7 @@ const uuid = require('uuid');
 const fs = require('fs-extra');
 const walk = require('fs-walk');
 const plist = require('simple-plist');
+const fchk = require('./lib/fchk');
 
 const { AppDirectory } = require('./lib/appdir');
 
@@ -20,24 +21,33 @@ const defaultEntitlements = require('./lib/entitlements');
 const plistBuild = require('plist').build;
 const bin = require('./lib/bin');
 
-module.exports = class Applesign {
+function checkArguments(a, b) {
+  if (a !== b) {
+    throw new Error('Invalid arguments');
+  }
+}
+
+class Applesign {
   constructor (options) {
-    this.config = config.fromOptions(options);
+    this.config = config.fromOptions(options || {});
     this.events = new EventEmitter();
     this.nested = [];
   }
 
   async signXCarchive (file) {
+    fchk(arguments, ['string']);
     const ipaFile = file + '.ipa';
     await tools.xcaToIpa(file, ipaFile);
     await this.signIPA(ipaFile);
   }
 
   async getIdentities () {
+    fchk(arguments, []);
     return tools.getIdentities();
   }
 
   async signIPA (file) {
+    fchk(arguments, ['string']);
     if (typeof file === 'string') {
       this.setFile(file);
     }
@@ -64,7 +74,7 @@ module.exports = class Applesign {
     return this;
   }
 
-  pullMobileProvision () {
+  _pullMobileProvision () {
     this.config.mobileprovision = this.config.mobileprovisions[0];
     if (this.config.mobileprovisions.length > 1) {
       this.config.mobileprovisions.slice(1);
@@ -72,7 +82,8 @@ module.exports = class Applesign {
   }
 
   async signAppDirectory (ipadir, skipNested) {
-    this.pullMobileProvision();
+    fchk(arguments, ['string', 'boolean']);
+    this._pullMobileProvision();
     if (this.config.run) {
       runScriptSync(this.config.run, this);
     }
@@ -118,6 +129,7 @@ module.exports = class Applesign {
 
   //  this is also removing xctests and plugins
   async removeWatchApp () {
+    fchk(arguments, []);
     const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
     await tools.asyncRimraf(watchdir);
@@ -125,6 +137,7 @@ module.exports = class Applesign {
 
   // wtf
   async removeXCTests () {
+    fchk(arguments, []);
     const keepTests = true;
     if (!keepTests) {
       return;
@@ -140,12 +153,14 @@ module.exports = class Applesign {
   }
 
   async removePlugins () {
+    fchk(arguments, []);
     const plugdir = path.join(this.config.appdir, 'PlugIns');
     this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
     await tools.asyncRimraf(plugdir);
   }
 
   findProvisioningsSync () {
+    fchk(arguments, []);
     let files = [];
     walk.walkSync(this.config.appdir, (basedir, filename, stat) => {
       const file = path.join(basedir, filename);
@@ -168,6 +183,7 @@ module.exports = class Applesign {
     Read the one in Info.plist and compare with bundleid
   */
   async checkProvision (appdir, file) {
+    fchk(arguments, ['string', 'string']);
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
@@ -201,6 +217,7 @@ module.exports = class Applesign {
   }
 
   adjustEntitlementsSync (file, entMobProv) {
+    fchk(arguments, ['string', 'string']);
     const teamId = entMobProv['com.apple.developer.team-identifier'];
     const appId = entMobProv['application-identifier'];
     let ent = bin.entitlements(file);
@@ -345,6 +362,7 @@ module.exports = class Applesign {
   }
 
   async adjustEntitlements (file) {
+    fchk(arguments, ['string']);
     if (!this.config.mobileprovision) {
       const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
       const newEntitlements = await tools.getEntitlementsFromMobileProvision(pathToProvision);
@@ -360,6 +378,7 @@ module.exports = class Applesign {
   }
 
   async signFile (file) {
+    fchk(arguments, ['string']);
     if (this.config.lipoArch !== undefined) {
       this.emit('message', '[lipo] ' + this.config.lipoArch + ' ' + file);
       try {
@@ -390,6 +409,7 @@ module.exports = class Applesign {
   }
 
   filterLibraries (libraries) {
+    fchk(arguments, ['object']);
     return libraries.filter(library => {
       // Resign all frameworks. even if not referenced :?
       if (this.config.all) {
@@ -409,6 +429,7 @@ module.exports = class Applesign {
   }
 
   findLibrariesSync () {
+    fchk(arguments, []);
     let libraries = [];
     let nested = [];
     const exe = path.sep + getExecutable(this.config.appdir);
@@ -451,6 +472,7 @@ module.exports = class Applesign {
   }
 
   async signLibraries (bpath, appdir) {
+    fchk(arguments, ['string', 'string']);
     this.emit('message', 'Signing libraries and frameworks');
 
     const parallelVerify = async (libs) => {
@@ -494,7 +516,7 @@ module.exports = class Applesign {
       await ls.loadFromDirectory(appdir);
 
       this.emit('message', 'Nested: ' + JSON.stringify(ls.nestedApplications()));
-      this.emit('message', 'SystemLibraries: '+ JSON.stringify(ls.systemLibraries()));
+      this.emit('message', 'SystemLibraries: ' + JSON.stringify(ls.systemLibraries()));
       this.emit('message', 'DiskLibraries: ' + JSON.stringify(ls.diskLibraries()));
       this.emit('message', 'UnavailableLibraries: ' + JSON.stringify(ls.unavailableLibraries()));
       this.emit('message', 'AppLibraries: ' + JSON.stringify(ls.appLibraries()));
@@ -515,6 +537,7 @@ module.exports = class Applesign {
   }
 
   async cleanup () {
+    fchk(arguments, []);
     if (this.config.noclean) {
       return;
     }
@@ -525,6 +548,7 @@ module.exports = class Applesign {
   }
 
   async zipIPA () {
+    fchk(arguments, []);
     const ipaIn = this.config.file;
     const ipaOut = getOutputPath(this.config.outdir, this.config.outfile);
     try {
@@ -542,16 +566,16 @@ module.exports = class Applesign {
   }
 
   setFile (name) {
-    if (typeof name === 'string') {
-      this.config.file = path.resolve(name);
-      this.config.outdir = this.config.file + '.' + uuid.v4();
-      if (!this.config.outfile) {
-        this.config.outfile = getResignedFilename(this.config.file);
-      }
+    fchk(arguments, ['string']);
+    this.config.file = path.resolve(name);
+    this.config.outdir = this.config.file + '.' + uuid.v4();
+    if (!this.config.outfile) {
+      this.config.outfile = getResignedFilename(this.config.file);
     }
   }
 
   async unzipIPA (file, outdir) {
+    fchk(arguments, ['string', 'string']);
     if (!file || !outdir) {
       throw new Error('No output specified');
     }
@@ -572,7 +596,7 @@ module.exports = class Applesign {
     this.events.on(ev, cb);
     return this;
   }
-};
+}
 
 // helper functions
 
@@ -716,3 +740,4 @@ function getAppDirectory (ipadir) {
   }
   return ipadir;
 }
+module.exports = Applesign;
