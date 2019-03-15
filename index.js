@@ -68,7 +68,7 @@ class Applesign {
         console.error(err);
       });
     }
-    await this.signAppDirectory(appDirectory);
+    await this.signAppDirectory(appDirectory, false);
     await this.zipIPA();
     await this.cleanup();
     return this;
@@ -217,7 +217,7 @@ class Applesign {
   }
 
   adjustEntitlementsSync (file, entMobProv) {
-    fchk(arguments, ['string', 'string']);
+    fchk(arguments, ['string', 'object']);
     const teamId = entMobProv['com.apple.developer.team-identifier'];
     const appId = entMobProv['application-identifier'];
     let ent = bin.entitlements(file);
