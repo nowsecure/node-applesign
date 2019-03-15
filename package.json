@@ -26,7 +26,7 @@
     "fs-extra": "7.0.1",
     "fs-walk": "github:trufae/fs-walk#patch-1",
     "is-array": "1.0.1",
-    "macho": "1.3.0",
+    "macho": "github:mrmacete/macho.git#add-arm64e-subtype",
     "macho-entitlements": "0.2.2",
     "macho-is-encrypted": "0.1.2",
     "minimist": "1.2.0",
