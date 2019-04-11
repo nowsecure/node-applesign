@@ -112,6 +112,9 @@ class Applesign {
     }
     const infoPlistPath = path.join(this.config.appdir, 'Info.plist');
     adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
+    if (!this.config.mobileprovision) {
+      throw new Error('warning: No mobile provisioning file provided');
+    }
     await this.checkProvision(this.config.appdir, this.config.mobileprovision);
     await this.adjustEntitlements(this.config.appbin);
     await this.signLibraries(this.config.appbin, this.config.appdir);
