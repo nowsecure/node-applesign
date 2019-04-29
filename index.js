@@ -649,10 +649,10 @@ async function insertLibrary (config) {
   } catch (_) {
   }
   const outputLib = path.join(appDir, 'Frameworks', libraryName);
-  await insertLibraryLL(outputLib, targetLib);
+  await insertLibraryLL(outputLib, targetLib, config);
 }
 
-function insertLibraryLL (outputLib, targetLib) {
+function insertLibraryLL (outputLib, targetLib, config) {
   return new Promise((resolve, reject) => {
     try {
       const writeStream = fs.createWriteStream(outputLib);
