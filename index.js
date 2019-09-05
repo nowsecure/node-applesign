@@ -389,7 +389,7 @@ class Applesign {
       } catch (ignored) {
       }
     }
-    function codesignHasFailed (config, error, errmsg) {
+    function codesignHasFailed (config, code, errmsg) {
       if (error && error.message.indexOf('Error:') !== -1) {
         throw error;
       }
