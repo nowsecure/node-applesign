@@ -390,7 +390,7 @@ class Applesign {
       }
     }
     function codesignHasFailed (config, error, errmsg) {
-      if (error && error.message.indexOf('Error:') !== -1) {
+      if (error && errmsg.indexOf('Error:') !== -1) {
         throw error;
       }
       return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
