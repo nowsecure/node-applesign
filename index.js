@@ -60,16 +60,21 @@ class Applesign {
     if (tools.isDirectory(this.config.file)) {
       throw new Error('This is a directory');
     }
-    await this.unzipIPA(this.config.file, this.config.outdir);
-    const appDirectory = path.join(this.config.outdir, '/Payload');
-    this.config.appdir = getAppDirectory(appDirectory);
-    if (this.config.withoutWatchapp) {
-      await Promise.all([this.removeWatchApp(), this.removeXCTests(), this.removePlugins()]).catch((err) => {
-        console.error(err);
-      });
+    try {
+      await this.unzipIPA(this.config.file, this.config.outdir);
+      const appDirectory = path.join(this.config.outdir, '/Payload');
+      this.config.appdir = getAppDirectory(appDirectory);
+      if (this.config.withoutWatchapp) {
+        await Promise.all([this.removeWatchApp(), this.removeXCTests(), this.removePlugins()]).catch((err) => {
+          console.error(err);
+        });
+      }
+      await this.signAppDirectory(appDirectory, false);
+      await this.zipIPA();
+    } catch (e) {
+      process.exitCode = 1;
+      console.error(e);
     }
-    await this.signAppDirectory(appDirectory, false);
-    await this.zipIPA();
     await this.cleanup();
     return this;
   }
