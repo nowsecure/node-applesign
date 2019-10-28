@@ -6,7 +6,7 @@
     "applesign": "bin/applesign.js"
   },
   "engines": {
-    "node": ">=5.12"
+    "node": ">=10"
   },
   "scripts": {
     "semi": "semistandard",
@@ -21,7 +21,7 @@
     "semistandard": "^14.2.0"
   },
   "dependencies": {
-    "colors": "1.3.3",
+    "colors": "1.4.0",
     "fatmacho": "0.1.2",
     "fs-extra": "^8.1.0",
     "fs-walk": "github:trufae/fs-walk#patch-1",
@@ -30,13 +30,13 @@
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",
     "minimist": "1.2.0",
-    "mocha": "^6.2.0",
+    "mocha": "^6.2.2",
     "plist": "github:trufae/plist.js#fix-null",
     "rimraf": "^3.0.0",
     "simple-plist": "github:trufae/node-simple-plist#update",
     "uniq": "1.0.1",
     "uuid": "3.3.3",
-    "which": "1.3.1"
+    "which": "2.0.1"
   },
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
