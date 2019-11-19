@@ -38,6 +38,25 @@
     "uuid": "3.3.3",
     "which": "2.0.1"
   },
+  "files": [
+    "LICENSE",
+    "lib/appdir.js",
+    "bin/applesign.js",
+    "lib/bin.js",
+    "lib/config.js",
+    "lib/depsolver.js",
+    "lib/entitlements.js",
+    "example.js",
+    "lib/fchk.js",
+    "lib/idprov.js",
+    "index.js",
+    "lib/info-plist.js",
+    "test/test.js",
+    "lib/tools.js",
+    "package.json",
+    "README.md",
+    "dist.sh"
+  ],
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
   "repository": {
