@@ -299,9 +299,9 @@ class Applesign {
         delete entMacho['com.apple.developer.associated-domains'];
         delete entMacho['com.apple.developer.team-identifier'];
       }
-    }    
+    }
 
-    if( typeof this.config.withGetTaskAllow != 'undefined' ) {
+    if (typeof this.config.withGetTaskAllow !== 'undefined') {
       this.emit('message', 'get-task-allow set to ' + this.config.withGetTaskAllow);
       entMacho['get-task-allow'] = this.config.withGetTaskAllow;
       changed = true;
