@@ -300,13 +300,13 @@ class Applesign {
         delete entMacho['com.apple.developer.team-identifier'];
       }
     }
-    if (this.config.withGetTaskAllow) {
-      if (entMacho['get-task-allow'] !== true) {
-        this.emit('message', 'get-task-allow set to true');
-        entMacho['get-task-allow'] = true;
-        changed = true;
-      }
+
+    if (typeof this.config.withGetTaskAllow !== 'undefined') {
+      this.emit('message', 'get-task-allow set to ' + this.config.withGetTaskAllow);
+      entMacho['get-task-allow'] = this.config.withGetTaskAllow;
+      changed = true;
     }
+
     const additionalKeychainGroups = [];
     if (typeof this.config.customKeychainGroup === 'string') {
       additionalKeychainGroups.push(this.config.customKeychainGroup);
