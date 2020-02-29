@@ -64,15 +64,21 @@ class Applesign {
       await this.unzipIPA(this.config.file, this.config.outdir);
       const appDirectory = path.join(this.config.outdir, '/Payload');
       this.config.appdir = getAppDirectory(appDirectory);
+      const tasks = [];
       if (this.config.withoutWatchapp) {
-        await Promise.all([this.removeWatchApp(), this.removeXCTests(), this.removePlugins()]).catch((err) => {
-          console.error(err);
-        });
+        tasks.push(this.removeWatchApp());
+        tasks.push(this.removePlugins());
+      }
+      if (this.config.withoutXCTests) {
+        tasks.push(this.removeXCTests())
+      }
+      if (tasks.length > 0) {
+        await Promise.all(tasks);
       }
       await this.signAppDirectory(appDirectory, false);
       await this.zipIPA();
     } catch (e) {
-      process.exitCode = 1;
+      process.exitCode = 1
       console.error(e);
     }
     await this.cleanup();
@@ -135,7 +141,6 @@ class Applesign {
     }
   }
 
-  //  this is also removing xctests and plugins
   async removeWatchApp () {
     fchk(arguments, []);
     const watchdir = path.join(this.config.appdir, 'Watch');
@@ -143,17 +148,14 @@ class Applesign {
     await tools.asyncRimraf(watchdir);
   }
 
-  // wtf
+  // XXX some directory leftovers
   async removeXCTests () {
     fchk(arguments, []);
-    const keepTests = true;
-    if (!keepTests) {
-      return;
-    }
     const dir = this.config.appdir;
     walk.walkSync(dir, (basedir, filename, stat) => {
-      if (filename.endsWith('.xctest')) {
-        const target = path.join(basedir, filename);
+      const target = path.join(basedir, filename);
+      //  if (target.toLowerCase().indexOf('/xct') !== -1)
+      if (target.toLowerCase().indexOf('xctest') !== -1) {
         this.emit('message', 'Deleting ' + target);
         fs.unlinkSync(target);
       }
