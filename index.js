@@ -46,10 +46,10 @@ class Applesign {
 
   _pathInTmp (filePath, scope = null) {
     const baseName = path.basename(filePath);
-    if (typeof scope !== 'string') {
-      return path.join(this.tmpDir, baseName);
+    if (typeof scope === 'string') {
+      return path.join(this.tmpDir, scope, baseName);
     }
-    return path.join(this.tmpDir, scope, baseName);
+    return path.join(this.tmpDir, baseName);
   }
 
   async signXCarchive (file) {
