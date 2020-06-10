@@ -56,7 +56,8 @@ async function main (argv) {
     } catch (e) {
       console.error(e);
     } finally {
-      as.cleanup();
+      await as.cleanupTmp();
+      await as.cleanup();
     }
   }
 }

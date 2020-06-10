@@ -10,6 +10,7 @@ const fs = require('fs-extra');
 const walk = require('fs-walk');
 const plist = require('simple-plist');
 const fchk = require('./lib/fchk');
+const { tmpdir } = require('os');
 
 const { AppDirectory } = require('./lib/appdir');
 
@@ -32,6 +33,23 @@ class Applesign {
     this.config = config.fromOptions(options || {});
     this.events = new EventEmitter();
     this.nested = [];
+    this.tmpDir = this._makeTmpDir();
+  }
+
+  _makeTmpDir () {
+    const tmp = tmpdir();
+    const base = path.join(tmp, "applesign");
+    const result = path.join(base, uuid.v4());
+    fs.mkdirSync(result, { recursive: true });
+    return result;
+  }
+
+  _pathInTmp (filePath, scope = null) {
+    const baseName = path.basename(filePath);
+    if (typeof scope === 'string') {
+      return path.join(this.tmpDir, scope, baseName);
+    }
+    return path.join(this.tmpDir, baseName);
   }
 
   async signXCarchive (file) {
@@ -240,8 +258,13 @@ class Applesign {
       this.emit('message', 'Using an unsigned provisioning');
       const newEntitlementsFile = file + '.entitlements';
       const newEntitlements = plistBuild(entMacho).toString();
-      fs.writeFileSync(newEntitlementsFile, newEntitlements);
-      this.config.entitlement = newEntitlementsFile;
+
+      const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
+      fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
+      this.config.entitlement = tmpEmtitlementsFile;
+      if (!this.config.noEntitlementsFile) {
+        fs.writeFileSync(newEntitlementsFile, newEntitlements);
+      }
       return;
     }
     let changed = false;
@@ -365,9 +388,14 @@ class Applesign {
       delete ent['beta-reports-active']; /* our entitlements doesnt support beta */
       delete ent['com.apple.developer.ubiquity-container-identifiers']; // TODO should be massaged
       newEntitlements = plistBuild(ent).toString();
-      fs.writeFileSync(newEntitlementsFile, newEntitlements);
-      this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
-      this.config.entitlement = newEntitlementsFile;
+
+      const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
+      fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
+      this.config.entitlement = tmpEmtitlementsFile;
+      if (!this.config.noEntitlementsFile) {
+        fs.writeFileSync(newEntitlementsFile, newEntitlements);
+        this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
+      }
     }
   }
 
@@ -555,6 +583,11 @@ class Applesign {
     this.emit('message', 'Cleaning up ' + outdir);
     //  await tools.asyncRimraf(this.config.outfile);
     return tools.asyncRimraf(outdir);
+  }
+
+  async cleanupTmp () {
+    this.emit('message', 'Cleaning up temp dir ' + this.tmpDir);
+    await tools.asyncRimraf(this.tmpDir);
   }
 
   async zipIPA () {
