@@ -85,8 +85,8 @@ class Applesign {
       const tasks = [];
       if (this.config.withoutWatchapp) {
         tasks.push(this.removeWatchApp());
-        tasks.push(this.removePlugins());
-      } else if (this.config.xctestsOnly) {
+      }
+      if (this.config.withoutPlugins) {
         tasks.push(this.removePlugins());
       }
       if (this.config.withoutXCTests) {
@@ -184,26 +184,23 @@ class Applesign {
 
   async removePlugins () {
     fchk(arguments, []);
-    const keepTests = this.config.xctestsOnly;
     const plugdir = path.join(this.config.appdir, 'PlugIns');
     let tests = [];
-    if (keepTests) {
-      if (fs.existsSync(plugdir)) {
-        try {
-          tests = fs.readdirSync(plugdir).filter((x) => {
-            return x.indexOf('.xctest') !== -1;
-          });
-          if (tests.length > 0) {
-            this.emit('message', 'Don\'t strip out the XCTest plugins');
-          }
-          for (let t of tests) {
-            const oldName = path.join(plugdir, t);
-            const newName = path.join(this.config.appdir, '__' + t);
-            fs.renameSync(oldName, newName);
-          }
-        } catch (err) {
-          console.error(err);
+    if (fs.existsSync(plugdir)) {
+      try {
+        tests = fs.readdirSync(plugdir).filter((x) => {
+          return x.indexOf('.xctest') !== -1;
+        });
+        if (tests.length > 0) {
+          this.emit('message', 'Don\'t strip out the XCTest plugins');
         }
+        for (let t of tests) {
+          const oldName = path.join(plugdir, t);
+          const newName = path.join(this.config.appdir, '__' + t);
+          fs.renameSync(oldName, newName);
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
     this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
