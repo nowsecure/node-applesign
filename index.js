@@ -185,37 +185,20 @@ class Applesign {
   async removePlugins () {
     fchk(arguments, []);
     const plugdir = path.join(this.config.appdir, 'PlugIns');
+    const tmpdir = path.join(this.config.appdir, 'applesign_xctest_tmp');
+    this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
     let tests = [];
-    if (fs.existsSync(plugdir)) {
-      try {
-        tests = fs.readdirSync(plugdir).filter((x) => {
-          return x.indexOf('.xctest') !== -1;
-        });
-        if (tests.length > 0) {
-          this.emit('message', 'Don\'t strip out the XCTest plugins');
-        }
-        for (let t of tests) {
-          const oldName = path.join(plugdir, t);
-          const newName = path.join(this.config.appdir, '__' + t);
-          fs.renameSync(oldName, newName);
-        }
-      } catch (err) {
-        console.error(err);
+    if (!this.config.withoutXCTests) {
+      tests = await enumerateTestFiles(plugdir);
+      if (tests.length > 0) {
+        await moveFiles(tests, plugdir, tmpdir);
       }
     }
-    this.emit('message', 'Stripping out the PlugIns at ' + plugdir);
+
     await tools.asyncRimraf(plugdir);
     if (tests.length > 0) {
-      try {
-        fs.mkdirSync(plugdir);
-        for (let t of tests) {
-          const oldName = path.join(this.config.appdir, '__' + t);
-          const newName = path.join(plugdir, t);
-          fs.renameSync(oldName, newName);
-        }
-      } catch (err) {
-        console.error(err);
-      }
+      await moveFiles(tests, tmpdir, plugdir);
+      await fs.rmdir(tmpdir);
     }
   }
 
@@ -814,5 +797,24 @@ function getAppDirectory (ipadir) {
     ipadir = ipadir.substring(0, ipadir.length - 1);
   }
   return ipadir;
+}
+
+async function enumerateTestFiles (dir) {
+  let tests = [];
+  if (fs.existsSync(dir)) {
+    tests = (await fs.readdir(dir)).filter((x) => {
+      return x.indexOf('.xctest') !== -1;
+    });
+  }
+  return tests;
+}
+
+async function moveFiles (files, sourceDir, destDir) {
+  await fs.mkdir(destDir, { recursive: true });
+  for (let f of files) {
+    const oldName = path.join(sourceDir, f);
+    const newName = path.join(destDir, f);
+    await fs.rename(oldName, newName);
+  }
 }
 module.exports = Applesign;
