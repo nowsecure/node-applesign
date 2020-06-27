@@ -20,53 +20,104 @@ Program Dependencies
 Usage
 -----
 
-	$ bin/applesign.js
-	Usage:
+When running without arguments we get a short help message
 
-	  applesign [--options ...] [input-ipafile]
+```
+$ bin/applesign.js
+Usage:
 
-	  -7, --use-7zip                Use 7zip instead of unzip
-	      --use-openssl             Use OpenSSL cms instead of Apple's security tool
-	  -a, --all                     Resign all binaries, even it unrelated to the app
-	  -A, --all-dirs                Archive all directories, not just Payload/
-	  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
-	  -B, --bundleid-access-group   Add $(TeamIdentifier).bundleid to keychain-access-groups
-	  -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
-	  -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
-	  -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
-	  -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
-	  -h, --help                    Show this help message
-	  -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
-	  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
-	  -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
-	  -k, --keychain [KEYCHAIN]     Specify alternative keychain file
-	  -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
-	  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
-	  -L, --identities              List local codesign identities
-	  -m, --mobileprovision [FILE]  Specify the mobileprovision file
-	  -M, --massage-entitlements    Massage entitlements to remove privileged ones
-	  -n, --noclean                 keep temporary files when signing error happens
-	  -o, --output [APP.IPA]        Path to the output IPA filename
-	  -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
-	  -p, --parallel                Run layered signing dependencies in parallel
-	  -r, --replace                 Replace the input IPA file with the resigned one
-	  -s, --single                  Sign a single file instead of an IPA
-	  -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
-	  -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
-	  -u, --unfair                  Resign encrypted applications
-	  -v, --verify-twice            Verify after signing every file and at the end
-	  -V, --dont-verify             Do not perform any codesign verification
-	  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
-	      --version                 Show applesign version
-	  -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
-	  [input-ipafile]               Path to the IPA file to resign
+  applesign [--options ...] [target.ipa | Payload/Target.app]
 
-	Examples:
+  -a, --all                     Resign all binaries, even it unrelated to the app
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
+  -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
+  -h, --help                    Show verbose help message
+  -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+  -L, --identities              List local codesign identities
+  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -o, --output [APP.IPA]        Path to the output IPA filename
+  -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
+  -p, --without-plugins         Remove plugins (excluding XCTests) from the resigned IPA
+  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+  -x, --without-xctests         Remove the XCTests from the resigned IPA
 
-	  applesign -L # enumerate codesign identities, grab one and use it with -i
-	  applesign -m embedded.mobileprovision test-app.ipa
-	  applesign -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C test-app.ipa
-	  applesign -i AD71EB4... -c --lipo arm64 -w -V test-app.ipa
+Example:
+
+  $ applesign -w -c -m embedded.mobileprovision target.ipa
+```
+
+The full help is displayed when passing the `--help` flag.
+
+```
+$ bin/applesign.js --help
+Usage:
+
+  applesign [--options ...] [input-ipafile]
+
+  Packaging:
+  -7, --use-7zip                Use 7zip instead of unzip
+  -A, --all-dirs                Archive all directories, not just Payload/
+  -I, --insert [frida.dylib]    Insert a dynamic library to the main executable
+  -l, --lipo [arm64|armv7]      Lipo -thin all bins inside the IPA for the given architecture
+  -n, --noclean                 keep temporary files when signing error happens
+  -o, --output [APP.IPA]        Path to the output IPA filename
+  -P, --parallel                Run layered signing dependencies in parallel (EXPERIMENTAL)
+  -r, --replace                 Replace the input IPA file with the resigned one
+  -u, --unfair                  Resign encrypted applications
+  -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
+
+  Stripping:
+  -p, --without-plugins         Remove plugins (excluding XCTests) from the resigned IPA
+  -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
+  -x, --without-xctests         Remove the XCTests from the resigned IPA
+
+  Signing:
+      --use-openssl             Use OpenSSL cms instead of Apple's security tool
+  -a, --all                     Resign all binaries, even it unrelated to the app
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+  -k, --keychain [KEYCHAIN]     Specify alternative keychain file
+  -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
+  -L, --identities              List local codesign identities
+  -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -s, --single                  Sign a single file instead of an IPA
+  -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
+  -v, --verify                  Verify all the signed files at the end
+  -V, --verify-twice            Verify after signing every file and at the end
+
+  Info.plist
+  -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
+  -B, --bundleid-access-group   Add $(TeamIdentifier).bundleid to keychain-access-groups
+  -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
+  -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
+  -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
+
+  Entitlements:
+  -c, --clone-entitlements      Clone the entitlements from the provisioning to the bin
+  -e, --entitlements [ENTITL]   Specify entitlements file (EXPERIMENTAL)
+  -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
+  -M, --massage-entitlements    Massage entitlements to remove privileged ones
+  -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
+  -C, --no-entitlements-file    Do not create .entitlements file in the IPA
+
+  -h, --help                    Show this help message
+      --version                 Show applesign version
+  [input-ipafile]               Path to the IPA file to resign
+
+Examples:
+
+  $ applesign -L # enumerate codesign identities, grab one and use it with -i
+  $ applesign -m embedded.mobileprovision target.ipa
+  $ applesign -i AD71EB42BC289A2B9FD3C2D5C9F02D923495A23C target.ipa
+  $ applesign -m a.mobileprovision -c --lipo arm64 -w target.ipa
+
+Installing in the device:
+
+  $ ideviceinstaller -i target-resigned.ipa
+  $ ios-deploy -b  target-resigned.ipa
+
+```
 
 List local codesign identities:
 
