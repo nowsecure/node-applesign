@@ -47,6 +47,9 @@ async function main (argv) {
     }).on('error', (msg) => {
       console.error(colors.msg(msg));
     });
+    if (options.file === undefined) {
+      throw new Error('No file provided');
+    }
 
     try {
       await as[target](options.file);
