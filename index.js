@@ -431,6 +431,28 @@ class Applesign {
   }
 
   async signFile (file) {
+    const config = this.config;
+    function customOptions(config, file) {
+      if (typeof config.json === 'object' && typeof config.json.custom === 'object') {
+        for (let c of config.json.custom) {
+          if (!c.filematch) {
+             continue;
+          }
+          console.error(JSON.stringify(c, null, 2));
+          const re = new RegExp(c.filematch);
+          if (re.test(file)) {
+            console.error('Debug: '+ JSON.stringify(c, null, 2))
+            return c;
+          }
+        }
+      }
+      return false;
+    }
+    const custom = customOptions(config, file);
+    function getKeychain() { return (custom !== false && custom.keychain !== undefined)? custom.keychain: config.keychain; }
+    function getIdentity() { return (custom !== false && custom.identity !== undefined)? custom.identity: config.identity; }
+    function getEntitlements() { return (custom !== false && custom.entitlements !== undefined)? custom.entitlements: config.entitlements; }
+
     fchk(arguments, ['string']);
     if (this.config.lipoArch !== undefined) {
       this.emit('message', '[lipo] ' + this.config.lipoArch + ' ' + file);
@@ -445,16 +467,19 @@ class Applesign {
       }
       return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
     }
-    const res = await tools.codesign(this.config.identity, this.config.entitlement, this.config.keychain, file);
-    if (res.code !== 0 && codesignHasFailed(this.config, res.code, res.stderr)) {
+    const identity = getIdentity();
+    const entitlements = getEntitlements();
+    const keychain = getKeychain();
+    const res = await tools.codesign(identity, entitlements, keychain, file);
+    if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
       return this.emit('end', res.stderr);
     }
     this.emit('message', 'Signed ' + file);
-    if (this.config.verifyTwice) {
+    if (config.verifyTwice) {
       this.emit('message', 'Verify ' + file);
-      const res = await tools.verifyCodesign(file, this.config.keychain);
+      const res = await tools.verifyCodesign(file, config.keychain);
       if (res.code !== 0) {
-        const type = (this.config.ignoreVerificationErrors) ? 'warning' : 'error';
+        const type = (config.ignoreVerificationErrors) ? 'warning' : 'error';
         return this.emit(type, res.stderr);
       }
     }
