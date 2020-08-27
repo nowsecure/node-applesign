@@ -22,23 +22,18 @@ const defaultEntitlements = require('./lib/entitlements');
 const plistBuild = require('plist').build;
 const bin = require('./lib/bin');
 
-function checkArguments(a, b) {
-  if (a !== b) {
-    throw new Error('Invalid arguments');
-  }
-}
-
 class Applesign {
   constructor (options) {
-    this.config = config.fromOptions(options || {});
+    this.config = config.fromOptions(options || {});
     this.events = new EventEmitter();
     this.nested = [];
+    this.debugObject = {};
     this.tmpDir = this._makeTmpDir();
   }
 
   _makeTmpDir () {
     const tmp = tmpdir();
-    const base = path.join(tmp, "applesign");
+    const base = path.join(tmp, 'applesign');
     const result = path.join(base, uuid.v4());
     fs.mkdirSync(result, { recursive: true });
     return result;
