@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const fs = require('fs');
 const packageJson = require('../package.json');
 const tools = require('../lib/tools');
 const config = require('../lib/config');
@@ -50,7 +51,6 @@ async function main (argv) {
     if (options.file === undefined) {
       throw new Error('No file provided');
     }
-
     try {
       await as[target](options.file);
       const outfile = (as.config.outfile || options.file);
@@ -61,6 +61,11 @@ async function main (argv) {
     } finally {
       await as.cleanupTmp();
       await as.cleanup();
+    }
+    if (as.config.debug !== '') {
+      const data = JSON.stringify(as.debugObject);
+      fs.writeFileSync(as.config.debug, data);
+      console.error('Debug: json file saved: ' + as.config.debug);
     }
   }
 }
