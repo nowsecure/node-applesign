@@ -17,8 +17,8 @@
     "dist-all": "./dist.sh macos linux freebsd alpine win"
   },
   "devDependencies": {
-    "pkg": "^4.4.8",
-    "semistandard": "^14.2.2"
+    "pkg": "^4.4.9",
+    "semistandard": "^14.2.3"
   },
   "dependencies": {
     "colors": "1.4.0",
@@ -30,12 +30,12 @@
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",
     "minimist": "1.2.5",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.2",
     "plist": "github:trufae/plist.js#fix-null",
     "rimraf": "^3.0.2",
     "simple-plist": "github:trufae/node-simple-plist#update",
     "uniq": "1.0.1",
-    "uuid": "8.2.0",
+    "uuid": "^8.3.0",
     "which": "2.0.2"
   },
   "files": [
