@@ -318,13 +318,13 @@ class Applesign {
           entMacho[id] = entMobProv[id];
         }
       });
-      if (typeof entMacho['keychain-access-groups'] === 'object') {
-        changed = true;
-        // keychain access groups makes the resigning fail with -M
-        delete entMacho['keychain-access-groups'];
-        // entMacho['keychain-access-groups'][0] = appId;
-      }
       if (this.config.massageEntitlements === true) {
+        if (typeof entMacho['keychain-access-groups'] === 'object') {
+          changed = true;
+          // keychain access groups makes the resigning fail with -M
+          delete entMacho['keychain-access-groups'];
+        // entMacho['keychain-access-groups'][0] = appId;
+        }
         [
           'com.apple.developer.ubiquity-kvstore-identifier',
           'com.apple.developer.ubiquity-container-identifiers',
@@ -347,7 +347,7 @@ class Applesign {
             changed = true;
           }
         });
-      } else {
+      } else if (!this.config.cloneEntitlements) {
         delete entMacho['com.apple.developer.icloud-container-identifiers'];
         delete entMacho['com.apple.developer.icloud-container-environment'];
         delete entMacho['com.apple.developer.ubiquity-kvstore-identifier'];
@@ -421,47 +421,45 @@ class Applesign {
         ent['com.apple.security.application-groups'] = groups;
       }
       delete ent['beta-reports-active']; /* our entitlements doesnt support beta */
-      delete ent['com.apple.developer.ubiquity-container-identifiers']; // TODO should be massaged
+      if (this.config.massageEntitlements === true) {
+        delete ent['com.apple.developer.ubiquity-container-identifiers']; // TODO should be massaged
+      }
       newEntitlements = plistBuild(ent).toString();
 
-      const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
-      fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
-      this.config.entitlement = tmpEmtitlementsFile;
+      this.debugInfo(file, 'newEntitlements', ent);
+
+      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
+      this.config.entitlement = tmpEntitlementsFile;
       if (!this.config.noEntitlementsFile) {
-        fs.writeFileSync(newEntitlementsFile, newEntitlements);
-        this.emit('message', 'Updated binary entitlements' + newEntitlementsFile);
+        fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
+        this.emit('message', 'Updated binary entitlements' + tmpEntitlementsFile);
       }
+      this.debugInfo(file, 'after', newEntitlements);
+    } else {
+      this.debugInfo(file, 'nothing-changed', true);
     }
   }
 
   async adjustEntitlements (file) {
     fchk(arguments, ['string']);
-    if (!this.config.mobileprovision) {
-      const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
-      const newEntitlements = await tools.getEntitlementsFromMobileProvision(pathToProvision);
-      this.emit('message', 'Using the entitlements from the mobileprovision');
-      this.adjustEntitlementsSync(file, newEntitlements);
-    }
-    const newEntitlements = await tools.getEntitlementsFromMobileProvision(this.config.mobileprovision);
+    const mp = this.config.mobileprovision ? this.config.mobileprovision : path.join(this.config.appdir, 'embedded.mobileprovision');
+    const newEntitlements = await tools.getEntitlementsFromMobileProvision(mp);
     this.emit('message', JSON.stringify(newEntitlements));
-    // const pathToProvision = path.join(this.config.appdir, 'embedded.mobileprovision');
-    // fs.copySync(this.config.mobileprovision, pathToProvision);
-    // plist.writeFileSync(pathToProvision, newEntitlements);
     this.adjustEntitlementsSync(file, newEntitlements);
   }
 
   async signFile (file) {
     const config = this.config;
-    function customOptions(config, file) {
+    function customOptions (config, file) {
       if (typeof config.json === 'object' && typeof config.json.custom === 'object') {
-        for (let c of config.json.custom) {
+        for (const c of config.json.custom) {
           if (!c.filematch) {
-             continue;
+            continue;
           }
-          console.error(JSON.stringify(c, null, 2));
           const re = new RegExp(c.filematch);
           if (re.test(file)) {
-            console.error('Debug: '+ JSON.stringify(c, null, 2))
+            // console.error('Debug: '+ JSON.stringify(c, null, 2))
             return c;
           }
         }
@@ -488,7 +486,17 @@ class Applesign {
       return ((errmsg && errmsg.indexOf('no identity found') !== -1) || !config.ignoreCodesignErrors);
     }
     const identity = getIdentity();
-    const entitlements = getEntitlements();
+    let entitlements = '';
+    if (this.config.cloneEntitlements) {
+      const mp = await tools.getMobileProvisionPlist(this.config.mobileprovision);
+      const newEntitlementsFile = file + '.entitlements';
+      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const entstr = plistBuild(mp.Entitlements).toString();
+      fs.writeFileSync(tmpEntitlementsFile, entstr);
+      entitlements = tmpEntitlementsFile;
+    } else {
+      entitlements = getEntitlements();
+    }
     const keychain = getKeychain();
     const res = await tools.codesign(identity, entitlements, keychain, file);
     if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
