@@ -184,6 +184,18 @@ class Applesign {
     });
   }
 
+  async removeSigningFiles () {
+    fchk(arguments, []);
+    const dir = this.config.appdir;
+    walk.walkSync(dir, (basedir, filename, stat) => {
+      if (filename.endsWith('.entitlements') || filename.endsWith('.mobileprovision')) {
+        const target = path.join(basedir, filename);
+        this.emit('message', 'Deleting ' + target);
+        fs.unlinkSync(target);
+      }
+    });
+  }
+
   async removePlugins () {
     fchk(arguments, []);
     const plugdir = path.join(this.config.appdir, 'PlugIns');
@@ -518,10 +530,10 @@ class Applesign {
     fchk(arguments, ['object']);
     return libraries.filter(library => {
       // Resign all frameworks. even if not referenced :?
-      if (this.config.all) {
+      if (library.indexOf('Frameworks/') !== -1) {
         return true;
       }
-      if (library.indexOf('Frameworks/') !== -1) {
+      if (this.config.all) {
         return true;
       }
       // check if there's a Plist to inform us which is the right executable
@@ -612,14 +624,21 @@ class Applesign {
 
     this.emit('message', 'Resolving signing order using layered list');
     let libs = [];
-    const useAppDir = true;
+    const ls = new AppDirectory();
+    await ls.loadFromDirectory(appdir);
     if (this.config.parallel) {
       // known to be buggy in some situations, must use AppDirectory
       const libraries = this.findLibrariesSync();
       libs = await depSolver(bpath, libraries, true);
+
+      for (const appex of ls.appexs) {
+        libs.push([appex]);
+      }
     } else {
-      const ls = new AppDirectory();
-      await ls.loadFromDirectory(appdir);
+      for (const appex of ls.appexs) {
+        await this.adjustEntitlements(appex);
+        await this.signFile(appex);
+      }
 
       this.emit('message', 'Nested: ' + JSON.stringify(ls.nestedApplications()));
       this.emit('message', 'SystemLibraries: ' + JSON.stringify(ls.systemLibraries()));
