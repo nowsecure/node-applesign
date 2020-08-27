@@ -136,7 +136,7 @@ class Applesign {
       if (!this.config.unfairPlay) {
         throw new Error('This IPA is encrypted');
       }
-      this.emit('message', 'Main IPA executable is encrypted');
+      this.emit('warning', 'Main IPA executable is encrypted');
     } else {
       this.emit('message', 'Main IPA executable is not encrypted');
     }
