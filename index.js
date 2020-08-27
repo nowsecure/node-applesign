@@ -77,15 +77,22 @@ class Applesign {
       await this.unzipIPA(this.config.file, this.config.outdir);
       const appDirectory = path.join(this.config.outdir, '/Payload');
       this.config.appdir = getAppDirectory(appDirectory);
+      if (this.config.debug) {
+        this.debugObject = {};
+      }
       const tasks = [];
       if (this.config.withoutWatchapp) {
         tasks.push(this.removeWatchApp());
+      }
+      // TODO: this .withoutSigningFiles option doesnt exist yet
+      if (this.config.withoutSigningFiles) {
+        tasks.push(this.removeSigningFiles());
       }
       if (this.config.withoutPlugins) {
         tasks.push(this.removePlugins());
       }
       if (this.config.withoutXCTests) {
-        tasks.push(this.removeXCTests())
+        tasks.push(this.removeXCTests());
       }
       if (tasks.length > 0) {
         await Promise.all(tasks);
@@ -146,7 +153,7 @@ class Applesign {
     await this.signLibraries(this.config.appbin, this.config.appdir);
 
     if (skipNested !== true) {
-      for (let nest of this.nested) {
+      for (const nest of this.nested) {
         if (tools.isDirectory(nest)) {
           await this.signAppDirectory(nest, true);
         } else {
@@ -199,7 +206,7 @@ class Applesign {
 
   findProvisioningsSync () {
     fchk(arguments, []);
-    let files = [];
+    const files = [];
     walk.walkSync(this.config.appdir, (basedir, filename, stat) => {
       const file = path.join(basedir, filename);
       // only walk on files. Symlinks and other special files are forbidden
@@ -212,6 +219,7 @@ class Applesign {
     });
     return files;
   }
+
   /*
     TODO: verify is mobileprovision app-id glob string matches the bundleid
     read provision file in raw
@@ -241,12 +249,12 @@ class Applesign {
         let ent = bin.entitlements(mainBin);
         if (ent === null) {
           this.emit('warning', 'Cannot find entitlements in binary. Using defaults');
-          const entMobProv = data['Entitlements'];
+          const entMobProv = data.Entitlements;
           const teamId = entMobProv['com.apple.developer.team-identifier'];
           const appId = entMobProv['application-identifier'];
           ent = defaultEntitlements(appId, teamId);
         }
-        data['Entitlements'] = plist.parse(ent.toString().trim());
+        data.Entitlements = plist.parse(ent.toString().trim());
         fs.writeFileSync(mobileProvision, plistBuild(data).toString());
         /* TODO: self-sign mobile provisioning */
       }
@@ -254,27 +262,44 @@ class Applesign {
     }
   }
 
+  debugInfo (path, key, val) {
+    if (!val) {
+      return;
+    }
+    const f = path.replace(this.config.outdir + '/', '');
+    if (!this.debugObject) {
+      this.debugObject = {};
+    }
+    if (this.debugObject[f] === undefined) {
+      this.debugObject[f] = {};
+    }
+    this.debugObject[f][key] = val;
+  }
+
   adjustEntitlementsSync (file, entMobProv) {
     fchk(arguments, ['string', 'object']);
+    this.debugInfo(file, 'before', entMobProv);
     const teamId = entMobProv['com.apple.developer.team-identifier'];
     const appId = entMobProv['application-identifier'];
     let ent = bin.entitlements(file);
-    if (ent === null) {
+    if (ent === null && !this.config.cloneEntitlements) {
       console.error('Cannot find entitlements in binary. Using defaults');
       ent = defaultEntitlements(appId, teamId);
     }
     let entMacho = plist.parse(ent.toString().trim());
+    this.debugInfo(file, 'fullPath', file);
+    this.debugInfo(file, 'oldEntitlements', entMacho || 'TODO');
     if (this.config.selfSignedProvision) {
       this.emit('message', 'Using an unsigned provisioning');
       const newEntitlementsFile = file + '.entitlements';
       const newEntitlements = plistBuild(entMacho).toString();
-
       const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
       fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
       this.config.entitlement = tmpEmtitlementsFile;
       if (!this.config.noEntitlementsFile) {
-        fs.writeFileSync(newEntitlementsFile, newEntitlements);
+        fs.writeFileSync(newEntitlementsFile, tmpEntitlements);
       }
+      this.debugInfo(file, 'newEntitlements', plist.parse(newEntitlements));
       return;
     }
     let changed = false;
@@ -352,13 +377,13 @@ class Applesign {
       if (typeof this.config.bundleid === 'string') {
         additionalKeychainGroups.push(this.config.bundleid);
       } else {
-        const bundleid = plistData['CFBundleIdentifier'];
+        const bundleid = plistData.CFBundleIdentifier;
         additionalKeychainGroups.push(bundleid);
       }
     }
     if (this.config.osversion !== undefined) {
       // DTPlatformVersion
-      plistData['MinimumOSVersion'] = this.config.osversion;
+      plistData.MinimumOSVersion = this.config.osversion;
       plist.writeFileSync(infoPlist, plistData);
     }
     if (additionalKeychainGroups.length > 0) {
@@ -385,7 +410,7 @@ class Applesign {
         ids.shift();
         const id = ids.join('.');
         const groups = [];
-        for (let group of ent['com.apple.security.application-groups']) {
+        for (const group of ent['com.apple.security.application-groups']) {
           const cols = group.split('.');
           if (cols.length === 4) {
             groups.push('group.' + id);
@@ -444,9 +469,9 @@ class Applesign {
       return false;
     }
     const custom = customOptions(config, file);
-    function getKeychain() { return (custom !== false && custom.keychain !== undefined)? custom.keychain: config.keychain; }
-    function getIdentity() { return (custom !== false && custom.identity !== undefined)? custom.identity: config.identity; }
-    function getEntitlements() { return (custom !== false && custom.entitlements !== undefined)? custom.entitlements: config.entitlements; }
+    function getKeychain () { return (custom !== false && custom.keychain !== undefined) ? custom.keychain : config.keychain; }
+    function getIdentity () { return (custom !== false && custom.identity !== undefined) ? custom.identity : config.identity; }
+    function getEntitlements () { return (custom !== false && custom.entitlements !== undefined) ? custom.entitlements : config.entitlements; }
 
     fchk(arguments, ['string']);
     if (this.config.lipoArch !== undefined) {
@@ -503,8 +528,8 @@ class Applesign {
 
   findLibrariesSync () {
     fchk(arguments, []);
-    let libraries = [];
-    let nested = [];
+    const libraries = [];
+    const nested = [];
     const exe = path.sep + getExecutable(this.config.appdir);
     const folders = this.config.appbin.split(path.sep);
     const exe2 = path.sep + folders[folders.length - 1];
@@ -558,8 +583,8 @@ class Applesign {
     };
 
     const layeredSigning = async (libs) => {
-      let libsCopy = libs.slice(0).reverse();
-      for (let deps of libsCopy) {
+      const libsCopy = libs.slice(0).reverse();
+      for (const deps of libsCopy) {
         const promises = deps.map(dep => { return this.signFile(dep); });
         await Promise.all(promises);
       }
@@ -567,8 +592,8 @@ class Applesign {
     };
 
     const serialSigning = async (libs) => {
-      let libsCopy = libs.slice(0).reverse();
-      for (let lib of libsCopy) {
+      const libsCopy = libs.slice(0).reverse();
+      for (const lib of libsCopy) {
         await this.signFile(lib);
         if (this.config.verify) {
           this.emit('message', 'Verifying ' + lib);
@@ -703,7 +728,7 @@ function getExecutable (appdir) {
   const plistPath = path.join(appdir, 'Info.plist');
   try {
     const plistData = plist.readFileSync(plistPath);
-    const cfBundleExecutable = plistData['CFBundleExecutable'];
+    const cfBundleExecutable = plistData.CFBundleExecutable;
     if (cfBundleExecutable) {
       return cfBundleExecutable;
     }
@@ -768,11 +793,11 @@ function runScriptSync (script, session) {
       return false;
     }
   } else {
-    process.env['APPLESIGN_DIRECTORY'] = session.config.appdir;
-    process.env['APPLESIGN_MAINBIN'] = session.config.appbin;
-    process.env['APPLESIGN_OUTFILE'] = session.config.outfile;
-    process.env['APPLESIGN_OUTDIR'] = session.config.outdir;
-    process.env['APPLESIGN_FILE'] = session.config.file;
+    process.env.APPLESIGN_DIRECTORY = session.config.appdir;
+    process.env.APPLESIGN_MAINBIN = session.config.appbin;
+    process.env.APPLESIGN_OUTFILE = session.config.outfile;
+    process.env.APPLESIGN_OUTDIR = session.config.outdir;
+    process.env.APPLESIGN_FILE = session.config.file;
     try {
       const res = execSync(script);
       console.error(res.toString());
@@ -831,7 +856,7 @@ async function enumerateTestFiles (dir) {
 
 async function moveFiles (files, sourceDir, destDir) {
   await fs.mkdir(destDir, { recursive: true });
-  for (let f of files) {
+  for (const f of files) {
     const oldName = path.join(sourceDir, f);
     const newName = path.join(destDir, f);
     await fs.rename(oldName, newName);
