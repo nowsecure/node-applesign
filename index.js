@@ -649,7 +649,12 @@ class Applesign {
       const libraries = ls.appLibraries();
       if (this.config.all) {
         libraries.push(...ls.orphanedLibraries());
-      }
+      } else {
+        for (let ol of ls.orphanedLibraries()) {
+          console.error('Warning: Orphaned library not signed, try -a: ' + ol);
+        }
+      }
+      this.debugInfo('analysis', 'orphan', ls.orphanedLibraries());
       // const libraries = ls.diskLibraries ();
       libs = libraries;
     }
