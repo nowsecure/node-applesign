@@ -168,6 +168,10 @@ class Applesign {
     const watchdir = path.join(this.config.appdir, 'Watch');
     this.emit('message', 'Stripping out the WatchApp at ' + watchdir);
     await tools.asyncRimraf(watchdir);
+
+    const placeholderdir = path.join(this.config.appdir, 'com.apple.WatchPlaceholder');
+    this.emit('message', 'Stripping out the WatchApp at ' + placeholderdir);
+    await tools.asyncRimraf(placeholderdir);
   }
 
   // XXX some directory leftovers
