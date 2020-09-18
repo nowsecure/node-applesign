@@ -660,7 +660,7 @@ class Applesign {
       }
       this.debugInfo('analysis', 'orphan', ls.orphanedLibraries());
       // const libraries = ls.diskLibraries ();
-      libs = libraries;
+      libs = libraries.filter(library => !(ls.appexs.includes(library))); // remove already-signed appexs
     }
     if (libs.length === 0) {
       libs.push(bpath);
