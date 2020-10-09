@@ -302,21 +302,24 @@ class Applesign {
       console.error('Cannot find entitlements in binary. Using defaults');
       ent = defaultEntitlements(appId, teamId);
     }
-    let entMacho = plist.parse(ent.toString().trim());
-    this.debugInfo(file, 'fullPath', file);
-    this.debugInfo(file, 'oldEntitlements', entMacho || 'TODO');
-    if (this.config.selfSignedProvision) {
-      this.emit('message', 'Using an unsigned provisioning');
-      const newEntitlementsFile = file + '.entitlements';
-      const newEntitlements = plistBuild(entMacho).toString();
-      const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
-      fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
-      this.config.entitlement = tmpEmtitlementsFile;
-      if (!this.config.noEntitlementsFile) {
-        fs.writeFileSync(newEntitlementsFile, tmpEntitlements);
+    let entMacho;
+    if (ent !== null) {
+      entMacho = plist.parse(ent.toString().trim());
+      this.debugInfo(file, 'fullPath', file);
+      this.debugInfo(file, 'oldEntitlements', entMacho || 'TODO');
+      if (this.config.selfSignedProvision) {
+        this.emit('message', 'Using an unsigned provisioning');
+        const newEntitlementsFile = file + '.entitlements';
+        const newEntitlements = plistBuild(entMacho).toString();
+        const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
+        fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
+        this.config.entitlement = tmpEmtitlementsFile;
+        if (!this.config.noEntitlementsFile) {
+          fs.writeFileSync(newEntitlementsFile, tmpEntitlements);
+        }
+        this.debugInfo(file, 'newEntitlements', plist.parse(newEntitlements));
+        return;
       }
-      this.debugInfo(file, 'newEntitlements', plist.parse(newEntitlements));
-      return;
     }
     let changed = false;
     if (this.config.cloneEntitlements) {
