@@ -30,7 +30,7 @@
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",
     "minimist": "1.2.5",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.3",
     "plist": "github:trufae/plist.js#fix-null",
     "rimraf": "^3.0.2",
     "simple-plist": "github:trufae/node-simple-plist#update",
@@ -91,5 +91,5 @@
     ]
   },
   "name": "applesign",
-  "version": "3.7.2"
+  "version": "3.7.3"
 }
