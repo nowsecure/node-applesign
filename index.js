@@ -145,10 +145,12 @@ class Applesign {
     }
     const infoPlistPath = path.join(this.config.appdir, 'Info.plist');
     adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
-    if (!this.config.mobileprovision) {
-      throw new Error('warning: No mobile provisioning file provided');
+    if (!this.config.pseudoSign) {
+      if (!this.config.mobileprovision) {
+        throw new Error('warning: No mobile provisioning file provided');
+      }
+      await this.checkProvision(this.config.appdir, this.config.mobileprovision);
     }
-    await this.checkProvision(this.config.appdir, this.config.mobileprovision);
     await this.adjustEntitlements(this.config.appbin);
     await this.signLibraries(this.config.appbin, this.config.appdir);
 
@@ -293,6 +295,20 @@ class Applesign {
   }
 
   adjustEntitlementsSync (file, entMobProv) {
+    if (this.config.pseudoSign) {
+      const ent = bin.entitlements(file);
+      if (ent === null) {
+        return;
+      }
+      const entMacho = plist.parse(ent.toString().trim());
+      // TODO: merge additional entitlements here
+      const newEntitlements = plistBuild(entMacho).toString();
+      const newEntitlementsFile = file + '.entitlements';
+      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
+      this.config.entitlement = tmpEntitlementsFile;
+      return;
+    }
     fchk(arguments, ['string', 'object']);
     this.debugInfo(file, 'before', entMobProv);
     const teamId = entMobProv['com.apple.developer.team-identifier'];
@@ -462,9 +478,12 @@ class Applesign {
 
   async adjustEntitlements (file) {
     fchk(arguments, ['string']);
-    const mp = this.config.mobileprovision ? this.config.mobileprovision : path.join(this.config.appdir, 'embedded.mobileprovision');
-    const newEntitlements = await tools.getEntitlementsFromMobileProvision(mp);
-    this.emit('message', JSON.stringify(newEntitlements));
+    let newEntitlements = null;
+    if (!this.config.pseudoSign) {
+      const mp = this.config.mobileprovision ? this.config.mobileprovision : path.join(this.config.appdir, 'embedded.mobileprovision');
+      newEntitlements = await tools.getEntitlementsFromMobileProvision(mp);
+      this.emit('message', JSON.stringify(newEntitlements));
+    }
     this.adjustEntitlementsSync(file, newEntitlements);
   }
 
@@ -516,10 +535,15 @@ class Applesign {
     } else {
       entitlements = getEntitlements();
     }
-    const keychain = getKeychain();
-    const res = await tools.codesign(identity, entitlements, keychain, file);
-    if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
-      return this.emit('end', res.stderr);
+    let res;
+    if (this.config.pseudoSign) {
+      res = await tools.pseudoSign(entitlements, file);
+    } else {
+      const keychain = getKeychain();
+      res = await tools.codesign(identity, entitlements, keychain, file);
+      if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
+        return this.emit('end', res.stderr);
+      }
     }
     this.emit('message', 'Signed ' + file);
     if (config.verifyTwice) {
