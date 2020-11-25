@@ -17,9 +17,9 @@ colors.setTheme({
 async function main (argv) {
   const conf = config.parse(argv);
   const options = config.compile(conf);
+  await tools.findInPath();
   const as = new Applesign(options);
   // initialize
-  await tools.findInPath();
   if (conf.identities || conf.L) {
     const ids = await as.getIdentities();
     ids.forEach((id) => {
