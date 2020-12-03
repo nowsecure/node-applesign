@@ -537,6 +537,9 @@ class Applesign {
     }
     let res;
     if (this.config.pseudoSign) {
+      const newEntitlementsFile = file + '.entitlements';
+      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const entitlements = fs.existsSync(tmpEntitlementsFile) ? tmpEntitlementsFile : null;
       res = await tools.pseudoSign(entitlements, file);
     } else {
       const keychain = getKeychain();
