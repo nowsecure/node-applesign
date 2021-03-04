@@ -371,7 +371,6 @@ class Applesign {
           'com.apple.networking.vpn.configuration',
           'com.apple.developer.associated-domains',
           'com.apple.security.application-groups',
-          'com.apple.developer.team-identifier',
           'com.apple.developer.in-app-payments',
           'com.apple.developer.siri',
           'beta-reports-active', /* our entitlements doesnt support beta */
@@ -392,7 +391,8 @@ class Applesign {
         delete entMacho['aps-environment'];
         delete entMacho['com.apple.security.application-groups'];
         delete entMacho['com.apple.developer.associated-domains'];
-        delete entMacho['com.apple.developer.team-identifier'];
+        delete entMacho['keychain-access-groups'];
+        changed = true;
       }
     }
 
@@ -507,7 +507,7 @@ class Applesign {
     const custom = customOptions(config, file);
     function getKeychain () { return (custom !== false && custom.keychain !== undefined) ? custom.keychain : config.keychain; }
     function getIdentity () { return (custom !== false && custom.identity !== undefined) ? custom.identity : config.identity; }
-    function getEntitlements () { return (custom !== false && custom.entitlements !== undefined) ? custom.entitlements : config.entitlements; }
+    function getEntitlements () { return (custom !== false && custom.entitlements !== undefined) ? custom.entitlements : config.entitlement; }
 
     fchk(arguments, ['string']);
     if (this.config.lipoArch !== undefined) {
