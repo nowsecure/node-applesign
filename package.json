@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "pkg": "^4.4.8",
-    "semistandard": "^14.2.2"
+    "semistandard": "^16.0.1"
   },
   "dependencies": {
     "colors": "1.4.0",
