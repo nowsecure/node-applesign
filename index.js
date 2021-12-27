@@ -50,7 +50,7 @@ class Applesign {
   async getDeviceProvision () {
     const installedProvisions = await tools.ideviceprovision('list');
     const pd = path.join(homedir(), 'Library', 'MobileDevice', 'Provisioning Profiles');
-    for (let ip of installedProvisions) {
+    for (const ip of installedProvisions) {
       const absPath = path.join(pd, ip + '.mobileprovision');
       if (fs.existsSync(absPath)) {
         return absPath;
@@ -344,11 +344,11 @@ class Applesign {
         this.emit('message', 'Using an unsigned provisioning');
         const newEntitlementsFile = file + '.entitlements';
         const newEntitlements = plistBuild(entMacho).toString();
-        const tmpEmtitlementsFile = this._pathInTmp(newEntitlementsFile);
-        fs.writeFileSync(tmpEmtitlementsFile, newEntitlements);
-        this.config.entitlement = tmpEmtitlementsFile;
+        const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+        fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
+        this.config.entitlement = tmpEntitlementsFile;
         if (!this.config.noEntitlementsFile) {
-          fs.writeFileSync(newEntitlementsFile, tmpEntitlements);
+          fs.writeFileSync(newEntitlementsFile, tmpEntitlementsFile);
         }
         this.debugInfo(file, 'newEntitlements', plist.parse(newEntitlements));
         return;
@@ -701,10 +701,10 @@ class Applesign {
       if (this.config.all) {
         libraries.push(...ls.orphanedLibraries());
       } else {
-        for (let ol of ls.orphanedLibraries()) {
+        for (const ol of ls.orphanedLibraries()) {
           console.error('Warning: Orphaned library not signed, try -a: ' + ol);
         }
-      }
+      }
       this.debugInfo('analysis', 'orphan', ls.orphanedLibraries());
       // const libraries = ls.diskLibraries ();
       libs = libraries.filter(library => !(ls.appexs.includes(library))); // remove already-signed appexs
