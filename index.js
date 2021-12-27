@@ -2,6 +2,7 @@
 
 const tools = require('./lib/tools');
 const config = require('./lib/config');
+const idprov = require('./lib/idprov');
 const EventEmitter = require('events').EventEmitter;
 const path = require('path');
 const { execSync } = require('child_process');
@@ -123,11 +124,12 @@ class Applesign {
   async _pullMobileProvision () {
     if (this.config.deviceProvision === true) {
       this.config.mobileprovision = await this.getDeviceProvision();
-    } else {
-      this.config.mobileprovision = this.config.mobileprovisions[0];
-      if (this.config.mobileprovisions.length > 1) {
-        this.config.mobileprovisions.slice(1);
-      }
+      this.config.mobileprovisions = [this.config.mobileprovision];
+      this.config.identity = idprov(this.config.mobileprovision);
+    }
+    this.config.mobileprovision = this.config.mobileprovisions[0];
+    if (this.config.mobileprovisions.length > 1) {
+      this.config.mobileprovisions.slice(1);
     }
   }
 
@@ -453,8 +455,8 @@ class Applesign {
       let newEntitlements = (appId && teamId && this.config.entry)
         ? defaultEntitlements(appId, teamId)
         : (this.config.entitlement)
-          ? fs.readFileSync(this.config.entitlement).toString()
-          : plistBuild(entMacho).toString();
+            ? fs.readFileSync(this.config.entitlement).toString()
+            : plistBuild(entMacho).toString();
       const ent = plist.parse(newEntitlements.trim());
       const shouldRenameGroups = !this.config.mobileprovision && !this.config.cloneEntitlements;
       if (shouldRenameGroups && ent['com.apple.security.application-groups']) {
