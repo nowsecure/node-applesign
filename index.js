@@ -10,7 +10,7 @@ const fs = require('fs-extra');
 const walk = require('fs-walk');
 const plist = require('simple-plist');
 const fchk = require('./lib/fchk');
-const { tmpdir } = require('os');
+const { tmpdir, homedir } = require('os');
 
 const { AppDirectory } = require('./lib/appdir');
 
@@ -47,6 +47,18 @@ class Applesign {
     return path.join(this.tmpDir, baseName);
   }
 
+  async getDeviceProvision () {
+    const installedProvisions = await tools.ideviceprovision('list');
+    const pd = path.join(homedir(), 'Library', 'MobileDevice', 'Provisioning Profiles');
+    for (let ip of installedProvisions) {
+      const absPath = path.join(pd, ip + '.mobileprovision');
+      if (fs.existsSync(absPath)) {
+        return absPath;
+      }
+    }
+    throw new Error('Cannot find provisioning file automatically. Please use -m');
+  }
+
   async signXCarchive (file) {
     fchk(arguments, ['string']);
     const ipaFile = file + '.ipa';
@@ -68,6 +80,7 @@ class Applesign {
       use7zip: this.config.use7zip,
       useOpenSSL: this.config.useOpenSSL
     });
+    await this._pullMobileProvision();
     this.emit('message', 'File: ' + this.config.file);
     this.emit('message', 'Outdir: ' + this.config.outdir);
     if (tools.isDirectory(this.config.file)) {
@@ -107,16 +120,20 @@ class Applesign {
     return this;
   }
 
-  _pullMobileProvision () {
-    this.config.mobileprovision = this.config.mobileprovisions[0];
-    if (this.config.mobileprovisions.length > 1) {
-      this.config.mobileprovisions.slice(1);
+  async _pullMobileProvision () {
+    if (this.config.deviceProvision === true) {
+      this.config.mobileprovision = await this.getDeviceProvision();
+    } else {
+      this.config.mobileprovision = this.config.mobileprovisions[0];
+      if (this.config.mobileprovisions.length > 1) {
+        this.config.mobileprovisions.slice(1);
+      }
     }
   }
 
   async signAppDirectory (ipadir, skipNested) {
     fchk(arguments, ['string', 'boolean']);
-    this._pullMobileProvision();
+    await this._pullMobileProvision();
     if (this.config.run) {
       runScriptSync(this.config.run, this);
     }

@@ -32,11 +32,6 @@ async function main (argv) {
   } else if (conf._.length === 0) {
     console.error(config.shortHelpMessage);
   } else {
-    if (options.insertLibrary !== undefined) {
-      // if (err && err.toString().indexOf('dylib_insert') !== -1) {
-      // console.error(err);
-      // }
-    }
     const target = getTargetMethod(options.file, (conf.s || conf.single));
     if (target === undefined) {
       throw new Error('Cannot open file');
