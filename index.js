@@ -133,7 +133,7 @@ class Applesign {
     }
   }
 
-  async signAppDirectory (ipadir, skipNested) {
+  async signAppDirectoryInternal (ipadir, skipNested) {
     fchk(arguments, ['string', 'boolean']);
     await this._pullMobileProvision();
     if (this.config.run) {
@@ -176,12 +176,17 @@ class Applesign {
     if (skipNested !== true) {
       for (const nest of this.nested) {
         if (tools.isDirectory(nest)) {
-          await this.signAppDirectory(nest, true);
+          await this.signAppDirectoryInternal(nest, true);
         } else {
           this.emit('warning', 'Cannot find ' + nest);
         }
       }
     }
+  }
+
+  async signAppDirectory (ipadir) {
+    fchk(arguments, ['string']);
+    return this.signAppDirectoryInternal(ipadir, false);
   }
 
   async removeWatchApp () {
