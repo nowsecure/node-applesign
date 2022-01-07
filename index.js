@@ -111,7 +111,7 @@ class Applesign {
       if (tasks.length > 0) {
         await Promise.all(tasks);
       }
-      await this.signAppDirectory(appDirectory, false);
+      await this.signAppDirectory(appDirectory);
       await this.zipIPA();
     } catch (e) {
       process.exitCode = 1;
