@@ -17,7 +17,6 @@ colors.setTheme({
 async function main (argv) {
   const conf = config.parse(argv);
   const options = config.compile(conf);
-  await tools.findInPath();
   const as = new Applesign(options);
   // initialize
   if (conf.identities || conf.L) {
@@ -52,6 +51,7 @@ async function main (argv) {
       const message = 'Target is now signed: ' + outfile;
       console.log(message);
     } catch (e) {
+      process.exitCode = 1;
       console.error(e);
     } finally {
       await as.cleanupTmp();
