@@ -113,11 +113,9 @@ class Applesign {
       }
       await this.signAppDirectory(appDirectory);
       await this.zipIPA();
-    } catch (e) {
-      process.exitCode = 1;
-      console.error(e);
+    } finally {
+      await this.cleanup();
     }
-    await this.cleanup();
     return this;
   }
 
