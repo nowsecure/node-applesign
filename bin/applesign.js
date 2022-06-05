@@ -54,8 +54,10 @@ async function main (argv) {
       process.exitCode = 1;
       console.error(e);
     } finally {
-      await as.cleanupTmp();
-      await as.cleanup();
+      if (!options.noclean) {
+        await as.cleanupTmp();
+        await as.cleanup();
+      }
     }
     if (as.config.debug !== '') {
       const data = JSON.stringify(as.debugObject);
