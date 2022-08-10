@@ -551,7 +551,7 @@ class Applesign {
       const mp = await tools.getMobileProvisionPlist(this.config.mobileprovision);
       const newEntitlementsFile = file + '.entitlements';
       const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
-      const entstr = plistBuild(mp.Entitlements, { pretty:true, allowEmpty: false }).toString();
+      const entstr = plistBuild(mp.Entitlements, { pretty: true, allowEmpty: false }).toString();
       fs.writeFileSync(tmpEntitlementsFile, entstr);
       entitlements = tmpEntitlementsFile;
     } else {
