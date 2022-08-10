@@ -565,7 +565,7 @@ class Applesign {
       res = await tools.pseudoSign(entitlements, file);
     } else {
       const keychain = getKeychain();
-      res = await tools.codesign(identity, entitlements, keychain, file);
+      res = await tools.codesign(identity, entitlements, keychain, file, this.config.codeSign);
       if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
         return this.emit('end', res.stderr);
       }
