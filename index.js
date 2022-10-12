@@ -322,7 +322,12 @@ class Applesign {
       if (ent === null) {
         return;
       }
-      const entMacho = plist.parse(ent.toString().trim());
+      let entMacho = plist.parse(ent.toString().trim());
+      if (this.config.addEntitlements !== undefined) {
+        const addEnt = plist.readFileSync(this.config.addEntitlements);
+        // TODO: deepmerge
+        entMacho = Object.assign(entMacho, addEnt);
+      }
       // TODO: merge additional entitlements here
       const newEntitlements = plistBuild(entMacho).toString();
       const newEntitlementsFile = file + '.entitlements';
