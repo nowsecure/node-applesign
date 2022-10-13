@@ -316,6 +316,16 @@ class Applesign {
     this.debugObject[f][key] = val;
   }
 
+  addEntitlementsSync (orig) {
+    if (this.config.addEntitlements === undefined) {
+      return orig;
+    }
+    this.emit('message', 'Adding entitlements from file');
+    const addEnt = plist.readFileSync(this.config.addEntitlements);
+    // TODO: deepmerge
+    return Object.assign(orig, addEnt);
+  }
+
   adjustEntitlementsSync (file, entMobProv) {
     if (this.config.pseudoSign) {
       const ent = bin.entitlements(file);
@@ -323,11 +333,7 @@ class Applesign {
         return;
       }
       let entMacho = plist.parse(ent.toString().trim());
-      if (this.config.addEntitlements !== undefined) {
-        const addEnt = plist.readFileSync(this.config.addEntitlements);
-        // TODO: deepmerge
-        entMacho = Object.assign(entMacho, addEnt);
-      }
+      entMacho = this.addEntitlementsSync(entMacho);
       // TODO: merge additional entitlements here
       const newEntitlements = plistBuild(entMacho).toString();
       const newEntitlementsFile = file + '.entitlements';
@@ -348,6 +354,7 @@ class Applesign {
     let entMacho;
     if (ent !== null) {
       entMacho = plist.parse(ent.toString().trim());
+      entMacho = this.addEntitlementsSync(entMacho);
       this.debugInfo(file, 'fullPath', file);
       this.debugInfo(file, 'oldEntitlements', entMacho || 'TODO');
       if (this.config.selfSignedProvision) {
