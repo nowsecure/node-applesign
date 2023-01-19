@@ -144,7 +144,7 @@ class Applesign {
     this.emit('msg', 'Main Executable Name: ' + binname);
     this.config.appbin = path.join(this.config.appdir, binname);
     if (!fs.lstatSync(this.config.appbin).isFile()) {
-      throw new Error('This was suposed to be a file');
+      throw new Error('This was supposed to be a file');
     }
     if (bin.isBitcode(this.config.appbin)) {
       throw new Error('This IPA contains only bitcode. Must be transpiled for the target device to run.');
