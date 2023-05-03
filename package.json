@@ -27,7 +27,6 @@
     "fatmacho": "0.1.2",
     "fs-extra": "^10.1.0",
     "fs-walk": "github:trufae/fs-walk#patch-1",
-    "is-array": "1.0.1",
     "macho": "^1.4.0",
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",
