@@ -40,12 +40,11 @@ class Applesign {
     return result;
   }
 
-  _pathInTmp (filePath, scope = null) {
-    const baseName = path.basename(filePath);
-    if (typeof scope === 'string') {
-      return path.join(this.tmpDir, scope, baseName);
-    }
-    return path.join(this.tmpDir, baseName);
+  _fullPathInTmp (filePath) {
+    const dirname = path.dirname(filePath);
+    const dirnameInTmp = path.join(this.tmpDir, dirname);
+    fs.mkdirpSync(dirnameInTmp);
+    return path.join(this.tmpDir, filePath);
   }
 
   async getDeviceProvision () {
@@ -337,7 +336,7 @@ class Applesign {
       // TODO: merge additional entitlements here
       const newEntitlements = plistBuild(entMacho).toString();
       const newEntitlementsFile = file + '.entitlements';
-      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
       this.config.entitlement = tmpEntitlementsFile;
       return;
@@ -361,7 +360,7 @@ class Applesign {
         this.emit('message', 'Using an unsigned provisioning');
         const newEntitlementsFile = file + '.entitlements';
         const newEntitlements = plistBuild(entMacho).toString();
-        const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+        const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
         fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
         this.config.entitlement = tmpEntitlementsFile;
         if (!this.config.noEntitlementsFile) {
@@ -497,7 +496,7 @@ class Applesign {
 
       this.debugInfo(file, 'newEntitlements', ent);
 
-      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
       this.config.entitlement = tmpEntitlementsFile;
       if (!this.config.noEntitlementsFile) {
@@ -562,7 +561,7 @@ class Applesign {
     if (this.config.cloneEntitlements) {
       const mp = await tools.getMobileProvisionPlist(this.config.mobileprovision);
       const newEntitlementsFile = file + '.entitlements';
-      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       const entstr = plistBuild(mp.Entitlements, { pretty: true, allowEmpty: false }).toString();
       fs.writeFileSync(tmpEntitlementsFile, entstr);
       entitlements = tmpEntitlementsFile;
@@ -572,7 +571,7 @@ class Applesign {
     let res;
     if (this.config.pseudoSign) {
       const newEntitlementsFile = file + '.entitlements';
-      const tmpEntitlementsFile = this._pathInTmp(newEntitlementsFile);
+      const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       const entitlements = fs.existsSync(tmpEntitlementsFile) ? tmpEntitlementsFile : null;
       res = await tools.pseudoSign(entitlements, file);
     } else {
