@@ -1,13 +1,8 @@
-'use strict';
-
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const isEncryptedSync = require('macho-is-encrypted');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const fatmacho = require('fatmacho');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const macho = require('macho');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
-const fs = require('fs');
+import isEncryptedSync from 'macho-is-encrypted';
+import fatmacho from 'fatmacho';
+import macho from 'macho';
+import fs from 'fs';
+import machoEntitlements from 'macho-entitlements';
 
 const MACH0_MIN_SIZE = 1024 * 4;
 const MH_EXECUTE = 2;
@@ -152,7 +147,7 @@ function isTruncated (data: any) {
   return false;
 }
 
-function parseMacho (data: any) {
+function parseMacho (data: any) : any{
   try {
     return macho.parse(data);
   } catch (e) {
@@ -181,8 +176,6 @@ function enumerateLibraries (data: any) {
   ).map((x: any) => x.name);
 }
 
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const machoEntitlements = require('macho-entitlements');
 
 function entitlements (file: any) {
   return machoEntitlements.parseFile(file);
@@ -225,8 +218,7 @@ function getIdentifier (path: any) {
   }
 }
 
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = {
+export {
   entitlements,
   isMacho,
   isBitcode,

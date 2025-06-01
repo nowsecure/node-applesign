@@ -1,47 +1,25 @@
-'use strict';
+import * as tools from './lib/tools.js';
+import * as config from './lib/config.js';
+import idprov from './lib/idprov.js';
+import { EventEmitter } from 'events';
+import path from 'path';
+import { execSync } from 'child_process';
+import * as uuid from 'uuid';
+import fs from 'fs-extra';
+import walk from 'fs-walk';
+import plist from 'simple-plist';
+import fchk from './lib/fchk.js';
+import { tmpdir, homedir } from 'os';
+import { AppDirectory } from './lib/appdir.js';
+import depSolver from './lib/depsolver.js';
+import adjustInfoPlist from './lib/info-plist.js';
+import defaultEntitlements from './lib/entitlements.js';
+// import { build as plistBuild } from 'plist';
+import * as bin from './lib/bin.js';
 
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'tools'.
-const tools = require('./lib/tools');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'config'.
-const config = require('./lib/config');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'idprov'.
-const idprov = require('./lib/idprov');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const EventEmitter = require('events').EventEmitter;
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
-const path = require('path');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'execSync'.
-const { execSync } = require('child_process');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const uuid = require('uuid');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
-const fs = require('fs-extra');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'walk'.
-const walk = require('fs-walk');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
-const plist = require('simple-plist');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const fchk = require('./lib/fchk');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const { tmpdir, homedir } = require('os');
+import pkg from 'plist';
+const { build: plistBuild } = pkg;
 
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const { AppDirectory } = require('./lib/appdir');
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'depSolver'... Remove this comment to see the full error message
-const depSolver = require('./lib/depsolver');
-
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const adjustInfoPlist = require('./lib/info-plist');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'defaultEnt... Remove this comment to see the full error message
-const defaultEntitlements = require('./lib/entitlements');
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plistBuild... Remove this comment to see the full error message
-const plistBuild = require('plist').build;
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
-const bin = require('./lib/bin');
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'Applesign'... Remove this comment to see the full error message
 class Applesign {
   config: any;
   debugObject: any;
@@ -593,7 +571,7 @@ class Applesign {
     } else {
       entitlements = getEntitlements();
     }
-    let res;
+    let res: any;
     if (this.config.pseudoSign) {
       const newEntitlementsFile = file + '.entitlements';
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
@@ -609,7 +587,7 @@ class Applesign {
     this.emit('message', 'Signed ' + file);
     if (config.verifyTwice) {
       this.emit('message', 'Verify ' + file);
-      const res = await tools.verifyCodesign(file, config.keychain);
+      const res: any = await tools.verifyCodesign(file, config.keychain);
       if (res.code !== 0) {
         const type = (config.ignoreVerificationErrors) ? 'warning' : 'error';
         return this.emit(type, res.stderr);
@@ -993,5 +971,4 @@ async function moveFiles (files: any, sourceDir: any, destDir: any) {
     await fs.rename(oldName, newName);
   }
 }
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = Applesign;
+export default Applesign;

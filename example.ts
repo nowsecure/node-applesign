@@ -1,7 +1,4 @@
-'use strict';
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'Applesign'... Remove this comment to see the full error message
-const Applesign = require('.');
+import Applesign from '.';
 
 const as = new Applesign({
   /* bin/applesign -L to list all available identities in your system */

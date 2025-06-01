@@ -1,9 +1,8 @@
-'use strict';
+// Converted to ES module
 
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
-const path = require('path');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'idprov'.
-const idprov = require('./idprov');
+import path from 'path';
+import idprov from './idprov.js';
+import minimist from 'minimist';
 
 const shortHelpMessage = `Usage:
 
@@ -203,8 +202,7 @@ const fromState = function (state: any) {
 };
 
 function parse (argv: any) {
-  // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-  return require('minimist')(argv.slice(2), {
+  return minimist(argv.slice(2), {
     string: [
       'd', 'debug',
       'j', 'json',
@@ -293,12 +291,4 @@ function compile (conf: any) {
   return options;
 }
 
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = {
-  compile,
-  fromOptions,
-  fromState,
-  helpMessage,
-  parse,
-  shortHelpMessage
-};
+export { compile, fromOptions, fromState, helpMessage, parse, shortHelpMessage };

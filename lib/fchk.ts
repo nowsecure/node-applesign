@@ -1,5 +1,4 @@
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = function (args: any, types: any) {
+export default function fchk(args: any, types: any): void {
   if (args.length !== types.length) {
     throw new Error('Incorrect arguments count');
   }
@@ -10,4 +9,4 @@ module.exports = function (args: any, types: any) {
       throw new Error('Invalid argument type');
     }
   }
-};
+}

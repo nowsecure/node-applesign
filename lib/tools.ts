@@ -1,23 +1,13 @@
-'use strict';
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
-const fs = require('fs');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const { promisify } = require('util');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'execSync'.
-const { execSync, spawn } = require('child_process');
+import fs from 'fs';
+import { promisify } from 'util';
+import { execSync, spawn } from 'child_process';
 const unlinkAsync = promisify(fs.unlink);
 const renameAsync = promisify(fs.rename);
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
-const plist = require('simple-plist');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
-const path = require('path');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const which = require('which');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const rimraf = require('rimraf');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
-const bin = require('./bin');
+import plist from 'simple-plist';
+import path from 'path';
+import which from 'which';
+import rimraf from 'rimraf';
+import * as bin from './bin.js';
 
 let use7zip = false;
 let useOpenSSL = false;
@@ -112,7 +102,7 @@ function getTool (tool: any) {
   return cmd[tool];
 }
 
-async function ideviceprovision (action: any, optarg: any) {
+async function ideviceprovision (action: any, optarg?: any) {
   if (action === 'list') {
     const res = await execProgram(getTool('ideviceprovision'), ['list'], null);
     // @ts-expect-error TS(2571): Object is of type 'unknown'.
@@ -159,7 +149,7 @@ async function pseudoSign (entitlement: any, file: any) {
   return execProgram(getTool('ldid2'), args, null);
 }
 
-async function verifyCodesign (file: any, keychain: any, cb: any) {
+async function verifyCodesign (file: any, keychain?: any, cb?: any) {
   const args = ['-v', '--no-strict'];
   if (typeof keychain === 'string') {
     args.push('--keychain=' + keychain);
@@ -187,7 +177,7 @@ async function getMobileProvisionPlist (file: any) {
   return plist.parse(res.stdout);
 }
 
-async function getEntitlementsFromMobileProvision (file: any, cb: any) {
+async function getEntitlementsFromMobileProvision (file: any, cb?: any) {
   const res = await getMobileProvisionPlist(file);
   return res.Entitlements;
 }
@@ -293,7 +283,7 @@ function getIdentitiesFromString (stdout: any) {
   return ids;
 }
 
-function getIdentitiesSync (bin: any, arg: any) {
+function getIdentitiesSync () {
   const command = [getTool('security'), 'find-identity', '-v', '-p', 'codesigning'];
   return getIdentitiesFromString(execSync(command.join(' ')).toString());
 }
@@ -305,7 +295,7 @@ async function getIdentities () {
   return getIdentitiesFromString(res.stdout);
 }
 
-async function lipoFile (file: any, arch: any, cb: any) {
+async function lipoFile (file: any, arch: any, cb?: any) {
   const args = [file, '-thin', arch, '-output', file];
   // @ts-expect-error TS(2554): Expected 3 arguments, but got 4.
   return execProgram(getTool('lipo'), args, null, cb);
@@ -340,7 +330,7 @@ function asyncRimraf (dir: any) {
   });
 }
 
-[
+export {
   codesign,
   pseudoSign,
   verifyCodesign,
@@ -357,7 +347,4 @@ function asyncRimraf (dir: any) {
   setOptions,
   isDirectory,
   asyncRimraf
-].forEach(function (x) {
-  // @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-  module.exports[x.name] = x;
-});
+};

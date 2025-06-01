@@ -1,13 +1,12 @@
 'use strict';
 
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
-const plist = require('simple-plist');
+import plist from 'simple-plist';
 
 const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
 // @ts-expect-error TS(2464): A computed property name must be of type 'string',... Remove this comment to see the full error message
 const objectFromEntries = (x: any) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
 
-function fix (file: any, options: any, emit: any) {
+export default function fix(file: any, options: any, emit: any): void {
   const { appdir, bundleid, forceFamily, allowHttp } = options;
   if (!file || !appdir) {
     throw new Error('Invalid parameters for fixPlist');
@@ -126,6 +125,3 @@ function supportedDevices (data: any) {
   }
   return have;
 }
-
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = fix;

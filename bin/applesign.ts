@@ -1,19 +1,10 @@
 #!/usr/bin/env node
-'use strict';
-
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
-const fs = require('fs');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-// Point to root package.json in distribution
-const packageJson = require('../../package.json');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'tools'.
-const tools = require('../lib/tools');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'config'.
-const config = require('../lib/config');
-// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
-const colors = require('colors');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'Applesign'... Remove this comment to see the full error message
-const Applesign = require('../');
+import fs from 'fs';
+// import packageJson from '../../package.json';
+import * as tools from '../lib/tools.js';
+import * as config from '../lib/config.js';
+import colors from 'colors';
+import Applesign from '../index.js';
 
 colors.setTheme({
   error: 'red',
@@ -32,7 +23,7 @@ async function main (argv: any) {
       console.log(id.hash, id.name);
     });
   } else if (conf.version) {
-    console.log(packageJson.version);
+    //console.log(packageJson.version);
   } else if (conf.h || conf.help) {
     console.error(config.helpMessage);
   } else if (conf._.length === 0) {

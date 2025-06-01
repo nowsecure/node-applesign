@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "rootDir": ".",
     "outDir": "dist",
     "strict": true,
@@ -19,7 +20,8 @@
     "bin/**/*",
     "index.*",
     "example.*",
-    "test/**/*"
+    "test/**/*",
+    "*.json"
   ],
   "exclude": ["node_modules", "dist"]
 }

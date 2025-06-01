@@ -1,10 +1,5 @@
-'use strict';
-
-// const uniq = require('uniq');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
-const fs = require('fs');
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
-const bin = require('./bin');
+import fs from 'fs';
+import * as bin from './bin.js';
 
 function resolveRpath (libs: any, file: any, lib: any) {
   const libName = lib.substring(6); /* chop @rpath */
@@ -45,7 +40,7 @@ function resolvePathDirective (file: any, lib: any, directive: any) {
   return lib.replace(directive, rpath);
 }
 
-function resolvePath (executable: any, file: any, lib: any, libs: any) {
+export function resolvePath(executable: any, file: any, lib: any, libs: any) {
   if (lib.startsWith('/')) {
     return null;
   }
@@ -110,8 +105,7 @@ function flattenize (layers: any) {
   return list;
 }
 
-// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'depSolver'... Remove this comment to see the full error message
-function depSolver (executable: any, libs: any, parallel: any) {
+export default function depSolver(executable: any, libs: any, parallel: any): Promise<any> {
   return new Promise((resolve, reject) => {
     if (libs.length === 0) {
       return resolve([]);
@@ -164,7 +158,3 @@ function depSolver (executable: any, libs: any, parallel: any) {
   });
 }
 
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports = depSolver;
-// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
-module.exports.resolvePath = resolvePath;
