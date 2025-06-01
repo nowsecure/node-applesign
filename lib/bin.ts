@@ -22,12 +22,10 @@ function isMacho (filePath: any) {
   if (fd < 1) {
     return false;
   }
-  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   const machoMagic = Buffer.alloc(4);
   if (fs.readSync(fd, machoMagic, { position: 0, length: 4 }) !== 4) {
     return false;
   }
-  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   const machoType = Buffer.alloc(4);
   if (fs.readSync(fd, machoType, { position: 0xc, length: 4 }) !== 4) {
     return false;
@@ -35,7 +33,6 @@ function isMacho (filePath: any) {
   fs.close(fd);
   // is this a fatmacho?
 
-  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   if (!machoMagic.compare(Buffer.from([0xca, 0xfe, 0xba, 0xbe]))) {
     try {
       const data = fs.readFileSync(filePath);
@@ -62,7 +59,6 @@ function isValidMacho (machoMagic: any, machoType: any) {
     [0xcf, 0xfa, 0xed, 0xfe] // 64bit
   ];
   for (const a of magics) {
-    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     if (!machoMagic.slice(0, 4).compare(Buffer.from(a))) {
       // ensure the macho type is supported by ldid2
       const fileType = machoType[0];

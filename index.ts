@@ -275,8 +275,7 @@ class Applesign {
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
       const files = this.findProvisioningsSync();
-      // @ts-expect-error TS(7006): Parameter 'file' implicitly has an 'any' type.
-      files.forEach((file) => {
+      files.forEach((file: string) => {
         console.error('Deleting ', file);
         fs.unlinkSync(file);
       });
@@ -888,29 +887,22 @@ function getOutputPath (cwd: any, ofile: any) {
 function runScriptSync (script: any, session: any) {
   if (script.endsWith('.js')) {
     try {
-      // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
       const s = require(script);
       return s(session);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       return false;
     }
   } else {
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_DIRECTORY = session.config.appdir;
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_MAINBIN = session.config.appbin;
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_OUTFILE = session.config.outfile;
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_OUTDIR = session.config.outdir;
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_FILE = session.config.file;
     try {
       const res = execSync(script);
       console.error(res.toString());
-    } catch (e) {
-      // @ts-expect-error TS(2571): Object is of type 'unknown'.
+    } catch (e: any) {
       console.error(e.toString());
       return false;
     }

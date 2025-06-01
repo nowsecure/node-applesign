@@ -27,31 +27,61 @@ const cmdSpec = {
   ldid2: 'ldid2'
 };
 
-const cmd = {};
+const cmd: Record<string, string> = {};
 let cmdInited = false;
 
-async function execProgram (bin: any, arg: any, opt: any) {
+/**
+ * Result of executing a child process.
+ */
+interface ExecResult {
+  stdout: string;
+  stderr: string;
+  code: number;
+}
+/**
+ * Execute a program and capture stdout, stderr, and exit code.
+ * @param cmdPath Path to executable
+ * @param args Array of string arguments
+ * @param options Spawn options
+ * @returns Promise resolving to execution result
+ */
+/**
+ * Options for spawning child processes used by execProgram.
+ */
+type ExecOptions = {
+  cwd?: string;
+  env?: { [key: string]: string | undefined };
+  stdio?: any;
+};
+/**
+ * Execute a program and capture stdout, stderr, and exit code.
+ * @param cmdPath Path to executable
+ * @param args Arguments array
+ * @param options Spawn options
+ * @returns Execution result
+ */
+async function execProgram(
+  cmdPath: string,
+  args: string[],
+  options?: ExecOptions
+): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     let _out = Buffer.alloc(0);
-    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     let _err = Buffer.alloc(0);
-    const child = spawn(bin, arg, opt || {});
-    child.stdout.on('data', (data: any) => {
-      // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
+    const child = spawn(cmdPath, args, options || {});
+    child.stdout.on('data', (data: Buffer) => {
       _out = Buffer.concat([_out, data]);
     });
-    child.stderr.on('data', (data: any) => {
-      // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
+    child.stderr.on('data', (data: Buffer) => {
       _err = Buffer.concat([_err, data]);
     });
     child.stdin.end();
-    child.on('close', (code: any) => {
+    child.on('close', (code: number) => {
       if (code !== 0) {
-        let msg = 'stdout: ' + _out.toString('utf8');
-        msg += '\nstderr: ' + _err.toString('utf8');
-        msg += '\ncommand: ' + bin + ' ' + arg.join(' ');
-        msg += '\ncode: ' + code;
+        let msg = `stdout: ${_out.toString('utf8')}`;
+        msg += `\nstderr: ${_err.toString('utf8')}`;
+        msg += `\ncommand: ${cmdPath} ${args.join(' ')}`;
+        msg += `\ncode: ${code}`;
         return reject(new Error(msg));
       }
       resolve({
@@ -83,29 +113,28 @@ function findInPath () {
   const keys = Object.keys(cmdSpec);
   for (const key of keys) {
     try {
-      // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
       cmd[key] = which.sync(key);
-    } catch (err) {
+    } catch {
+      // ignore missing tools
     }
   }
 }
 
-function getTool (tool: any) {
+/**
+ * Get the path to a tool executable, or throw if not found.
+ * @param tool Name of the tool
+ */
+function getTool (tool: string): string {
   findInPath();
   if (!(tool in cmd)) {
-    if (isDramatic(tool)) {
-      throw new Error(`Warning: tools.findInPath: not found: ${tool}`);
-    }
-    return null;
+    throw new Error(`tools.findInPath: not found: ${tool}`);
   }
-  // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
   return cmd[tool];
 }
 
 async function ideviceprovision (action: any, optarg?: any) {
   if (action === 'list') {
-    const res = await execProgram(getTool('ideviceprovision'), ['list'], null);
-    // @ts-expect-error TS(2571): Object is of type 'unknown'.
+    const res = await execProgram(getTool('ideviceprovision')!, ['list']);
     return res.stdout.split('\n')
       .filter((line: any) => line.indexOf('-') !== -1)
       .map((line: any) => line.split(' ')[0]);
@@ -131,10 +160,10 @@ async function codesign (identity: any, entitlement: any, keychain: any, file: a
   }
   args.push('--generate-entitlement-der');
   args.push(file);
-  return execProgram(getTool('codesign'), args, null);
+  return execProgram(getTool('codesign')!, args);
 }
 
-async function pseudoSign (entitlement: any, file: any) {
+async function pseudoSign (entitlement: any, file: string): Promise<ExecResult> {
   const args = [];
   if (typeof entitlement === 'string') {
     args.push('-S' + entitlement);
@@ -146,17 +175,16 @@ async function pseudoSign (entitlement: any, file: any) {
     args.push('-I' + identifier);
   }
   args.push(file);
-  return execProgram(getTool('ldid2'), args, null);
+  return execProgram(getTool('ldid2')!, args);
 }
 
-async function verifyCodesign (file: any, keychain?: any, cb?: any) {
+async function verifyCodesign (file: string, keychain?: string): Promise<ExecResult> {
   const args = ['-v', '--no-strict'];
   if (typeof keychain === 'string') {
     args.push('--keychain=' + keychain);
   }
   args.push(file);
-  // @ts-expect-error TS(2554): Expected 3 arguments, but got 4.
-  return execProgram(getTool('codesign'), args, null, cb);
+  return execProgram(getTool('codesign')!, args);
 }
 
 async function getMobileProvisionPlist (file: any) {
@@ -167,13 +195,12 @@ async function getMobileProvisionPlist (file: any) {
   if (useOpenSSL === true) {
     /* portable using openssl */
     const args = ['cms', '-in', file, '-inform', 'der', '-verify'];
-    res = await execProgram(getTool('openssl'), args, null);
+    res = await execProgram(getTool('openssl')!, args);
   } else {
     /* OSX specific using security */
     const args = ['cms', '-D', '-i', file];
-    res = await execProgram(getTool('security'), args, null);
+    res = await execProgram(getTool('security')!, args);
   }
-  // @ts-expect-error TS(2571): Object is of type 'unknown'.
   return plist.parse(res.stdout);
 }
 
@@ -192,39 +219,35 @@ async function zip (cwd: any, ofile: any, src: any) {
   if (use7zip) {
     const zipFile = ofile + '.zip';
     const args = ['a', zipFile, src];
-    await execProgram(getTool('7z'), args, { cwd });
+    await execProgram(getTool('7z')!, args, { cwd });
     await renameAsync(zipFile, ofile);
   } else {
     const args = ['-qry', ofile, src];
-    await execProgram(getTool('zip'), args, { cwd });
+    await execProgram(getTool('zip')!, args, { cwd });
   }
 }
 
 async function unzip (ifile: any, odir: any) {
   if (use7zip) {
     const args = ['x', '-y', '-o' + odir, ifile];
-    return execProgram(getTool('7z'), args, null);
+    return execProgram(getTool('7z')!, args);
   }
-  // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
   if (process.env.UNZIP !== undefined) {
-    // @ts-expect-error TS(2339): Property 'unzip' does not exist on type '{}'.
     cmd.unzip = process.env.UNZIP;
-    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     delete process.env.UNZIP;
   }
   const args = ['-o', ifile, '-d', odir];
-  return execProgram(getTool('unzip'), args, null);
+  return execProgram(getTool('unzip')!, args);
 }
 
 async function xcaToIpa (ifile: any, odir: any) {
   const args = ['-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir];
-  return execProgram(getTool('xcodebuild'), args, null);
+  return execProgram(getTool('xcodebuild')!, args);
 }
 
 async function insertLibrary (lib: any, bin: any, out: any) {
   let error = null;
   try {
-    // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
     const machoMangle = require('macho-mangle');
     try {
       let src = fs.readFileSync(bin);
@@ -250,7 +273,7 @@ async function insertLibrary (lib: any, bin: any, out: any) {
   } catch (e) {
     if (getTool('insert_dylib') !== null) {
       const args = ['--strip-codesig', '--all-yes', lib, bin, bin];
-      const res = await execProgram(getTool('insert_dylib'), args, null);
+      const res = await execProgram(getTool('insert_dylib')!, args);
       console.error(JSON.stringify(res));
     } else {
       error = new Error('Cannot find insert_dylib or macho-mangle');
@@ -290,15 +313,13 @@ function getIdentitiesSync () {
 
 async function getIdentities () {
   const args = ['find-identity', '-v', '-p', 'codesigning'];
-  const res = await execProgram(getTool('security'), args, null);
-  // @ts-expect-error TS(2571): Object is of type 'unknown'.
+  const res = await execProgram(getTool('security')!, args);
   return getIdentitiesFromString(res.stdout);
 }
 
-async function lipoFile (file: any, arch: any, cb?: any) {
+async function lipoFile (file: string, arch: string): Promise<ExecResult> {
   const args = [file, '-thin', arch, '-output', file];
-  // @ts-expect-error TS(2554): Expected 3 arguments, but got 4.
-  return execProgram(getTool('lipo'), args, null, cb);
+  return execProgram(getTool('lipo')!, args);
 }
 
 function isDirectory (pathString: any) {
@@ -319,10 +340,9 @@ function setOptions (obj: any) {
 }
 
 function asyncRimraf (dir: any) {
-  return new Promise((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     if (dir === undefined) {
-      // @ts-expect-error TS(2794): Expected 1 arguments, but got 0. Did you forget to... Remove this comment to see the full error message
-      resolve();
+      resolve(undefined);
     }
     rimraf(dir, (err: any, res: any) => {
       return err ? reject(err) : resolve(res);
