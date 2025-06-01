@@ -15,10 +15,10 @@
     "indent": "semistandard --fix bin/*.js lib/*.js *.js",
     "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
     "test": "mocha",
-    "dist": "./dist.sh",
-    "dist-all": "./dist.sh macos linux freebsd alpine win",
-    "build": "tsc",
-    "migrate": "ts-migrate migrate"
+    "dist": "./scripts/dist.sh",
+    "dist-all": "./scripts/dist.sh macos linux freebsd alpine win",
+    "prebuild": "node scripts/update-version.cjs",
+    "build": "tsc"
   },
   "devDependencies": {
     "npm": "^10.0.0",
@@ -64,7 +64,8 @@
     "lib/tools.js",
     "package.json",
     "README.md",
-    "dist.sh"
+    "scripts/update-version.sh",
+    "scripts/dist.sh"
   ],
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",

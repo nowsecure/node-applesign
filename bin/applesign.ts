@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'fs';
-// import packageJson from '../../package.json';
+import pkgVersion from '../lib/version.js';
+import { join } from 'path';
 import * as tools from '../lib/tools.js';
 import * as config from '../lib/config.js';
 import colors from 'colors';
@@ -28,7 +29,7 @@ async function main (argv: string[]): Promise<void> {
       console.log(id.hash, id.name);
     });
   } else if (conf.version) {
-    //console.log(packageJson.version);
+    console.log(pkgVersion);
   } else if (conf.h || conf.help) {
     console.error(config.helpMessage);
   } else if (conf._.length === 0) {

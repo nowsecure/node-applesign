@@ -9,10 +9,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    // Allow JavaScript files during migration
-    "allowJs": true,
-    "checkJs": false
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     // include both JS and TS sources for migration
