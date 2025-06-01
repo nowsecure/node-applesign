@@ -1,30 +1,30 @@
-import fs from 'fs';
-import { promisify } from 'util';
-import { execSync, spawn } from 'child_process';
+import fs from "fs";
+import { promisify } from "util";
+import { execSync, spawn } from "child_process";
 const unlinkAsync = promisify(fs.unlink);
 const renameAsync = promisify(fs.rename);
-import plist from 'simple-plist';
-import path from 'path';
-import which from 'which';
-import rimraf from 'rimraf';
-import * as bin from './bin.js';
+import plist from "simple-plist";
+import path from "path";
+import which from "which";
+import rimraf from "rimraf";
+import * as bin from "./bin.js";
 
 let use7zip = false;
 let useOpenSSL = false;
 
 const cmdSpec = {
-  '7z': '/usr/local/bin/7z',
-  codesign: '/usr/bin/codesign',
-  insert_dylib: 'insert_dylib',
-  lipo: '/usr/bin/lipo',
+  "7z": "/usr/local/bin/7z",
+  codesign: "/usr/bin/codesign",
+  insert_dylib: "insert_dylib",
+  lipo: "/usr/bin/lipo",
   /* only when useOpenSSL is true */
-  openssl: '/usr/local/bin/openssl',
-  security: '/usr/bin/security',
-  unzip: '/usr/bin/unzip',
-  xcodebuild: '/usr/bin/xcodebuild',
-  ideviceprovision: '/usr/local/bin/ideviceprovision',
-  zip: '/usr/bin/zip',
-  ldid2: 'ldid2'
+  openssl: "/usr/local/bin/openssl",
+  security: "/usr/bin/security",
+  unzip: "/usr/bin/unzip",
+  xcodebuild: "/usr/bin/xcodebuild",
+  ideviceprovision: "/usr/local/bin/ideviceprovision",
+  zip: "/usr/bin/zip",
+  ldid2: "ldid2",
 };
 
 const cmd: Record<string, string> = {};
@@ -63,31 +63,31 @@ type ExecOptions = {
 async function execProgram(
   cmdPath: string,
   args: string[],
-  options?: ExecOptions
+  options?: ExecOptions,
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     let _out = Buffer.alloc(0);
     let _err = Buffer.alloc(0);
     const child = spawn(cmdPath, args, options || {});
-    child.stdout.on('data', (data: Buffer) => {
+    child.stdout.on("data", (data: Buffer) => {
       _out = Buffer.concat([_out, data]);
     });
-    child.stderr.on('data', (data: Buffer) => {
+    child.stderr.on("data", (data: Buffer) => {
       _err = Buffer.concat([_err, data]);
     });
     child.stdin.end();
-    child.on('close', (code: number) => {
+    child.on("close", (code: number) => {
       if (code !== 0) {
-        let msg = `stdout: ${_out.toString('utf8')}`;
-        msg += `\nstderr: ${_err.toString('utf8')}`;
-        msg += `\ncommand: ${cmdPath} ${args.join(' ')}`;
+        let msg = `stdout: ${_out.toString("utf8")}`;
+        msg += `\nstderr: ${_err.toString("utf8")}`;
+        msg += `\ncommand: ${cmdPath} ${args.join(" ")}`;
         msg += `\ncode: ${code}`;
         return reject(new Error(msg));
       }
       resolve({
         stdout: _out.toString(),
         stderr: _err.toString(),
-        code
+        code,
       });
     });
   });
@@ -95,17 +95,17 @@ async function execProgram(
 
 /* public */
 
-function isDramatic (msg: any) {
-  if (msg.indexOf('insert_dylib') !== -1) {
+function isDramatic(msg: any) {
+  if (msg.indexOf("insert_dylib") !== -1) {
     return false;
   }
-  if (msg.indexOf('7z') !== -1) {
+  if (msg.indexOf("7z") !== -1) {
     return false;
   }
   return true;
 }
 
-function findInPath () {
+function findInPath() {
   if (cmdInited) {
     return;
   }
@@ -124,7 +124,7 @@ function findInPath () {
  * Get the path to a tool executable, or throw if not found.
  * @param tool Name of the tool
  */
-function getTool (tool: string): string {
+function getTool(tool: string): string {
   findInPath();
   if (!(tool in cmd)) {
     throw new Error(`tools.findInPath: not found: ${tool}`);
@@ -132,84 +132,92 @@ function getTool (tool: string): string {
   return cmd[tool];
 }
 
-async function ideviceprovision (action: any, optarg?: any) {
-  if (action === 'list') {
-    const res = await execProgram(getTool('ideviceprovision')!, ['list']);
-    return res.stdout.split('\n')
-      .filter((line: any) => line.indexOf('-') !== -1)
-      .map((line: any) => line.split(' ')[0]);
+async function ideviceprovision(action: any, optarg?: any) {
+  if (action === "list") {
+    const res = await execProgram(getTool("ideviceprovision")!, ["list"]);
+    return res.stdout.split("\n")
+      .filter((line: any) => line.indexOf("-") !== -1)
+      .map((line: any) => line.split(" ")[0]);
   } else {
-    throw new Error('unsupported ideviceprovision action');
+    throw new Error("unsupported ideviceprovision action");
   }
 }
 
-async function codesign (identity: any, entitlement: any, keychain: any, file: any) {
+async function codesign(
+  identity: any,
+  entitlement: any,
+  keychain: any,
+  file: any,
+) {
   /* use the --no-strict to avoid the "resource envelope is obsolete" error */
-  const args = ['--no-strict']; // http://stackoverflow.com/a/26204757
+  const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
   if (identity === undefined) {
-    throw new Error('--identity is required to sign');
+    throw new Error("--identity is required to sign");
   }
-  args.push('-fs', identity);
+  args.push("-fs", identity);
   // args.push('-v');
   // args.push('--deep');
-  if (typeof entitlement === 'string') {
-    args.push('--entitlements=' + entitlement);
+  if (typeof entitlement === "string") {
+    args.push("--entitlements=" + entitlement);
   }
-  if (typeof keychain === 'string') {
-    args.push('--keychain=' + keychain);
+  if (typeof keychain === "string") {
+    args.push("--keychain=" + keychain);
   }
-  args.push('--generate-entitlement-der');
+  args.push("--generate-entitlement-der");
   args.push(file);
-  return execProgram(getTool('codesign')!, args);
+  return execProgram(getTool("codesign")!, args);
 }
 
-async function pseudoSign (entitlement: any, file: string): Promise<ExecResult> {
+async function pseudoSign(entitlement: any, file: string): Promise<ExecResult> {
   const args = [];
-  if (typeof entitlement === 'string') {
-    args.push('-S' + entitlement);
+  if (typeof entitlement === "string") {
+    args.push("-S" + entitlement);
   } else {
-    args.push('-S');
+    args.push("-S");
   }
   const identifier = bin.getIdentifier(file);
-  if (identifier !== null && identifier !== '') {
-    args.push('-I' + identifier);
+  if (identifier !== null && identifier !== "") {
+    args.push("-I" + identifier);
   }
   args.push(file);
-  return execProgram(getTool('ldid2')!, args);
+  return execProgram(getTool("ldid2")!, args);
 }
 
-async function verifyCodesign (file: string, keychain?: string): Promise<ExecResult> {
-  const args = ['-v', '--no-strict'];
-  if (typeof keychain === 'string') {
-    args.push('--keychain=' + keychain);
+async function verifyCodesign(
+  file: string,
+  keychain?: string,
+): Promise<ExecResult> {
+  const args = ["-v", "--no-strict"];
+  if (typeof keychain === "string") {
+    args.push("--keychain=" + keychain);
   }
   args.push(file);
-  return execProgram(getTool('codesign')!, args);
+  return execProgram(getTool("codesign")!, args);
 }
 
-async function getMobileProvisionPlist (file: any) {
+async function getMobileProvisionPlist(file: any) {
   let res;
   if (file === undefined) {
-    throw new Error('No mobile provisioning file available.');
+    throw new Error("No mobile provisioning file available.");
   }
   if (useOpenSSL === true) {
     /* portable using openssl */
-    const args = ['cms', '-in', file, '-inform', 'der', '-verify'];
-    res = await execProgram(getTool('openssl')!, args);
+    const args = ["cms", "-in", file, "-inform", "der", "-verify"];
+    res = await execProgram(getTool("openssl")!, args);
   } else {
     /* OSX specific using security */
-    const args = ['cms', '-D', '-i', file];
-    res = await execProgram(getTool('security')!, args);
+    const args = ["cms", "-D", "-i", file];
+    res = await execProgram(getTool("security")!, args);
   }
   return plist.parse(res.stdout);
 }
 
-async function getEntitlementsFromMobileProvision (file: any, cb?: any) {
+async function getEntitlementsFromMobileProvision(file: any, cb?: any) {
   const res = await getMobileProvisionPlist(file);
   return res.Entitlements;
 }
 
-async function zip (cwd: any, ofile: any, src: any) {
+async function zip(cwd: any, ofile: any, src: any) {
   try {
     await unlinkAsync(ofile);
   } catch (ignored) {
@@ -217,66 +225,74 @@ async function zip (cwd: any, ofile: any, src: any) {
   const ofilePath = path.dirname(ofile);
   fs.mkdirSync(ofilePath, { recursive: true });
   if (use7zip) {
-    const zipFile = ofile + '.zip';
-    const args = ['a', zipFile, src];
-    await execProgram(getTool('7z')!, args, { cwd });
+    const zipFile = ofile + ".zip";
+    const args = ["a", zipFile, src];
+    await execProgram(getTool("7z")!, args, { cwd });
     await renameAsync(zipFile, ofile);
   } else {
-    const args = ['-qry', ofile, src];
-    await execProgram(getTool('zip')!, args, { cwd });
+    const args = ["-qry", ofile, src];
+    await execProgram(getTool("zip")!, args, { cwd });
   }
 }
 
-async function unzip (ifile: any, odir: any) {
+async function unzip(ifile: any, odir: any) {
   if (use7zip) {
-    const args = ['x', '-y', '-o' + odir, ifile];
-    return execProgram(getTool('7z')!, args);
+    const args = ["x", "-y", "-o" + odir, ifile];
+    return execProgram(getTool("7z")!, args);
   }
   if (process.env.UNZIP !== undefined) {
     cmd.unzip = process.env.UNZIP;
     delete process.env.UNZIP;
   }
-  const args = ['-o', ifile, '-d', odir];
-  return execProgram(getTool('unzip')!, args);
+  const args = ["-o", ifile, "-d", odir];
+  return execProgram(getTool("unzip")!, args);
 }
 
-async function xcaToIpa (ifile: any, odir: any) {
-  const args = ['-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir];
-  return execProgram(getTool('xcodebuild')!, args);
+async function xcaToIpa(ifile: any, odir: any) {
+  const args = [
+    "-exportArchive",
+    "-exportFormat",
+    "ipa",
+    "-archivePath",
+    ifile,
+    "-exportPath",
+    odir,
+  ];
+  return execProgram(getTool("xcodebuild")!, args);
 }
 
-async function insertLibrary (lib: any, bin: any, out: any) {
+async function insertLibrary(lib: any, bin: any, out: any) {
   let error = null;
   try {
-    const machoMangle = require('macho-mangle');
+    const machoMangle = require("macho-mangle");
     try {
       let src = fs.readFileSync(bin);
-      if (lib.indexOf('@rpath') === 0) {
+      if (lib.indexOf("@rpath") === 0) {
         src = machoMangle(src, {
-          type: 'rpath',
-          name: '@executable_path/Frameworks'
+          type: "rpath",
+          name: "@executable_path/Frameworks",
         });
       }
       const dst = machoMangle(src, {
-        type: 'load_dylib',
+        type: "load_dylib",
         name: lib,
         version: {
-          current: '1.0.0',
-          compat: '0.0.0'
-        }
+          current: "1.0.0",
+          compat: "0.0.0",
+        },
       });
       fs.writeFileSync(bin, dst);
-      console.log('Library inserted');
+      console.log("Library inserted");
     } catch (e) {
       error = e;
     }
   } catch (e) {
-    if (getTool('insert_dylib') !== null) {
-      const args = ['--strip-codesig', '--all-yes', lib, bin, bin];
-      const res = await execProgram(getTool('insert_dylib')!, args);
+    if (getTool("insert_dylib") !== null) {
+      const args = ["--strip-codesig", "--all-yes", lib, bin, bin];
+      const res = await execProgram(getTool("insert_dylib")!, args);
       console.error(JSON.stringify(res));
     } else {
-      error = new Error('Cannot find insert_dylib or macho-mangle');
+      error = new Error("Cannot find insert_dylib or macho-mangle");
     }
   }
   if (error) {
@@ -284,21 +300,21 @@ async function insertLibrary (lib: any, bin: any, out: any) {
   }
 }
 
-function getIdentitiesFromString (stdout: any) {
-  const lines = stdout.split('\n');
+function getIdentitiesFromString(stdout: any) {
+  const lines = stdout.split("\n");
   lines.pop(); // remove last line
   const ids: any = [];
   lines.filter((entry: any) => {
-    return entry.indexOf('CSSMERR_TP_CERT_REVOKED') === -1;
+    return entry.indexOf("CSSMERR_TP_CERT_REVOKED") === -1;
   }).forEach((line: any) => {
-    const tok = line.indexOf(') ');
+    const tok = line.indexOf(") ");
     if (tok !== -1) {
       const msg = line.substring(tok + 2).trim();
-      const tok2 = msg.indexOf(' ');
+      const tok2 = msg.indexOf(" ");
       if (tok2 !== -1) {
         ids.push({
           hash: msg.substring(0, tok2),
-          name: msg.substring(tok2 + 1).replace(/^"/, '').replace(/"$/, '')
+          name: msg.substring(tok2 + 1).replace(/^"/, "").replace(/"$/, ""),
         });
       }
     }
@@ -306,23 +322,29 @@ function getIdentitiesFromString (stdout: any) {
   return ids;
 }
 
-function getIdentitiesSync () {
-  const command = [getTool('security'), 'find-identity', '-v', '-p', 'codesigning'];
-  return getIdentitiesFromString(execSync(command.join(' ')).toString());
+function getIdentitiesSync() {
+  const command = [
+    getTool("security"),
+    "find-identity",
+    "-v",
+    "-p",
+    "codesigning",
+  ];
+  return getIdentitiesFromString(execSync(command.join(" ")).toString());
 }
 
-async function getIdentities () {
-  const args = ['find-identity', '-v', '-p', 'codesigning'];
-  const res = await execProgram(getTool('security')!, args);
+async function getIdentities() {
+  const args = ["find-identity", "-v", "-p", "codesigning"];
+  const res = await execProgram(getTool("security")!, args);
   return getIdentitiesFromString(res.stdout);
 }
 
-async function lipoFile (file: string, arch: string): Promise<ExecResult> {
-  const args = [file, '-thin', arch, '-output', file];
-  return execProgram(getTool('lipo')!, args);
+async function lipoFile(file: string, arch: string): Promise<ExecResult> {
+  const args = [file, "-thin", arch, "-output", file];
+  return execProgram(getTool("lipo")!, args);
 }
 
-function isDirectory (pathString: any) {
+function isDirectory(pathString: any) {
   try {
     return fs.lstatSync(pathString).isDirectory();
   } catch (e) {
@@ -330,16 +352,16 @@ function isDirectory (pathString: any) {
   }
 }
 
-function setOptions (obj: any) {
-  if (typeof obj.use7zip === 'boolean') {
+function setOptions(obj: any) {
+  if (typeof obj.use7zip === "boolean") {
     use7zip = obj.use7zip;
   }
-  if (typeof obj.useOpenSSL === 'boolean') {
+  if (typeof obj.useOpenSSL === "boolean") {
     useOpenSSL = obj.useOpenSSL;
   }
 }
 
-function asyncRimraf (dir: any) {
+function asyncRimraf(dir: any) {
   return new Promise<any>((resolve, reject) => {
     if (dir === undefined) {
       resolve(undefined);
@@ -351,20 +373,20 @@ function asyncRimraf (dir: any) {
 }
 
 export {
+  asyncRimraf,
   codesign,
-  pseudoSign,
-  verifyCodesign,
   getEntitlementsFromMobileProvision,
-  getMobileProvisionPlist,
-  zip,
-  unzip,
-  xcaToIpa,
   getIdentities,
-  ideviceprovision,
   getIdentitiesSync,
+  getMobileProvisionPlist,
+  ideviceprovision,
   insertLibrary,
-  lipoFile,
-  setOptions,
   isDirectory,
-  asyncRimraf
+  lipoFile,
+  pseudoSign,
+  setOptions,
+  unzip,
+  verifyCodesign,
+  xcaToIpa,
+  zip,
 };

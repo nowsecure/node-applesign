@@ -1,8 +1,8 @@
-import isEncryptedSync from 'macho-is-encrypted';
-import fatmacho from 'fatmacho';
-import macho from 'macho';
-import fs from 'fs';
-import machoEntitlements from 'macho-entitlements';
+import isEncryptedSync from "macho-is-encrypted";
+import fatmacho from "fatmacho";
+import macho from "macho";
+import fs from "fs";
+import machoEntitlements from "macho-entitlements";
 
 const MACH0_MIN_SIZE = 1024 * 4;
 const MH_EXECUTE = 2;
@@ -10,15 +10,15 @@ const MH_DYLIB = 6;
 const MH_BUNDLE = 8;
 const CSSLOT_CODEDIRECTORY = 0;
 
-function isMacho (filePath: string) {
-  if (typeof filePath !== 'string') {
-    throw new Error('Expected a string');
+function isMacho(filePath: string) {
+  if (typeof filePath !== "string") {
+    throw new Error("Expected a string");
   }
   // read file headers and read the magic and filetype
   if (!fs.lstatSync(filePath).isFile()) {
     return false;
   }
-  const fd = fs.openSync(filePath, 'r');
+  const fd = fs.openSync(filePath, "r");
   if (fd < 1) {
     return false;
   }
@@ -52,11 +52,11 @@ function isMacho (filePath: string) {
   return isValidMacho(machoMagic, machoType);
 }
 
-function isValidMacho (machoMagic: any, machoType: any) : boolean {
+function isValidMacho(machoMagic: any, machoType: any): boolean {
   // verify this file have enough magic
   const magics = [
     [0xce, 0xfa, 0xed, 0xfe], // 32bit
-    [0xcf, 0xfa, 0xed, 0xfe] // 64bit
+    [0xcf, 0xfa, 0xed, 0xfe], // 64bit
   ];
   for (const a of magics) {
     if (!machoMagic.slice(0, 4).compare(Buffer.from(a))) {
@@ -74,17 +74,17 @@ function isValidMacho (machoMagic: any, machoType: any) : boolean {
   return false;
 }
 
-function isBitcodeMacho (cmds: any) : boolean {
+function isBitcodeMacho(cmds: any): boolean {
   let haveBitcode = false;
   let haveNative = false;
   for (const cmd of cmds) {
-    if (cmd.type === 'segment' || cmd.type === 'segment_64') {
-      if (cmd.name === '__TEXT' && cmd.sections.length > 0) {
+    if (cmd.type === "segment" || cmd.type === "segment_64") {
+      if (cmd.name === "__TEXT" && cmd.sections.length > 0) {
         haveNative = cmd.vmsize > 0;
       }
-      if (cmd.name === '__LLVM' && cmd.sections.length > 0) {
+      if (cmd.name === "__LLVM" && cmd.sections.length > 0) {
         const section = cmd.sections[0];
-        if (section.sectname === '__bundle' && section.size > 0) {
+        if (section.sectname === "__bundle" && section.size > 0) {
           haveBitcode = true;
         }
       }
@@ -93,15 +93,15 @@ function isBitcodeMacho (cmds: any) : boolean {
   return haveBitcode && !haveNative;
 }
 
-function isEncrypted (fileName: string) : boolean {
-  if (typeof fileName !== 'string') {
+function isEncrypted(fileName: string): boolean {
+  if (typeof fileName !== "string") {
     throw new Error("invalid argument for isEncryptedSync");
   }
   return isEncryptedSync.data(fs.readFileSync(fileName));
 }
 
-function isBitcode (data: any) : boolean {
-  if (typeof data === 'string') {
+function isBitcode(data: any): boolean {
+  if (typeof data === "string") {
     data = fs.readFileSync(data);
   }
   try {
@@ -119,8 +119,8 @@ function isBitcode (data: any) : boolean {
   return false;
 }
 
-function isTruncated (data: any) : boolean {
-  if (typeof data === 'string') {
+function isTruncated(data: any): boolean {
+  if (typeof data === "string") {
     data = fs.readFileSync(data);
   }
   if (data.length < MACH0_MIN_SIZE) {
@@ -129,8 +129,8 @@ function isTruncated (data: any) : boolean {
   const diskMacho = macho.parse(data);
   for (const cmd of diskMacho.cmds) {
     switch (cmd.type) {
-      case 'segment':
-      case 'segment_64':
+      case "segment":
+      case "segment_64":
         {
           const end = cmd.fileoff + cmd.filesize;
           if (end > data.length) {
@@ -143,7 +143,7 @@ function isTruncated (data: any) : boolean {
   return false;
 }
 
-function parseMacho (data: any) : any {
+function parseMacho(data: any): any {
   try {
     return macho.parse(data);
   } catch (e: unknown) {
@@ -153,7 +153,7 @@ function parseMacho (data: any) : any {
   }
 }
 
-function parseMachoAndGetData (data: any) : [any, any] {
+function parseMachoAndGetData(data: any): [any, any] {
   try {
     return [macho.parse(data), data];
   } catch (e) {
@@ -163,31 +163,32 @@ function parseMachoAndGetData (data: any) : [any, any] {
   }
 }
 
-function enumerateLibraries (data: any) {
-  if (typeof data === 'string') {
+function enumerateLibraries(data: any) {
+  if (typeof data === "string") {
     data = fs.readFileSync(data);
   }
   const exec = parseMacho(data);
-  return exec.cmds.filter((x: any) => x.type === 'load_dylib' || x.type === 'load_weak_dylib'
+  return exec.cmds.filter((x: any) =>
+    x.type === "load_dylib" || x.type === "load_weak_dylib"
   ).map((x: any) => x.name);
 }
 
-function entitlements (file: any) {
+function entitlements(file: any) {
   return machoEntitlements.parseFile(file);
 }
 
-function getIdentifier (path: any) {
+function getIdentifier(path: any) {
   const rawData = fs.readFileSync(path);
   const [bin, data] = parseMachoAndGetData(rawData);
   for (const cmd of bin.cmds) {
-    if (cmd.type === 'code_signature') {
+    if (cmd.type === "code_signature") {
       return parseIdentifier(data.slice(cmd.dataoff));
     }
   }
   return null;
 }
 
-function parseIdentifier (data: any) {
+function parseIdentifier(data: any) {
   const count = data.readUInt32BE(8);
   for (let i = 0; i < count; i++) {
     const base = 8 * i;
@@ -207,7 +208,7 @@ function parseIdentifier (data: any) {
         identifier.push(String.fromCharCode(charCode));
         cursor++;
       }
-      return identifier.join('');
+      return identifier.join("");
     }
   }
   return null;
@@ -215,10 +216,10 @@ function parseIdentifier (data: any) {
 
 export {
   entitlements,
-  isMacho,
+  enumerateLibraries,
+  getIdentifier,
   isBitcode,
   isEncrypted,
+  isMacho,
   isTruncated,
-  enumerateLibraries,
-  getIdentifier
 };

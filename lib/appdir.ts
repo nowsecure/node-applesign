@@ -1,9 +1,9 @@
-import path from 'path';
-import walk from 'fs-walk';
-import plist from 'simple-plist';
-import * as bin from './bin.js';
-import fs from 'fs';
-import depSolver, { resolvePath } from './depsolver.js';
+import path from "path";
+import walk from "fs-walk";
+import plist from "simple-plist";
+import * as bin from "./bin.js";
+import fs from "fs";
+import depSolver, { resolvePath } from "./depsolver.js";
 
 export class AppDirectory {
   appbin: any;
@@ -68,7 +68,7 @@ export class AppDirectory {
   appExtensions() {
     return this.appexs;
   }
-};
+}
 
 // internal functions //
 function orphanedLibraries(src: any, dst: any) {

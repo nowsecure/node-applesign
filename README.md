@@ -1,24 +1,21 @@
-node-applesign
-===============
+# node-applesign
 
-NodeJS module and commandline utility for re-signing iOS applications (IPA files).
+NodeJS module and commandline utility for re-signing iOS applications (IPA
+files).
 
-Author
-------
+## Author
 
 Sergi Alvarez Capilla aka pancake @ nowsecure.com
 
-Program Dependencies
---------------------
+## Program Dependencies
 
-* zip          - re-create IPA
-* unzip        - decompress IPA (see `npm run unzip-lzfse`)
-* codesign     - sign and verify binary with new entitlements and identity
-* security     - get entitlements from mobileprovision
-* insert_dylib - only if you want to use the -I,--insert flag
+- zip - re-create IPA
+- unzip - decompress IPA (see `npm run unzip-lzfse`)
+- codesign - sign and verify binary with new entitlements and identity
+- security - get entitlements from mobileprovision
+- insert_dylib - only if you want to use the -I,--insert flag
 
-Usage
------
+## Usage
 
 When running without arguments we get a short help message
 
@@ -116,31 +113,31 @@ Installing in the device:
 
   $ ideviceinstaller -i target-resigned.ipa
   $ ios-deploy -b  target-resigned.ipa
-
 ```
 
 List local codesign identities:
 
-	$ bin/applesign -L
+    $ bin/applesign -L
 
 Resign an IPA with a specific identity:
 
-	$ bin/applesign -i 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
+    $ bin/applesign -i 1C4D1A442A623A91E6656F74D170A711CB1D257A foo.ipa
 
 Change bundleid:
 
-	$ bin/applesign -b org.nowsecure.testapp path/to/ipa
+    $ bin/applesign -b org.nowsecure.testapp path/to/ipa
 
-Signing methods
----------------
+## Signing methods
 
-There are different ways to sign an IPA file with applesign for experimental reasons.
+There are different ways to sign an IPA file with applesign for experimental
+reasons.
 
 You may want to check the following options:
 
 **-c, --clone-entitlements**
 
-put the entitlements embedded inside the signed mobileprovisioning file provided by the user as the default ones to sign all the binaries
+put the entitlements embedded inside the signed mobileprovisioning file provided
+by the user as the default ones to sign all the binaries
 
 **-S, --self-sign-provision**
 
@@ -152,72 +149,81 @@ use the default entitlements plist. useful when troubleshooting
 
 The default signing method does as follow:
 
-* Grab entitlements from binary
-* Remove problematic entitlements
-* Grab entitlements from the provisioning
-* Adjust application-id and team-id of the binary with the provisioning ones
-* Copy the original mobileprovisioning inside the IPA
-* Creates ${AppName}.entitlements and signs all the mach0s
+- Grab entitlements from binary
+- Remove problematic entitlements
+- Grab entitlements from the provisioning
+- Adjust application-id and team-id of the binary with the provisioning ones
+- Copy the original mobileprovisioning inside the IPA
+- Creates ${AppName}.entitlements and signs all the mach0s
 
 After some testing we will probably go for having -c or -E as default.
 
-In addition, for performance reasons, applesign supports -p for parallel signing. The order of signing the binaries inside an IPA matters, so applesign creates a dependency list of all the bins and signs them in order. The parallel signing aims to run in parallel as much tasks as possible without breaking the dependency list.
+In addition, for performance reasons, applesign supports -p for parallel
+signing. The order of signing the binaries inside an IPA matters, so applesign
+creates a dependency list of all the bins and signs them in order. The parallel
+signing aims to run in parallel as much tasks as possible without breaking the
+dependency list.
 
-Mangling
---------
+## Mangling
 
-It is possible with `--force-family` to remove the UISupportedDevices from the Info.plist and replace the entitlement information found in the mobileprovisioning and then carefully massage the rest of entitlements to drop the privileged ones (`--massage-entitlements`).
+It is possible with `--force-family` to remove the UISupportedDevices from the
+Info.plist and replace the entitlement information found in the
+mobileprovisioning and then carefully massage the rest of entitlements to drop
+the privileged ones (`--massage-entitlements`).
 
 Other interesting manipulations that can be done in the IPA are:
 
 **-I, --insert [frida.dylib]**
 
-Allows to insert a dynamic library in the main executable. This is how Frida can be injected to introspect iOS applications without jailbreak.
+Allows to insert a dynamic library in the main executable. This is how Frida can
+be injected to introspect iOS applications without jailbreak.
 
 **-l, --lipo [arm64|armv7]**
 
-Thinifies an IPA by removing all fatmach0s to only contain binaries for one specified architecture. Also this is helpful to identify non-arm binaries embedded inside IPA that can be leaked from development or pre-production environments.
+Thinifies an IPA by removing all fatmach0s to only contain binaries for one
+specified architecture. Also this is helpful to identify non-arm binaries
+embedded inside IPA that can be leaked from development or pre-production
+environments.
 
-In order to thinify the final IPA even more, applesign allows to drop the watchapp extensions which would not be necessary for non Apple Watch users.
+In order to thinify the final IPA even more, applesign allows to drop the
+watchapp extensions which would not be necessary for non Apple Watch users.
 
-Performance
------------
+## Performance
 
-Sometimes the time required to run the codesigning step matters, so applesign allows to skip some steps and speedup the process.
+Sometimes the time required to run the codesigning step matters, so applesign
+allows to skip some steps and speedup the process.
 
 See `--dont-verify` and `--parallel` commandline flags.
 
 Enabling those options can result on a 35% speedup on ~60MB IPAs.
 
-API usage
----------
+## API usage
 
 Here's a simple program that resigns an IPA:
 
 ```js
-const Applesign = require('applesign');
+const Applesign = require("applesign");
 
 const as = new Applesign({
-  identity: '81A24300FE2A8EAA99A9601FDA3EA811CD80526A',
-  mobileprovision: '/path/to/dev.mobileprovision',
-  withoutWatchapp: true
+  identity: "81A24300FE2A8EAA99A9601FDA3EA811CD80526A",
+  mobileprovision: "/path/to/dev.mobileprovision",
+  withoutWatchapp: true,
 });
-as.events.on('warning', (msg) => {
-  console.log('WARNING', msg);
+as.events.on("warning", (msg) => {
+  console.log("WARNING", msg);
 })
-.on('message', (msg) => {
-  console.log('msg', msg);
-});
+  .on("message", (msg) => {
+    console.log("msg", msg);
+  });
 
-as.signIPA('/path/to/app.ipa')
-.then(_ => {
-  console.log('ios-deploy -b', as.config.outfile);
-})
-.catch(e => {
-  console.error(e);
-  process.exitCode = 1;
-});
-
+as.signIPA("/path/to/app.ipa")
+  .then((_) => {
+    console.log("ios-deploy -b", as.config.outfile);
+  })
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  });
 ```
 
 To list the developer identities available in the system:
@@ -233,31 +239,30 @@ try {
 }
 ```
 
-Bear in mind that the Applesign object can tuned to use different
-configuration options:
+Bear in mind that the Applesign object can tuned to use different configuration
+options:
 
 ```js
 const options = {
-  file: '/path/to/app.ipa',
-  outfile: '/path/to/app-resigned.ipa',
-  entitlement: '/path/to/entitlement',
-  bundleid: 'app.company.bundleid',
-  identity: 'hash id of the developer',
-  mobileprovision: '/path/to/mobileprovision file',
+  file: "/path/to/app.ipa",
+  outfile: "/path/to/app-resigned.ipa",
+  entitlement: "/path/to/entitlement",
+  bundleid: "app.company.bundleid",
+  identity: "hash id of the developer",
+  mobileprovision: "/path/to/mobileprovision file",
   ignoreVerificationErrors: true,
-  withoutWatchapp: true
+  withoutWatchapp: true,
 };
 ```
 
-Further reading
----------------
+## Further reading
 
 See the Wiki: https://github.com/nowsecure/node-applesign/wiki
 
-* https://github.com/maciekish/iReSign
-* https://github.com/saucelabs/isign
-* https://github.com/phonegap/ios-deploy
+- https://github.com/maciekish/iReSign
+- https://github.com/saucelabs/isign
+- https://github.com/phonegap/ios-deploy
 
 Pre iOS9 devices will require a developer account:
 
-* http://dev.mlsdigital.net/posts/how-to-resign-an-ios-app-from-external-developers/
+- http://dev.mlsdigital.net/posts/how-to-resign-an-ios-app-from-external-developers/

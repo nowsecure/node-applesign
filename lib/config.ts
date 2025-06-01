@@ -1,8 +1,8 @@
 // Converted to ES module
 
-import path from 'path';
-import idprov from './idprov.js';
-import minimist from 'minimist';
+import path from "path";
+import idprov from "./idprov.js";
+import minimist from "minimist";
 
 const shortHelpMessage = `Usage:
 
@@ -119,12 +119,12 @@ Installing in the device:
 */
 
 const fromOptions = function (opt: any) {
-  if (typeof opt !== 'object') {
+  if (typeof opt !== "object") {
     opt = {};
   }
   if (opt.osversion !== undefined) {
     if (isNaN(+opt.osversion)) {
-      throw new Error('Version passed to -O must be numeric');
+      throw new Error("Version passed to -O must be numeric");
     }
   }
   if (opt.mobileprovision) {
@@ -157,7 +157,7 @@ const fromOptions = function (opt: any) {
     bundleid: opt.bundleid || undefined,
     cloneEntitlements: opt.cloneEntitlements || false,
     customKeychainGroup: opt.customKeychainGroup || undefined,
-    debug: opt.d || opt.debug || '',
+    debug: opt.d || opt.debug || "",
     deviceProvision: opt.D || opt.deviceProvision || false,
     entitlement: opt.entitlement || undefined,
     entry: opt.entry || undefined,
@@ -168,7 +168,7 @@ const fromOptions = function (opt: any) {
     ignoreVerificationErrors: true,
     ignoreZipErrors: opt.ignoreZipErrors || false,
     insertLibrary: opt.insertLibrary || undefined,
-    json: JSON.parse(opt.json || '{}'),
+    json: JSON.parse(opt.json || "{}"),
     keychain: opt.keychain,
     lipoArch: opt.lipoArch || undefined,
     massageEntitlements: opt.massageEntitlements || false,
@@ -193,7 +193,7 @@ const fromOptions = function (opt: any) {
     withoutPlugins: opt.withoutPlugins || false,
     withoutSigningFiles: opt.withoutSigningFiles || false,
     withoutWatchapp: opt.withoutWatchapp || false,
-    withoutXCTests: opt.withoutXCTests || false
+    withoutXCTests: opt.withoutXCTests || false,
   };
 };
 
@@ -201,94 +201,135 @@ const fromState = function (state: any) {
   return JSON.parse(JSON.stringify(state));
 };
 
-function parse (argv: any) {
+function parse(argv: any) {
   return minimist(argv.slice(2), {
     string: [
-      'd', 'debug',
-      'j', 'json',
-      'i', 'identity',
-      'O', 'osversion',
-      'R', 'run'
+      "d",
+      "debug",
+      "j",
+      "json",
+      "i",
+      "identity",
+      "O",
+      "osversion",
+      "R",
+      "run",
     ],
     boolean: [
-      '7', 'use-7zip',
-      'A', 'all-dirs',
-      'B', 'bundleid-access-group',
-      'C', 'no-entitlements-file',
-      'D', 'device-provision',
-      'E', 'entry-entitlement',
-      'F', 'without-signing-files',
-      'H', 'allow-http',
-      'L', 'identities',
-      'M', 'massage-entitlements',
-      'P', 'parallel',
-      'S', 'self-signed-provision',
-      'V', 'verify-twice',
-      'Z', 'pseudo-sign',
-      'a', 'all',
-      'c', 'clone-entitlements',
-      'f', 'force-family',
-      'n', 'noclean',
-      'p', 'without-plugins',
-      'r', 'replace',
-      's', 'single',
-      't', 'without-get-task-allow',
-      'u', 'unfair',
-      'u', 'unsigned-provision',
-      'v', 'verify',
-      'w', 'without-watchapp',
-      'x', 'without-xctests',
-      'z', 'ignore-zip-errors'
-    ]
+      "7",
+      "use-7zip",
+      "A",
+      "all-dirs",
+      "B",
+      "bundleid-access-group",
+      "C",
+      "no-entitlements-file",
+      "D",
+      "device-provision",
+      "E",
+      "entry-entitlement",
+      "F",
+      "without-signing-files",
+      "H",
+      "allow-http",
+      "L",
+      "identities",
+      "M",
+      "massage-entitlements",
+      "P",
+      "parallel",
+      "S",
+      "self-signed-provision",
+      "V",
+      "verify-twice",
+      "Z",
+      "pseudo-sign",
+      "a",
+      "all",
+      "c",
+      "clone-entitlements",
+      "f",
+      "force-family",
+      "n",
+      "noclean",
+      "p",
+      "without-plugins",
+      "r",
+      "replace",
+      "s",
+      "single",
+      "t",
+      "without-get-task-allow",
+      "u",
+      "unfair",
+      "u",
+      "unsigned-provision",
+      "v",
+      "verify",
+      "w",
+      "without-watchapp",
+      "x",
+      "without-xctests",
+      "z",
+      "ignore-zip-errors",
+    ],
   });
 }
 
-function compile (conf: any) {
+function compile(conf: any) {
   const options = {
     all: conf.a || conf.all || false,
-    allDirs: conf['all-dirs'] || conf.A,
-    allowHttp: conf['allow-http'] || conf.H,
-    addEntitlements: conf['add-entitlements'] || conf.N,
-    bundleIdKeychainGroup: conf.B || conf['bundleid-access-group'],
+    allDirs: conf["all-dirs"] || conf.A,
+    allowHttp: conf["allow-http"] || conf.H,
+    addEntitlements: conf["add-entitlements"] || conf.N,
+    bundleIdKeychainGroup: conf.B || conf["bundleid-access-group"],
     bundleid: conf.bundleid || conf.b,
-    cloneEntitlements: conf.c || conf['clone-entitlements'],
-    customKeychainGroup: conf.K || conf['add-access-group'],
-    debug: conf.debug || conf.d || '',
+    cloneEntitlements: conf.c || conf["clone-entitlements"],
+    customKeychainGroup: conf.K || conf["add-access-group"],
+    debug: conf.debug || conf.d || "",
     deviceProvision: conf.D || conf.deviceProvision || false,
     entitlement: conf.entitlement || conf.e,
-    entry: conf['entry-entitlement'] || conf.E,
+    entry: conf["entry-entitlement"] || conf.E,
     file: conf._[0] || undefined,
-    forceFamily: conf['force-family'] || conf.f,
+    forceFamily: conf["force-family"] || conf.f,
     identity: conf.identity || conf.i,
-    ignoreZipErrors: conf.z || conf['ignore-zip-errors'],
+    ignoreZipErrors: conf.z || conf["ignore-zip-errors"],
     insertLibrary: conf.I || conf.insert,
     json: conf.json || conf.j,
     keychain: conf.keychain || conf.k,
     lipoArch: conf.lipo || conf.l,
-    massageEntitlements: conf['massage-entitlements'] || conf.M,
+    massageEntitlements: conf["massage-entitlements"] || conf.M,
     mobileprovision: conf.mobileprovision || conf.m,
-    noEntitlementsFile: conf.C || conf['no-entitlements-file'] || conf.noEntitlementsFile,
+    noEntitlementsFile: conf.C || conf["no-entitlements-file"] ||
+      conf.noEntitlementsFile,
     noclean: conf.n || conf.noclean,
     osversion: conf.osversion || conf.O,
-    outfile: (conf.output || conf.o) ? path.resolve(conf.output || conf.o) : '',
+    outfile: (conf.output || conf.o) ? path.resolve(conf.output || conf.o) : "",
     parallel: conf.parallel || conf.P,
-    pseudoSign: conf.Z || conf['pseudo-sign'],
+    pseudoSign: conf.Z || conf["pseudo-sign"],
     replaceipa: conf.replace || conf.r,
     run: conf.R || conf.run,
-    selfSignedProvision: conf.S || conf['self-signed-provision'],
+    selfSignedProvision: conf.S || conf["self-signed-provision"],
     single: conf.single || conf.s,
     unfairPlay: conf.unfair || conf.u,
-    use7zip: conf['7'] || conf['use-7zip'],
-    useOpenSSL: conf['use-openssl'],
-    verify: conf.v || conf.V || conf.verify || conf['verify-twice'],
-    verifyTwice: conf.V || conf['verify-twice'],
-    withGetTaskAllow: !(conf['without-get-task-allow'] || conf.t),
-    withoutPlugins: !!conf['without-plugins'] || !!conf.p,
-    withoutSigningFiles: !!conf['without-signing-files'] || !!conf.F,
-    withoutWatchapp: !!conf['without-watchapp'] || !!conf.w,
-    withoutXCTests: !!conf['without-xctests'] || !!conf.x
+    use7zip: conf["7"] || conf["use-7zip"],
+    useOpenSSL: conf["use-openssl"],
+    verify: conf.v || conf.V || conf.verify || conf["verify-twice"],
+    verifyTwice: conf.V || conf["verify-twice"],
+    withGetTaskAllow: !(conf["without-get-task-allow"] || conf.t),
+    withoutPlugins: !!conf["without-plugins"] || !!conf.p,
+    withoutSigningFiles: !!conf["without-signing-files"] || !!conf.F,
+    withoutWatchapp: !!conf["without-watchapp"] || !!conf.w,
+    withoutXCTests: !!conf["without-xctests"] || !!conf.x,
   };
   return options;
 }
 
-export { compile, fromOptions, fromState, helpMessage, parse, shortHelpMessage };
+export {
+  compile,
+  fromOptions,
+  fromState,
+  helpMessage,
+  parse,
+  shortHelpMessage,
+};

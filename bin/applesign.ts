@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-import fs from 'fs';
-import pkgVersion from '../lib/version.js';
-import { join } from 'path';
-import * as tools from '../lib/tools.js';
-import * as config from '../lib/config.js';
-import colors from 'colors';
-import Applesign from '../index.js';
+import fs from "fs";
+import pkgVersion from "../lib/version.js";
+import { join } from "path";
+import * as tools from "../lib/tools.js";
+import * as config from "../lib/config.js";
+import colors from "colors";
+import Applesign from "../index.js";
 
 colors.setTheme({
-  error: 'red',
-  msg: 'yellow',
-  warning: 'green'
+  error: "red",
+  msg: "yellow",
+  warning: "green",
 });
 
 // Removed unused SpawnOptions import (no longer required)
@@ -18,7 +18,7 @@ colors.setTheme({
  * Main entry point for applesign CLI.
  * @param argv Command-line arguments (process.argv)
  */
-async function main (argv: string[]): Promise<void> {
+async function main(argv: string[]): Promise<void> {
   const conf = config.parse(argv);
   const options = config.compile(conf);
   const as = new Applesign(options);
@@ -38,15 +38,18 @@ async function main (argv: string[]): Promise<void> {
     const singleMode = Boolean(conf.s || conf.single);
     const target = getTargetMethod(options.file, singleMode);
     if (!target) {
-      throw new Error('Cannot open file');
+      throw new Error("Cannot open file");
     }
     // Subscribe to signing events
     as.events
-      .on('message', (msg: string) => console.log(colors.msg(msg)))
-      .on('warning', (msg: string) => console.error(colors.warning('warning'), msg))
-      .on('error', (msg: string) => console.error(colors.msg(msg)));
+      .on("message", (msg: string) => console.log(colors.msg(msg)))
+      .on(
+        "warning",
+        (msg: string) => console.error(colors.warning("warning"), msg),
+      )
+      .on("error", (msg: string) => console.error(colors.msg(msg)));
     if (!options.file) {
-      throw new Error('No file provided');
+      throw new Error("No file provided");
     }
     try {
       await as[target](options.file);
@@ -82,15 +85,18 @@ main(process.argv)
  * @param single Whether to sign a single file instead of an IPA
  * @returns Signing method name or undefined if unsupported
  */
-type TargetMethod = 'signAppDirectory' | 'signFile' | 'signIPA';
-function getTargetMethod (file: string | undefined, single: boolean): TargetMethod | undefined {
+type TargetMethod = "signAppDirectory" | "signFile" | "signIPA";
+function getTargetMethod(
+  file: string | undefined,
+  single: boolean,
+): TargetMethod | undefined {
   if (!file) return undefined;
   try {
     return tools.isDirectory(file)
-      ? 'signAppDirectory'
+      ? "signAppDirectory"
       : single
-      ? 'signFile'
-      : 'signIPA';
+      ? "signFile"
+      : "signIPA";
   } catch {
     return undefined;
   }

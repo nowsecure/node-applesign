@@ -1,22 +1,25 @@
-'use strict';
+"use strict";
 
-import plist from 'simple-plist';
+import plist from "simple-plist";
 
-const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
+const appleDevices = ["iPhone", "iPad", "AppleTV", "AppleWatch"];
 // @ts-expect-error TS(2464): A computed property name must be of type 'string',... Remove this comment to see the full error message
 const objectFromEntries = (x: any) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
 
 export default function fix(file: any, options: any, emit: any): void {
   const { appdir, bundleid, forceFamily, allowHttp } = options;
   if (!file || !appdir) {
-    throw new Error('Invalid parameters for fixPlist');
+    throw new Error("Invalid parameters for fixPlist");
   }
   let changed = false;
   const data = plist.readFileSync(file);
-  delete data[''];
+  delete data[""];
   if (allowHttp) {
-    emit('message', 'Adding NSAllowArbitraryLoads');
-    if (!data.NSAppTransportSecurity || (data.NSAppTransportSecurity.constructor !== Object)) {
+    emit("message", "Adding NSAllowArbitraryLoads");
+    if (
+      !data.NSAppTransportSecurity ||
+      (data.NSAppTransportSecurity.constructor !== Object)
+    ) {
       data.NSAppTransportSecurity = {};
     }
     data.NSAppTransportSecurity.NSAllowsArbitraryLoads = true;
@@ -36,7 +39,7 @@ export default function fix(file: any, options: any, emit: any): void {
   }
 }
 
-function setBundleId (data: any, bundleid: any) {
+function setBundleId(data: any, bundleid: any) {
   const oldBundleId = data.CFBundleIdentifier;
   if (oldBundleId) {
     data.CFBundleIdentifier = bundleid;
@@ -51,7 +54,7 @@ function setBundleId (data: any, bundleid: any) {
   }
 }
 
-function performForceFamily (data: any, emit: any) {
+function performForceFamily(data: any, emit: any) {
   if (!emit) emit = console.error;
   const have = supportedDevices(data);
   const df = [];
@@ -69,28 +72,31 @@ function performForceFamily (data: any, emit: any) {
     changes = true;
   }
   // @ts-expect-error TS(2339): Property 'AppleWatch' does not exist on type '{}[]... Remove this comment to see the full error message
-  if ((have.AppleWatch && have.AppleWatch.length > 0) || (have.AppleTV && have.AppleTV.length > 0)) {
-    emit('message', 'Apple{TV/Watch} apps do not require to be re-familied');
+  if (
+    (have.AppleWatch && have.AppleWatch.length > 0) ||
+    (have.AppleTV && have.AppleTV.length > 0)
+  ) {
+    emit("message", "Apple{TV/Watch} apps do not require to be re-familied");
     return changes;
   }
   if (df.length === 0) {
-    emit('message', 'UIDeviceFamily forced to iPhone/iPod');
+    emit("message", "UIDeviceFamily forced to iPhone/iPod");
     df.push(1);
   }
   if (df.length === 2) {
-    emit('message', 'No UIDeviceFamily changes required');
+    emit("message", "No UIDeviceFamily changes required");
     return changes;
   }
-  emit('message', 'UIDeviceFamily set to ' + JSON.stringify(df));
+  emit("message", "UIDeviceFamily set to " + JSON.stringify(df));
   data.UIDeviceFamily = df;
   return true;
 }
 
-function supportedDevices (data: any) {
+function supportedDevices(data: any) {
   const have = objectFromEntries(appleDevices);
   const sd = data.UISupportedDevices;
   if (Array.isArray(sd)) {
-    sd.forEach(model => {
+    sd.forEach((model) => {
       for (const type of appleDevices) {
         if (model.indexOf(type) !== -1) {
           // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
@@ -105,12 +111,12 @@ function supportedDevices (data: any) {
       }
     });
   } else if (sd !== undefined) {
-    console.error('Warning: Invalid UISupportedDevices in Info.plist?');
+    console.error("Warning: Invalid UISupportedDevices in Info.plist?");
   }
   const df = data.UIDeviceFamily;
   if (Array.isArray(df)) {
-    df.forEach(family => {
-      const families = ['Any', ...appleDevices];
+    df.forEach((family) => {
+      const families = ["Any", ...appleDevices];
       const fam = families[family];
       if (fam) {
         // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
