@@ -1,7 +1,7 @@
 import fs from 'fs';
 import * as bin from './bin.js';
 
-function resolveRpath (libs: any, file: any, lib: any) {
+function resolveRpath (libs: any, file: any, lib: any) : string | null {
   const libName = lib.substring(6); /* chop @rpath */
   const rpaths = libs.filter((x: any) => {
     return x.indexOf(libName) !== -1;
@@ -12,35 +12,15 @@ function resolveRpath (libs: any, file: any, lib: any) {
   // throw new Error('Cannot resolve rpath: ' + libName);
   console.error('Cannot resolve rpath for:', lib, 'from', file);
   return null;
-  /*
-  const rpaths = uniq(libs.filter((x) => {
-    return x.indexOf('dylib') !== -1;
-  }).map((x) => {
-    return x.substring(0, x.lastIndexOf('/'));
-  }));
-  rpaths.forEach((x) => {
-    try {
-      const paz = x + realLib;
-      fs.statSync(paz);
-      return lib.replace('@rpath', paz);
-    } catch (e) {
-      // ignored
-    }
-  });
-  if (rpaths.length > 0) {
-    return rpaths[0] + realLib;
-  }
-  return realLib;
-*/
 }
 
-function resolvePathDirective (file: any, lib: any, directive: any) {
+function resolvePathDirective (file: string, lib: string, directive: string) : string {
   const slash = file.lastIndexOf('/');
   const rpath = (slash !== -1) ? file.substring(0, slash) : '';
   return lib.replace(directive, rpath);
 }
 
-export function resolvePath(executable: any, file: any, lib: any, libs: any) {
+export function resolvePath(executable: string, file: string, lib: string, libs: string[]) {
   if (lib.startsWith('/')) {
     return null;
   }
@@ -95,8 +75,8 @@ function layerize (state: any) {
   return result;
 }
 
-function flattenize (layers: any) {
-  const list = [];
+function flattenize (layers: any) : string[] {
+  const list : string[] = [];
   for (const layer of layers) {
     for (const lib of layer) {
       list.push(lib);
@@ -105,7 +85,7 @@ function flattenize (layers: any) {
   return list;
 }
 
-export default function depSolver(executable: any, libs: any, parallel: any): Promise<any> {
+export default function depSolver(executable: string, libs: string[], parallel: boolean): Promise<any> {
   return new Promise((resolve, reject) => {
     if (libs.length === 0) {
       return resolve([]);
@@ -122,7 +102,7 @@ export default function depSolver(executable: any, libs: any, parallel: any): Pr
       };
       for (const r of macholibs) {
         if (!r.startsWith('/')) {
-          const realPath = resolvePath(executable, target, r, libs);
+          const realPath = resolvePath(executable, target!, r, libs);
           try {
             fs.statSync(realPath);
             // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message

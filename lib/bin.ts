@@ -10,7 +10,7 @@ const MH_DYLIB = 6;
 const MH_BUNDLE = 8;
 const CSSLOT_CODEDIRECTORY = 0;
 
-function isMacho (filePath: any) {
+function isMacho (filePath: string) {
   if (typeof filePath !== 'string') {
     throw new Error('Expected a string');
   }
@@ -52,7 +52,7 @@ function isMacho (filePath: any) {
   return isValidMacho(machoMagic, machoType);
 }
 
-function isValidMacho (machoMagic: any, machoType: any) {
+function isValidMacho (machoMagic: any, machoType: any) : boolean {
   // verify this file have enough magic
   const magics = [
     [0xce, 0xfa, 0xed, 0xfe], // 32bit
@@ -74,7 +74,7 @@ function isValidMacho (machoMagic: any, machoType: any) {
   return false;
 }
 
-function isBitcodeMacho (cmds: any) {
+function isBitcodeMacho (cmds: any) : boolean {
   let haveBitcode = false;
   let haveNative = false;
   for (const cmd of cmds) {
@@ -93,14 +93,14 @@ function isBitcodeMacho (cmds: any) {
   return haveBitcode && !haveNative;
 }
 
-function isEncrypted (data: any) {
-  if (typeof data === 'string') {
-    data = fs.readFileSync(data);
+function isEncrypted (fileName: string) : boolean {
+  if (typeof fileName !== 'string') {
+    throw new Error("invalid argument for isEncryptedSync");
   }
-  return isEncryptedSync.data(data);
+  return isEncryptedSync.data(fs.readFileSync(fileName));
 }
 
-function isBitcode (data: any) {
+function isBitcode (data: any) : boolean {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
@@ -119,7 +119,7 @@ function isBitcode (data: any) {
   return false;
 }
 
-function isTruncated (data: any) {
+function isTruncated (data: any) : boolean {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
@@ -143,17 +143,17 @@ function isTruncated (data: any) {
   return false;
 }
 
-function parseMacho (data: any) : any{
+function parseMacho (data: any) : any {
   try {
     return macho.parse(data);
-  } catch (e) {
-    const fat = fatmacho.parse(data); //  throws
+  } catch (e: unknown) {
+    const fat = fatmacho.parse(data); // throws
     // we get the first slice, assuming it contains the same libs as the others
     return parseMacho(fat[0].data);
   }
 }
 
-function parseMachoAndGetData (data: any) {
+function parseMachoAndGetData (data: any) : [any, any] {
   try {
     return [macho.parse(data), data];
   } catch (e) {
@@ -172,7 +172,6 @@ function enumerateLibraries (data: any) {
   ).map((x: any) => x.name);
 }
 
-
 function entitlements (file: any) {
   return machoEntitlements.parseFile(file);
 }
@@ -186,32 +185,32 @@ function getIdentifier (path: any) {
     }
   }
   return null;
+}
 
-  function parseIdentifier (data: any) {
-    const count = data.readUInt32BE(8);
-    for (let i = 0; i < count; i++) {
-      const base = 8 * i;
-      const type = data.readUInt32BE(base + 12);
-      const blob = data.readUInt32BE(base + 16);
-      if (type === CSSLOT_CODEDIRECTORY) {
-        const size = data.readUInt32BE(blob + 4);
-        const directory = data.slice(blob + 8, blob + size);
-        const identOffset = directory.readUInt32BE(12);
-        const identifier = [];
-        let cursor = identOffset;
-        while (cursor < size) {
-          const charCode = data.readUInt8(blob + cursor);
-          if (charCode === 0) {
-            break;
-          }
-          identifier.push(String.fromCharCode(charCode));
-          cursor++;
+function parseIdentifier (data: any) {
+  const count = data.readUInt32BE(8);
+  for (let i = 0; i < count; i++) {
+    const base = 8 * i;
+    const type = data.readUInt32BE(base + 12);
+    const blob = data.readUInt32BE(base + 16);
+    if (type === CSSLOT_CODEDIRECTORY) {
+      const size = data.readUInt32BE(blob + 4);
+      const directory = data.slice(blob + 8, blob + size);
+      const identOffset = directory.readUInt32BE(12);
+      const identifier = [];
+      let cursor = identOffset;
+      while (cursor < size) {
+        const charCode = data.readUInt8(blob + cursor);
+        if (charCode === 0) {
+          break;
         }
-        return identifier.join('');
+        identifier.push(String.fromCharCode(charCode));
+        cursor++;
       }
+      return identifier.join('');
     }
-    return null;
   }
+  return null;
 }
 
 export {
