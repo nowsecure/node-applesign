@@ -1,14 +1,22 @@
 'use strict';
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const { promisify } = require('util');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'execSync'.
 const { execSync, spawn } = require('child_process');
 const unlinkAsync = promisify(fs.unlink);
 const renameAsync = promisify(fs.rename);
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
 const plist = require('simple-plist');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
 const path = require('path');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const which = require('which');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const rimraf = require('rimraf');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
 const bin = require('./bin');
 
 let use7zip = false;
@@ -32,19 +40,23 @@ const cmdSpec = {
 const cmd = {};
 let cmdInited = false;
 
-async function execProgram (bin, arg, opt) {
+async function execProgram (bin: any, arg: any, opt: any) {
   return new Promise((resolve, reject) => {
+    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     let _out = Buffer.alloc(0);
+    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     let _err = Buffer.alloc(0);
     const child = spawn(bin, arg, opt || {});
-    child.stdout.on('data', data => {
+    child.stdout.on('data', (data: any) => {
+      // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
       _out = Buffer.concat([_out, data]);
     });
-    child.stderr.on('data', data => {
+    child.stderr.on('data', (data: any) => {
+      // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
       _err = Buffer.concat([_err, data]);
     });
     child.stdin.end();
-    child.on('close', code => {
+    child.on('close', (code: any) => {
       if (code !== 0) {
         let msg = 'stdout: ' + _out.toString('utf8');
         msg += '\nstderr: ' + _err.toString('utf8');
@@ -63,7 +75,7 @@ async function execProgram (bin, arg, opt) {
 
 /* public */
 
-function isDramatic (msg) {
+function isDramatic (msg: any) {
   if (msg.indexOf('insert_dylib') !== -1) {
     return false;
   }
@@ -81,13 +93,14 @@ function findInPath () {
   const keys = Object.keys(cmdSpec);
   for (const key of keys) {
     try {
+      // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
       cmd[key] = which.sync(key);
     } catch (err) {
     }
   }
 }
 
-function getTool (tool) {
+function getTool (tool: any) {
   findInPath();
   if (!(tool in cmd)) {
     if (isDramatic(tool)) {
@@ -95,21 +108,23 @@ function getTool (tool) {
     }
     return null;
   }
+  // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
   return cmd[tool];
 }
 
-async function ideviceprovision (action, optarg) {
+async function ideviceprovision (action: any, optarg: any) {
   if (action === 'list') {
     const res = await execProgram(getTool('ideviceprovision'), ['list'], null);
+    // @ts-expect-error TS(2571): Object is of type 'unknown'.
     return res.stdout.split('\n')
-      .filter((line) => line.indexOf('-') !== -1)
-      .map((line) => line.split(' ')[0]);
+      .filter((line: any) => line.indexOf('-') !== -1)
+      .map((line: any) => line.split(' ')[0]);
   } else {
     throw new Error('unsupported ideviceprovision action');
   }
 }
 
-async function codesign (identity, entitlement, keychain, file) {
+async function codesign (identity: any, entitlement: any, keychain: any, file: any) {
   /* use the --no-strict to avoid the "resource envelope is obsolete" error */
   const args = ['--no-strict']; // http://stackoverflow.com/a/26204757
   if (identity === undefined) {
@@ -129,7 +144,7 @@ async function codesign (identity, entitlement, keychain, file) {
   return execProgram(getTool('codesign'), args, null);
 }
 
-async function pseudoSign (entitlement, file) {
+async function pseudoSign (entitlement: any, file: any) {
   const args = [];
   if (typeof entitlement === 'string') {
     args.push('-S' + entitlement);
@@ -144,16 +159,17 @@ async function pseudoSign (entitlement, file) {
   return execProgram(getTool('ldid2'), args, null);
 }
 
-async function verifyCodesign (file, keychain, cb) {
+async function verifyCodesign (file: any, keychain: any, cb: any) {
   const args = ['-v', '--no-strict'];
   if (typeof keychain === 'string') {
     args.push('--keychain=' + keychain);
   }
   args.push(file);
+  // @ts-expect-error TS(2554): Expected 3 arguments, but got 4.
   return execProgram(getTool('codesign'), args, null, cb);
 }
 
-async function getMobileProvisionPlist (file) {
+async function getMobileProvisionPlist (file: any) {
   let res;
   if (file === undefined) {
     throw new Error('No mobile provisioning file available.');
@@ -167,15 +183,16 @@ async function getMobileProvisionPlist (file) {
     const args = ['cms', '-D', '-i', file];
     res = await execProgram(getTool('security'), args, null);
   }
+  // @ts-expect-error TS(2571): Object is of type 'unknown'.
   return plist.parse(res.stdout);
 }
 
-async function getEntitlementsFromMobileProvision (file, cb) {
+async function getEntitlementsFromMobileProvision (file: any, cb: any) {
   const res = await getMobileProvisionPlist(file);
   return res.Entitlements;
 }
 
-async function zip (cwd, ofile, src) {
+async function zip (cwd: any, ofile: any, src: any) {
   try {
     await unlinkAsync(ofile);
   } catch (ignored) {
@@ -193,27 +210,31 @@ async function zip (cwd, ofile, src) {
   }
 }
 
-async function unzip (ifile, odir) {
+async function unzip (ifile: any, odir: any) {
   if (use7zip) {
     const args = ['x', '-y', '-o' + odir, ifile];
     return execProgram(getTool('7z'), args, null);
   }
+  // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
   if (process.env.UNZIP !== undefined) {
+    // @ts-expect-error TS(2339): Property 'unzip' does not exist on type '{}'.
     cmd.unzip = process.env.UNZIP;
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     delete process.env.UNZIP;
   }
   const args = ['-o', ifile, '-d', odir];
   return execProgram(getTool('unzip'), args, null);
 }
 
-async function xcaToIpa (ifile, odir) {
+async function xcaToIpa (ifile: any, odir: any) {
   const args = ['-exportArchive', '-exportFormat', 'ipa', '-archivePath', ifile, '-exportPath', odir];
   return execProgram(getTool('xcodebuild'), args, null);
 }
 
-async function insertLibrary (lib, bin, out) {
+async function insertLibrary (lib: any, bin: any, out: any) {
   let error = null;
   try {
+    // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
     const machoMangle = require('macho-mangle');
     try {
       let src = fs.readFileSync(bin);
@@ -250,13 +271,13 @@ async function insertLibrary (lib, bin, out) {
   }
 }
 
-function getIdentitiesFromString (stdout) {
+function getIdentitiesFromString (stdout: any) {
   const lines = stdout.split('\n');
   lines.pop(); // remove last line
-  const ids = [];
-  lines.filter(entry => {
+  const ids: any = [];
+  lines.filter((entry: any) => {
     return entry.indexOf('CSSMERR_TP_CERT_REVOKED') === -1;
-  }).forEach((line) => {
+  }).forEach((line: any) => {
     const tok = line.indexOf(') ');
     if (tok !== -1) {
       const msg = line.substring(tok + 2).trim();
@@ -272,7 +293,7 @@ function getIdentitiesFromString (stdout) {
   return ids;
 }
 
-function getIdentitiesSync (bin, arg) {
+function getIdentitiesSync (bin: any, arg: any) {
   const command = [getTool('security'), 'find-identity', '-v', '-p', 'codesigning'];
   return getIdentitiesFromString(execSync(command.join(' ')).toString());
 }
@@ -280,15 +301,17 @@ function getIdentitiesSync (bin, arg) {
 async function getIdentities () {
   const args = ['find-identity', '-v', '-p', 'codesigning'];
   const res = await execProgram(getTool('security'), args, null);
+  // @ts-expect-error TS(2571): Object is of type 'unknown'.
   return getIdentitiesFromString(res.stdout);
 }
 
-async function lipoFile (file, arch, cb) {
+async function lipoFile (file: any, arch: any, cb: any) {
   const args = [file, '-thin', arch, '-output', file];
+  // @ts-expect-error TS(2554): Expected 3 arguments, but got 4.
   return execProgram(getTool('lipo'), args, null, cb);
 }
 
-function isDirectory (pathString) {
+function isDirectory (pathString: any) {
   try {
     return fs.lstatSync(pathString).isDirectory();
   } catch (e) {
@@ -296,7 +319,7 @@ function isDirectory (pathString) {
   }
 }
 
-function setOptions (obj) {
+function setOptions (obj: any) {
   if (typeof obj.use7zip === 'boolean') {
     use7zip = obj.use7zip;
   }
@@ -305,12 +328,13 @@ function setOptions (obj) {
   }
 }
 
-function asyncRimraf (dir) {
+function asyncRimraf (dir: any) {
   return new Promise((resolve, reject) => {
     if (dir === undefined) {
+      // @ts-expect-error TS(2794): Expected 1 arguments, but got 0. Did you forget to... Remove this comment to see the full error message
       resolve();
     }
-    rimraf(dir, (err, res) => {
+    rimraf(dir, (err: any, res: any) => {
       return err ? reject(err) : resolve(res);
     });
   });
@@ -334,5 +358,6 @@ function asyncRimraf (dir) {
   isDirectory,
   asyncRimraf
 ].forEach(function (x) {
+  // @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
   module.exports[x.name] = x;
 });

@@ -1,12 +1,14 @@
 'use strict';
 
 // const uniq = require('uniq');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
 const bin = require('./bin');
 
-function resolveRpath (libs, file, lib) {
+function resolveRpath (libs: any, file: any, lib: any) {
   const libName = lib.substring(6); /* chop @rpath */
-  const rpaths = libs.filter((x) => {
+  const rpaths = libs.filter((x: any) => {
     return x.indexOf(libName) !== -1;
   });
   if (rpaths.length > 0) {
@@ -37,13 +39,13 @@ function resolveRpath (libs, file, lib) {
 */
 }
 
-function resolvePathDirective (file, lib, directive) {
+function resolvePathDirective (file: any, lib: any, directive: any) {
   const slash = file.lastIndexOf('/');
   const rpath = (slash !== -1) ? file.substring(0, slash) : '';
   return lib.replace(directive, rpath);
 }
 
-function resolvePath (executable, file, lib, libs) {
+function resolvePath (executable: any, file: any, lib: any, libs: any) {
   if (lib.startsWith('/')) {
     return null;
   }
@@ -59,7 +61,7 @@ function resolvePath (executable, file, lib, libs) {
   throw new Error('Cannot resolve: ' + file);
 }
 
-function layerize (state) {
+function layerize (state: any) {
   let currentLayer = 0;
   const result = [];
   let processing = false;
@@ -69,6 +71,7 @@ function layerize (state) {
       const deps = state[lib].deps;
       if (deps.length === 0) {
         if (state[lib].layer === -1) {
+          // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
           result[currentLayer].push(lib);
           state[lib].layer = 0;
         }
@@ -84,6 +87,7 @@ function layerize (state) {
       processing = true;
       if (allDepsSolved) {
         if (state[lib].layer === -1) {
+          // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
           result[currentLayer].push(lib);
           state[lib].layer = currentLayer;
         }
@@ -96,7 +100,7 @@ function layerize (state) {
   return result;
 }
 
-function flattenize (layers) {
+function flattenize (layers: any) {
   const list = [];
   for (const layer of layers) {
     for (const lib of layer) {
@@ -106,7 +110,8 @@ function flattenize (layers) {
   return list;
 }
 
-function depSolver (executable, libs, parallel) {
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'depSolver'... Remove this comment to see the full error message
+function depSolver (executable: any, libs: any, parallel: any) {
   return new Promise((resolve, reject) => {
     if (libs.length === 0) {
       return resolve([]);
@@ -116,6 +121,7 @@ function depSolver (executable, libs, parallel) {
     const peek = () => {
       const target = peekableLibs.pop();
       const macholibs = bin.enumerateLibraries(target);
+      // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
       state[target] = {
         layer: -1,
         deps: []
@@ -125,6 +131,7 @@ function depSolver (executable, libs, parallel) {
           const realPath = resolvePath(executable, target, r, libs);
           try {
             fs.statSync(realPath);
+            // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
             state[target].deps.push(realPath);
           } catch (e) {
           }
@@ -138,8 +145,8 @@ function depSolver (executable, libs, parallel) {
         const finalLibs = flattenize(layers);
         if (libs.length !== finalLibs.length) {
           console.log('Orphaned libraries found');
-          const orphaned = libs.filter(lib => finalLibs.indexOf(lib) === -1);
-          orphaned.forEach(lib => {
+          const orphaned = libs.filter((lib: any) => finalLibs.indexOf(lib) === -1);
+          orphaned.forEach((lib: any) => {
             console.log(' *', lib);
           });
 
@@ -157,5 +164,7 @@ function depSolver (executable, libs, parallel) {
   });
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports = depSolver;
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports.resolvePath = resolvePath;

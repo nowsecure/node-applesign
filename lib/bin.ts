@@ -1,8 +1,12 @@
 'use strict';
 
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const isEncryptedSync = require('macho-is-encrypted');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const fatmacho = require('fatmacho');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const macho = require('macho');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs');
 
 const MACH0_MIN_SIZE = 1024 * 4;
@@ -11,7 +15,7 @@ const MH_DYLIB = 6;
 const MH_BUNDLE = 8;
 const CSSLOT_CODEDIRECTORY = 0;
 
-function isMacho (filePath) {
+function isMacho (filePath: any) {
   if (typeof filePath !== 'string') {
     throw new Error('Expected a string');
   }
@@ -23,10 +27,12 @@ function isMacho (filePath) {
   if (fd < 1) {
     return false;
   }
+  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   const machoMagic = Buffer.alloc(4);
   if (fs.readSync(fd, machoMagic, { position: 0, length: 4 }) !== 4) {
     return false;
   }
+  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   const machoType = Buffer.alloc(4);
   if (fs.readSync(fd, machoType, { position: 0xc, length: 4 }) !== 4) {
     return false;
@@ -34,6 +40,7 @@ function isMacho (filePath) {
   fs.close(fd);
   // is this a fatmacho?
 
+  // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
   if (!machoMagic.compare(Buffer.from([0xca, 0xfe, 0xba, 0xbe]))) {
     try {
       const data = fs.readFileSync(filePath);
@@ -53,13 +60,14 @@ function isMacho (filePath) {
   return isValidMacho(machoMagic, machoType);
 }
 
-function isValidMacho (machoMagic, machoType) {
+function isValidMacho (machoMagic: any, machoType: any) {
   // verify this file have enough magic
   const magics = [
     [0xce, 0xfa, 0xed, 0xfe], // 32bit
     [0xcf, 0xfa, 0xed, 0xfe] // 64bit
   ];
   for (const a of magics) {
+    // @ts-expect-error TS(2580): Cannot find name 'Buffer'. Do you need to install ... Remove this comment to see the full error message
     if (!machoMagic.slice(0, 4).compare(Buffer.from(a))) {
       // ensure the macho type is supported by ldid2
       const fileType = machoType[0];
@@ -75,7 +83,7 @@ function isValidMacho (machoMagic, machoType) {
   return false;
 }
 
-function isBitcodeMacho (cmds) {
+function isBitcodeMacho (cmds: any) {
   let haveBitcode = false;
   let haveNative = false;
   for (const cmd of cmds) {
@@ -94,14 +102,14 @@ function isBitcodeMacho (cmds) {
   return haveBitcode && !haveNative;
 }
 
-function isEncrypted (data) {
+function isEncrypted (data: any) {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
   return isEncryptedSync.data(data);
 }
 
-function isBitcode (data) {
+function isBitcode (data: any) {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
@@ -120,7 +128,7 @@ function isBitcode (data) {
   return false;
 }
 
-function isTruncated (data) {
+function isTruncated (data: any) {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
@@ -144,7 +152,7 @@ function isTruncated (data) {
   return false;
 }
 
-function parseMacho (data) {
+function parseMacho (data: any) {
   try {
     return macho.parse(data);
   } catch (e) {
@@ -154,7 +162,7 @@ function parseMacho (data) {
   }
 }
 
-function parseMachoAndGetData (data) {
+function parseMachoAndGetData (data: any) {
   try {
     return [macho.parse(data), data];
   } catch (e) {
@@ -164,23 +172,23 @@ function parseMachoAndGetData (data) {
   }
 }
 
-function enumerateLibraries (data) {
+function enumerateLibraries (data: any) {
   if (typeof data === 'string') {
     data = fs.readFileSync(data);
   }
   const exec = parseMacho(data);
-  return exec.cmds.filter((x) =>
-    x.type === 'load_dylib' || x.type === 'load_weak_dylib'
-  ).map((x) => x.name);
+  return exec.cmds.filter((x: any) => x.type === 'load_dylib' || x.type === 'load_weak_dylib'
+  ).map((x: any) => x.name);
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const machoEntitlements = require('macho-entitlements');
 
-function entitlements (file) {
+function entitlements (file: any) {
   return machoEntitlements.parseFile(file);
 }
 
-function getIdentifier (path) {
+function getIdentifier (path: any) {
   const rawData = fs.readFileSync(path);
   const [bin, data] = parseMachoAndGetData(rawData);
   for (const cmd of bin.cmds) {
@@ -190,7 +198,7 @@ function getIdentifier (path) {
   }
   return null;
 
-  function parseIdentifier (data) {
+  function parseIdentifier (data: any) {
     const count = data.readUInt32BE(8);
     for (let i = 0; i < count; i++) {
       const base = 8 * i;
@@ -217,6 +225,7 @@ function getIdentifier (path) {
   }
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports = {
   entitlements,
   isMacho,

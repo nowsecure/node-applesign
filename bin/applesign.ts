@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs');
-const packageJson = require('../package.json');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
+// Point to root package.json in distribution
+const packageJson = require('../../package.json');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'tools'.
 const tools = require('../lib/tools');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'config'.
 const config = require('../lib/config');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const colors = require('colors');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'Applesign'... Remove this comment to see the full error message
 const Applesign = require('../');
 
 colors.setTheme({
@@ -14,14 +21,14 @@ colors.setTheme({
   warning: 'green'
 });
 
-async function main (argv) {
+async function main (argv: any) {
   const conf = config.parse(argv);
   const options = config.compile(conf);
   const as = new Applesign(options);
   // initialize
   if (conf.identities || conf.L) {
     const ids = await as.getIdentities();
-    ids.forEach((id) => {
+    ids.forEach((id: any) => {
       console.log(id.hash, id.name);
     });
   } else if (conf.version) {
@@ -35,11 +42,11 @@ async function main (argv) {
     if (target === undefined) {
       throw new Error('Cannot open file');
     }
-    as.events.on('message', (msg) => {
+    as.events.on('message', (msg: any) => {
       console.log(colors.msg(msg));
-    }).on('warning', (msg) => {
+    }).on('warning', (msg: any) => {
       console.error(colors.warning('warning'), msg);
-    }).on('error', (msg) => {
+    }).on('error', (msg: any) => {
       console.error(colors.msg(msg));
     });
     if (options.file === undefined) {
@@ -51,6 +58,7 @@ async function main (argv) {
       const message = 'Target is now signed: ' + outfile;
       console.log(message);
     } catch (e) {
+      // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
       process.exitCode = 1;
       console.error(e);
     } finally {
@@ -67,9 +75,10 @@ async function main (argv) {
   }
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
 main(process.argv).then(_ => {}).catch(console.error);
 
-function getTargetMethod (file, single) {
+function getTargetMethod (file: any, single: any) {
   try {
     if (tools.isDirectory(file)) {
       return 'signAppDirectory';

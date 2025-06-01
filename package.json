@@ -15,12 +15,16 @@
     "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
     "test": "mocha",
     "dist": "./dist.sh",
-    "dist-all": "./dist.sh macos linux freebsd alpine win"
+    "dist-all": "./dist.sh macos linux freebsd alpine win",
+    "build": "tsc",
+    "migrate": "ts-migrate migrate"
   },
   "devDependencies": {
     "npm": "^10.0.0",
     "pkg": "5.6.0",
-    "semistandard": "^17.0.0"
+    "semistandard": "^17.0.0",
+    "ts-migrate": "*",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "colors": "1.4.0",
@@ -75,7 +79,8 @@
     "osx"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "maintainers": [
     {
       "name": "Sergi Alvarez",

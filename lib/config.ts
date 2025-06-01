@@ -1,6 +1,8 @@
 'use strict';
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
 const path = require('path');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'idprov'.
 const idprov = require('./idprov');
 
 const shortHelpMessage = `Usage:
@@ -117,7 +119,7 @@ Installing in the device:
 
 */
 
-const fromOptions = function (opt) {
+const fromOptions = function (opt: any) {
   if (typeof opt !== 'object') {
     opt = {};
   }
@@ -196,11 +198,12 @@ const fromOptions = function (opt) {
   };
 };
 
-const fromState = function (state) {
+const fromState = function (state: any) {
   return JSON.parse(JSON.stringify(state));
 };
 
-function parse (argv) {
+function parse (argv: any) {
+  // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
   return require('minimist')(argv.slice(2), {
     string: [
       'd', 'debug',
@@ -242,7 +245,7 @@ function parse (argv) {
   });
 }
 
-function compile (conf) {
+function compile (conf: any) {
   const options = {
     all: conf.a || conf.all || false,
     allDirs: conf['all-dirs'] || conf.A,
@@ -290,6 +293,7 @@ function compile (conf) {
   return options;
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports = {
   compile,
   fromOptions,

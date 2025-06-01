@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "rootDir": ".",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    // Allow JavaScript files during migration
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    // include both JS and TS sources for migration
+    "lib/**/*",
+    "bin/**/*",
+    "index.*",
+    "example.*",
+    "test/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

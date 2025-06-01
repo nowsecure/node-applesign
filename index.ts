@@ -1,30 +1,54 @@
 'use strict';
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'tools'.
 const tools = require('./lib/tools');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'config'.
 const config = require('./lib/config');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'idprov'.
 const idprov = require('./lib/idprov');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const EventEmitter = require('events').EventEmitter;
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'path'.
 const path = require('path');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'execSync'.
 const { execSync } = require('child_process');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const uuid = require('uuid');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs-extra');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'walk'.
 const walk = require('fs-walk');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
 const plist = require('simple-plist');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const fchk = require('./lib/fchk');
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const { tmpdir, homedir } = require('os');
 
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const { AppDirectory } = require('./lib/appdir');
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'depSolver'... Remove this comment to see the full error message
 const depSolver = require('./lib/depsolver');
 
+// @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
 const adjustInfoPlist = require('./lib/info-plist');
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'defaultEnt... Remove this comment to see the full error message
 const defaultEntitlements = require('./lib/entitlements');
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plistBuild... Remove this comment to see the full error message
 const plistBuild = require('plist').build;
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'bin'.
 const bin = require('./lib/bin');
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'Applesign'... Remove this comment to see the full error message
 class Applesign {
-  constructor (options) {
+  config: any;
+  debugObject: any;
+  events: any;
+  nested: any;
+  tmpDir: any;
+  constructor (options: any) {
     this.config = config.fromOptions(options || {});
     this.events = new EventEmitter();
     this.nested = [];
@@ -40,7 +64,7 @@ class Applesign {
     return result;
   }
 
-  _fullPathInTmp (filePath) {
+  _fullPathInTmp (filePath: any) {
     const dirname = path.dirname(filePath);
     const dirnameInTmp = path.join(this.tmpDir, dirname);
     fs.mkdirpSync(dirnameInTmp);
@@ -59,7 +83,7 @@ class Applesign {
     throw new Error('Cannot find provisioning file automatically. Please use -m');
   }
 
-  async signXCarchive (file) {
+  async signXCarchive (file: any) {
     fchk(arguments, ['string']);
     const ipaFile = file + '.ipa';
     await tools.xcaToIpa(file, ipaFile);
@@ -71,7 +95,7 @@ class Applesign {
     return tools.getIdentities();
   }
 
-  async signIPA (file) {
+  async signIPA (file: any) {
     fchk(arguments, ['string']);
     if (typeof file === 'string') {
       this.setFile(file);
@@ -130,7 +154,7 @@ class Applesign {
     }
   }
 
-  async signAppDirectoryInternal (ipadir, skipNested) {
+  async signAppDirectoryInternal (ipadir: any, skipNested: any) {
     fchk(arguments, ['string', 'boolean']);
     await this._pullMobileProvision();
     if (this.config.run) {
@@ -157,7 +181,7 @@ class Applesign {
       this.emit('message', 'Main IPA executable is not encrypted');
     }
     if (this.config.insertLibrary !== undefined) {
-      await insertLibrary(this.config);
+      await injectLibrary(this.config);
     }
     const infoPlistPath = path.join(this.config.appdir, 'Info.plist');
     adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
@@ -181,7 +205,7 @@ class Applesign {
     }
   }
 
-  async signAppDirectory (ipadir) {
+  async signAppDirectory (ipadir: any) {
     fchk(arguments, ['string']);
     return this.signAppDirectoryInternal(ipadir, false);
   }
@@ -201,7 +225,7 @@ class Applesign {
   async removeXCTests () {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir, filename, stat) => {
+    walk.walkSync(dir, (basedir: any, filename: any, stat: any) => {
       const target = path.join(basedir, filename);
       //  if (target.toLowerCase().indexOf('/xct') !== -1)
       if (target.toLowerCase().indexOf('xctest') !== -1) {
@@ -214,7 +238,7 @@ class Applesign {
   async removeSigningFiles () {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir, filename, stat) => {
+    walk.walkSync(dir, (basedir: any, filename: any, stat: any) => {
       if (filename.endsWith('.entitlements') || filename.endsWith('.mobileprovision')) {
         const target = path.join(basedir, filename);
         this.emit('message', 'Deleting ' + target);
@@ -245,8 +269,8 @@ class Applesign {
 
   findProvisioningsSync () {
     fchk(arguments, []);
-    const files = [];
-    walk.walkSync(this.config.appdir, (basedir, filename, stat) => {
+    const files: any = [];
+    walk.walkSync(this.config.appdir, (basedir: any, filename: any, stat: any) => {
       const file = path.join(basedir, filename);
       // only walk on files. Symlinks and other special files are forbidden
       if (!fs.lstatSync(file).isFile()) {
@@ -267,12 +291,13 @@ class Applesign {
     const identifierInProvisioning = 'x'
     Read the one in Info.plist and compare with bundleid
   */
-  async checkProvision (appdir, file) {
+  async checkProvision (appdir: any, file: any) {
     fchk(arguments, ['string', 'string']);
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
       const files = this.findProvisioningsSync();
+      // @ts-expect-error TS(7006): Parameter 'file' implicitly has an 'any' type.
       files.forEach((file) => {
         console.error('Deleting ', file);
         fs.unlinkSync(file);
@@ -301,7 +326,7 @@ class Applesign {
     }
   }
 
-  debugInfo (path, key, val) {
+  debugInfo (path: any, key: any, val: any) {
     if (!val) {
       return;
     }
@@ -315,7 +340,7 @@ class Applesign {
     this.debugObject[f][key] = val;
   }
 
-  addEntitlementsSync (orig) {
+  addEntitlementsSync (orig: any) {
     if (this.config.addEntitlements === undefined) {
       return orig;
     }
@@ -325,7 +350,7 @@ class Applesign {
     return Object.assign(orig, addEnt);
   }
 
-  adjustEntitlementsSync (file, entMobProv) {
+  adjustEntitlementsSync (file: any, entMobProv: any) {
     if (this.config.pseudoSign) {
       const ent = bin.entitlements(file);
       if (ent === null) {
@@ -350,7 +375,7 @@ class Applesign {
       console.error('Cannot find entitlements in binary. Using defaults');
       ent = defaultEntitlements(appId, teamId);
     }
-    let entMacho;
+    let entMacho: any;
     if (ent !== null) {
       entMacho = plist.parse(ent.toString().trim());
       entMacho = this.addEntitlementsSync(entMacho);
@@ -509,7 +534,7 @@ class Applesign {
     }
   }
 
-  async adjustEntitlements (file) {
+  async adjustEntitlements (file: any) {
     fchk(arguments, ['string']);
     let newEntitlements = null;
     if (!this.config.pseudoSign) {
@@ -520,9 +545,9 @@ class Applesign {
     this.adjustEntitlementsSync(file, newEntitlements);
   }
 
-  async signFile (file) {
+  async signFile (file: any) {
     const config = this.config;
-    function customOptions (config, file) {
+    function customOptions (config: any, file: any) {
       if (typeof config.json === 'object' && typeof config.json.custom === 'object') {
         for (const c of config.json.custom) {
           if (!c.filematch) {
@@ -550,7 +575,7 @@ class Applesign {
       } catch (ignored) {
       }
     }
-    function codesignHasFailed (config, error, errmsg) {
+    function codesignHasFailed (config: any, error: any, errmsg: any) {
       if (error && errmsg.indexOf('Error:') !== -1) {
         throw error;
       }
@@ -593,9 +618,9 @@ class Applesign {
     return this;
   }
 
-  filterLibraries (libraries) {
+  filterLibraries (libraries: any) {
     fchk(arguments, ['object']);
-    return libraries.filter(library => {
+    return libraries.filter((library: any) => {
       // Resign all frameworks. even if not referenced :?
       if (library.indexOf('Frameworks/') !== -1) {
         return true;
@@ -615,14 +640,14 @@ class Applesign {
 
   findLibrariesSync () {
     fchk(arguments, []);
-    const libraries = [];
-    const nested = [];
+    const libraries: any = [];
+    const nested: any = [];
     const exe = path.sep + getExecutable(this.config.appdir);
     const folders = this.config.appbin.split(path.sep);
     const exe2 = path.sep + folders[folders.length - 1];
 
     let found = false;
-    walk.walkSync(this.config.appdir, (basedir, filename, stat) => {
+    walk.walkSync(this.config.appdir, (basedir: any, filename: any, stat: any) => {
       const file = path.join(basedir, filename);
       // only walk on files. Symlinks and other special files are forbidden
       if (!fs.lstatSync(file).isFile()) {
@@ -656,29 +681,29 @@ class Applesign {
     return libraries;
   }
 
-  async signLibraries (bpath, appdir) {
+  async signLibraries (bpath: any, appdir: any) {
     fchk(arguments, ['string', 'string']);
     this.emit('message', 'Signing libraries and frameworks');
 
-    const parallelVerify = async (libs) => {
+    const parallelVerify = async (libs: any) => {
       if (!this.config.verify) {
         return;
       }
       this.emit('message', 'Verifying ' + libs);
-      const promises = libs.map(lib => tools.verifyCodesign);
+      const promises = libs.map((lib: any) => tools.verifyCodesign);
       return Promise.all(promises);
     };
 
-    const layeredSigning = async (libs) => {
+    const layeredSigning = async (libs: any) => {
       const libsCopy = libs.slice(0).reverse();
       for (const deps of libsCopy) {
-        const promises = deps.map(dep => { return this.signFile(dep); });
+        const promises = deps.map((dep: any) => { return this.signFile(dep); });
         await Promise.all(promises);
       }
       await parallelVerify(libs);
     };
 
-    const serialSigning = async (libs) => {
+    const serialSigning = async (libs: any) => {
       const libsCopy = libs.slice(0).reverse();
       for (const lib of libsCopy) {
         await this.signFile(lib);
@@ -723,7 +748,7 @@ class Applesign {
       }
       this.debugInfo('analysis', 'orphan', ls.orphanedLibraries());
       // const libraries = ls.diskLibraries ();
-      libs = libraries.filter(library => !(ls.appexs.includes(library))); // remove already-signed appexs
+      libs = libraries.filter((library: any) => !(ls.appexs.includes(library))); // remove already-signed appexs
     }
     if (libs.length === 0) {
       libs.push(bpath);
@@ -767,7 +792,7 @@ class Applesign {
     }
   }
 
-  setFile (name) {
+  setFile (name: any) {
     fchk(arguments, ['string']);
     this.config.file = path.resolve(name);
     this.config.outdir = this.config.file + '.' + uuid.v4();
@@ -776,7 +801,7 @@ class Applesign {
     }
   }
 
-  async unzipIPA (file, outdir) {
+  async unzipIPA (file: any, outdir: any) {
     fchk(arguments, ['string', 'string']);
     if (!file || !outdir) {
       throw new Error('No output specified');
@@ -790,11 +815,11 @@ class Applesign {
   }
 
   /* Event Wrapper API with cb support */
-  emit (ev, msg) {
+  emit (ev: any, msg: any) {
     this.events.emit(ev, msg);
   }
 
-  on (ev, cb) {
+  on (ev: any, cb: any) {
     this.events.on(ev, cb);
     return this;
   }
@@ -802,7 +827,7 @@ class Applesign {
 
 // helper functions
 
-function getResignedFilename (input) {
+function getResignedFilename (input: any) {
   if (!input) {
     return null;
   }
@@ -820,7 +845,7 @@ function getResignedFilename (input) {
   return input + '-resigned.ipa';
 }
 
-function getExecutable (appdir) {
+function getExecutable (appdir: any) {
   if (!appdir) {
     throw new Error('No application directory is provided');
   }
@@ -839,7 +864,7 @@ function getExecutable (appdir) {
   return (dotap === -1) ? exename : exename.substring(0, dotap);
 }
 
-async function insertLibrary (config) {
+async function injectLibrary (config: any) {
   const appDir = config.appdir;
   const targetLib = config.insertLibrary;
   const libraryName = path.basename(targetLib);
@@ -851,7 +876,7 @@ async function insertLibrary (config) {
   await insertLibraryLL(outputLib, targetLib, config);
 }
 
-function insertLibraryLL (outputLib, targetLib, config) {
+function insertLibraryLL (outputLib: any, targetLib: any, config: any) {
   return new Promise((resolve, reject) => {
     try {
       const writeStream = fs.createWriteStream(outputLib);
@@ -874,17 +899,18 @@ function insertLibraryLL (outputLib, targetLib, config) {
   });
 }
 
-function parentDirectory (root) {
+function parentDirectory (root: any) {
   return path.normalize(path.join(root, '..'));
 }
 
-function getOutputPath (cwd, ofile) {
+function getOutputPath (cwd: any, ofile: any) {
   return ofile.startsWith(path.sep) ? ofile : path.join(parentDirectory(cwd), ofile);
 }
 
-function runScriptSync (script, session) {
+function runScriptSync (script: any, session: any) {
   if (script.endsWith('.js')) {
     try {
+      // @ts-expect-error TS(2580): Cannot find name 'require'. Do you need to install... Remove this comment to see the full error message
       const s = require(script);
       return s(session);
     } catch (e) {
@@ -892,15 +918,21 @@ function runScriptSync (script, session) {
       return false;
     }
   } else {
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_DIRECTORY = session.config.appdir;
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_MAINBIN = session.config.appbin;
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_OUTFILE = session.config.outfile;
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_OUTDIR = session.config.outdir;
+    // @ts-expect-error TS(2580): Cannot find name 'process'. Do you need to install... Remove this comment to see the full error message
     process.env.APPLESIGN_FILE = session.config.file;
     try {
       const res = execSync(script);
       console.error(res.toString());
     } catch (e) {
+      // @ts-expect-error TS(2571): Object is of type 'unknown'.
       console.error(e.toString());
       return false;
     }
@@ -908,7 +940,7 @@ function runScriptSync (script, session) {
   return true;
 }
 
-function nestedApp (file) {
+function nestedApp (file: any) {
   const dotApp = file.indexOf('.app/');
   if (dotApp !== -1) {
     const subApp = file.substring(dotApp + 4).indexOf('.app/');
@@ -919,7 +951,7 @@ function nestedApp (file) {
   return false;
 }
 
-function getAppDirectory (ipadir) {
+function getAppDirectory(this: any, ipadir: any) {
   if (!ipadir) {
     ipadir = path.join(this.config.outdir, 'Payload');
   }
@@ -929,7 +961,7 @@ function getAppDirectory (ipadir) {
   if (ipadir.endsWith('.app')) {
     this.config.appdir = ipadir;
   } else {
-    const files = fs.readdirSync(ipadir).filter((x) => {
+    const files = fs.readdirSync(ipadir).filter((x: any) => {
       return x.endsWith('.app');
     });
     if (files.length !== 1) {
@@ -943,17 +975,17 @@ function getAppDirectory (ipadir) {
   return ipadir;
 }
 
-async function enumerateTestFiles (dir) {
+async function enumerateTestFiles (dir: any) {
   let tests = [];
   if (fs.existsSync(dir)) {
-    tests = (await fs.readdir(dir)).filter((x) => {
+    tests = (await fs.readdir(dir)).filter((x: any) => {
       return x.indexOf('.xctest') !== -1;
     });
   }
   return tests;
 }
 
-async function moveFiles (files, sourceDir, destDir) {
+async function moveFiles (files: any, sourceDir: any, destDir: any) {
   await fs.mkdir(destDir, { recursive: true });
   for (const f of files) {
     const oldName = path.join(sourceDir, f);
@@ -961,4 +993,5 @@ async function moveFiles (files, sourceDir, destDir) {
     await fs.rename(oldName, newName);
   }
 }
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports = Applesign;

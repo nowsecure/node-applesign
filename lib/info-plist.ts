@@ -1,11 +1,13 @@
 'use strict';
 
+// @ts-expect-error TS(2451): Cannot redeclare block-scoped variable 'plist'.
 const plist = require('simple-plist');
 
 const appleDevices = ['iPhone', 'iPad', 'AppleTV', 'AppleWatch'];
-const objectFromEntries = (x) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
+// @ts-expect-error TS(2464): A computed property name must be of type 'string',... Remove this comment to see the full error message
+const objectFromEntries = (x: any) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
 
-function fix (file, options, emit) {
+function fix (file: any, options: any, emit: any) {
   const { appdir, bundleid, forceFamily, allowHttp } = options;
   if (!file || !appdir) {
     throw new Error('Invalid parameters for fixPlist');
@@ -35,7 +37,7 @@ function fix (file, options, emit) {
   }
 }
 
-function setBundleId (data, bundleid) {
+function setBundleId (data: any, bundleid: any) {
   const oldBundleId = data.CFBundleIdentifier;
   if (oldBundleId) {
     data.CFBundleIdentifier = bundleid;
@@ -50,13 +52,15 @@ function setBundleId (data, bundleid) {
   }
 }
 
-function performForceFamily (data, emit) {
+function performForceFamily (data: any, emit: any) {
   if (!emit) emit = console.error;
   const have = supportedDevices(data);
   const df = [];
+  // @ts-expect-error TS(2339): Property 'iPhone' does not exist on type '{}[]'.
   if (have.iPhone && have.iPhone.length > 0) {
     df.push(1);
   }
+  // @ts-expect-error TS(2339): Property 'iPad' does not exist on type '{}[]'.
   if (have.iPad && have.iPad.length > 0) {
     df.push(2);
   }
@@ -65,6 +69,7 @@ function performForceFamily (data, emit) {
     delete data.UISupportedDevices;
     changes = true;
   }
+  // @ts-expect-error TS(2339): Property 'AppleWatch' does not exist on type '{}[]... Remove this comment to see the full error message
   if ((have.AppleWatch && have.AppleWatch.length > 0) || (have.AppleTV && have.AppleTV.length > 0)) {
     emit('message', 'Apple{TV/Watch} apps do not require to be re-familied');
     return changes;
@@ -82,16 +87,19 @@ function performForceFamily (data, emit) {
   return true;
 }
 
-function supportedDevices (data) {
+function supportedDevices (data: any) {
   const have = objectFromEntries(appleDevices);
   const sd = data.UISupportedDevices;
   if (Array.isArray(sd)) {
     sd.forEach(model => {
       for (const type of appleDevices) {
         if (model.indexOf(type) !== -1) {
+          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           if (!have[type]) {
+            // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
             have[type] = [];
           }
+          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           have[type].push(model);
           break;
         }
@@ -106,9 +114,12 @@ function supportedDevices (data) {
       const families = ['Any', ...appleDevices];
       const fam = families[family];
       if (fam) {
+        // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
         if (have[fam] === undefined) {
+          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           have[fam] = [];
         }
+        // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
         have[fam].push(fam);
       }
     });
@@ -116,4 +127,5 @@ function supportedDevices (data) {
   return have;
 }
 
+// @ts-expect-error TS(2580): Cannot find name 'module'. Do you need to install ... Remove this comment to see the full error message
 module.exports = fix;
