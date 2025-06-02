@@ -24,7 +24,6 @@
     "npm": "^10.0.0",
     "pkg": "5.6.0",
     "semistandard": "^17.0.0",
-    "ts-migrate": "*",
     "typescript": "^5.8.3"
   },
   "dependencies": {
@@ -49,21 +48,25 @@
   },
   "files": [
     "LICENSE",
-    "lib/appdir.js",
-    "bin/applesign.js",
-    "lib/bin.js",
-    "lib/config.js",
-    "lib/depsolver.js",
-    "lib/entitlements.js",
-    "example.js",
-    "lib/fchk.js",
-    "lib/idprov.js",
-    "index.js",
-    "lib/info-plist.js",
-    "test/test.js",
-    "lib/tools.js",
+    "lib/appdir.ts",
+    "bin/applesign.ts",
+    "lib/bin.ts",
+    "lib/config.ts",
+    "lib/depsolver.ts",
+    "lib/entitlements.ts",
+    "example.ts",
+    "lib/fchk.ts",
+    "lib/idprov.ts",
+    "index.ts",
+    "lib/info-plist.ts",
+    "test/test.ts",
+    "lib/tools.ts",
+    "lib/types.d.ts",
+    "lib/macho-entitlements.d.ts",
+    "lib/version.ts",
     "package.json",
     "README.md",
+    "tsconfig.json",
     "scripts/update-version.sh",
     "scripts/dist.sh"
   ],
@@ -104,3 +107,4 @@
   "name": "applesign",
   "version": "5.0.1"
 }
+
