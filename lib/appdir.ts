@@ -3,11 +3,11 @@ import walk from "fs-walk";
 import plist from "simple-plist";
 import * as bin from "./bin.js";
 import fs from "fs";
-import depSolver, { resolvePath } from "./depsolver.js";
+import { resolvePath } from "./depsolver.js";
 
 export class AppDirectory {
-  appbin: any;
-  appdir: any;
+  appbin: string = "";
+  appdir: string = "";
   appexs: any;
   applibs: any;
   disklibs: any;
@@ -91,7 +91,7 @@ function _findSystemLibraries(applibs: any) {
   return syslibs;
 }
 
-function _getAppExecutable(appdir: any) {
+function _getAppExecutable(appdir: string): string | null {
   if (!appdir) {
     throw new Error("No application directory is provided");
   }
@@ -111,9 +111,9 @@ function _getAppExecutable(appdir: any) {
   return dotap === -1 ? exename : exename.substring(0, dotap);
 }
 
-function _getAppExtensions(appdir: any) {
+function _getAppExtensions(appdir: string): string[] {
   const d = path.join(appdir, "PlugIns");
-  const apexBins: any = [];
+  const apexBins: string[] = [];
   try {
     if (!fs.existsSync(d)) {
       return apexBins;
@@ -141,8 +141,8 @@ function _getAppExtensions(appdir: any) {
 }
 
 /** return an array of strings with the absolute paths of the sub-apps found inside appdir */
-function _findNested(d: any) {
-  const nested: any = [];
+function _findNested(d: string): string[] {
+  const nested: string[] = [];
   walk.walkSync(d, (basedir: any, filename: any, stat: any) => {
     const file = path.join(basedir, filename);
     if (file.indexOf(".app/Info.plist") !== -1) {
@@ -153,8 +153,8 @@ function _findNested(d: any) {
   return nested;
 }
 
-function _findBinaries(appdir: any) {
-  const libraries: any = [];
+function _findBinaries(appdir: string): string[] {
+  const libraries: string[] = [];
   walk.walkSync(appdir, (basedir: any, filename: any, stat: any) => {
     const file = path.join(basedir, filename);
     // only walk on files. Symlinks and other special files are forbidden
@@ -168,7 +168,7 @@ function _findBinaries(appdir: any) {
   return libraries;
 }
 
-function binSysLibs(file: any) {
+function binSysLibs(file: string): string[] {
   try {
     return bin.enumerateLibraries(file).filter((l: any) => l.startsWith("/"));
   } catch (e) {
@@ -205,7 +205,12 @@ function binAbsLibs(file: any, o: any) {
 }
 
 // get all dependencies from appbin recursively
-function _findLibraries(appdir: any, appbin: any, appexs: any, disklibs: any) {
+function _findLibraries(
+  appdir: any,
+  appbin: any,
+  appexs: any,
+  disklibs: string[],
+) {
   const exe = path.join(appdir, appbin);
 
   const o = {
