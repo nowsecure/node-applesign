@@ -117,8 +117,58 @@ Installing in the device:
 }
 
 */
+export interface ConfigOptions {
+  appdir: any;
+  appbin: any;
+  all: boolean;
+  allDirs: boolean;
+  allowHttp: boolean;
+  addEntitlements: string | null;
+  bundleIdKeychainGroup: string | false;
+  bundleid: string | undefined;
+  cloneEntitlements: boolean;
+  customKeychainGroup: string | undefined;
+  debug: any; // opt.d || opt.debug || ""
+  deviceProvision: any; // opt.D || opt.deviceProvision || false
+  entitlement: string | undefined;
+  entry: any; // opt.entry || undefined
+  file: string | undefined;
+  forceFamily: boolean;
+  identity: string | undefined;
+  ignoreCodesignErrors: boolean;
+  ignoreVerificationErrors: boolean;
+  ignoreZipErrors: boolean;
+  insertLibrary: any; // opt.insertLibrary || undefined,
+  json: any; // JSON.parse(opt.json || "{}"),
+  keychain: any;
+  lipoArch: any;
+  massageEntitlements: boolean;
+  mobileprovision: any;
+  mobileprovisions: any;
+  noEntitlementsFile: any;
+  payloadOnly: boolean;
+  noclean: boolean;
+  osversion: any; // opt.osversion || undefined,
+  outdir: any;
+  outfile: string | null;
+  parallel: boolean;
+  pseudoSign: boolean;
+  replaceipa: boolean;
+  run: any;
+  selfSignedProvision: boolean;
+  unfairPlay: boolean;
+  use7zip: boolean;
+  useOpenSSL: boolean;
+  verify: boolean;
+  verifyTwice: boolean;
+  withGetTaskAllow: boolean;
+  withoutPlugins: boolean;
+  withoutSigningFiles: boolean;
+  withoutWatchapp: boolean;
+  withoutXCTests: boolean;
+}
 
-const fromOptions = function (opt: any) {
+const fromOptions = function (opt: any): ConfigOptions {
   if (typeof opt !== "object") {
     opt = {};
   }
@@ -177,7 +227,10 @@ const fromOptions = function (opt: any) {
     noEntitlementsFile: opt.noEntitlementsFile || false,
     noclean: opt.noclean || false,
     osversion: opt.osversion || undefined,
+    appbin: undefined,
+    appdir: undefined,
     outdir: undefined,
+    payloadOnly: false,
     outfile: opt.outfile,
     parallel: opt.parallel || false,
     pseudoSign: opt.pseudoSign || false,

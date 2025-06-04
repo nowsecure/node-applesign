@@ -21,7 +21,7 @@ import pkg from "plist";
 const { build: plistBuild } = pkg;
 
 class Applesign {
-  config: any;
+  config: config.ConfigOptions;
   debugObject: any;
   events: any;
   nested: any;
@@ -862,7 +862,7 @@ class Applesign {
     }
   }
 
-  async unzipIPA(file: any, outdir: any) : Promise<any> {
+  async unzipIPA(file: any, outdir: any): Promise<any> {
     fchk(arguments, ["string", "string"]);
     if (!file || !outdir) {
       throw new Error("No output specified");
@@ -888,7 +888,7 @@ class Applesign {
 
 // helper functions
 
-function getResignedFilename(input: any) {
+function getResignedFilename(input: any): string | null {
   if (!input) {
     return null;
   }
