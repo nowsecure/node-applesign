@@ -3,8 +3,16 @@
 import plist from "simple-plist";
 
 const appleDevices = ["iPhone", "iPad", "AppleTV", "AppleWatch"];
-// @ts-expect-error TS(2464): A computed property name must be of type 'string',... Remove this comment to see the full error message
-const objectFromEntries = (x: any) => Array.from(x, (k) => ({ [k]: [] })); // ES7 is not yet here
+/**
+ * Creates an object with keys from the input array, each mapping to an empty array.
+ */
+const objectFromEntries = (keys: string[]): Record<string, any[]> => {
+  const result: Record<string, any[]> = {};
+  keys.forEach((k) => {
+    result[k] = [];
+  });
+  return result;
+};
 
 export default function fix(file: any, options: any, emit: any): void {
   const { appdir, bundleid, forceFamily, allowHttp } = options;
@@ -58,11 +66,9 @@ function performForceFamily(data: any, emit: any) {
   if (!emit) emit = console.error;
   const have = supportedDevices(data);
   const df = [];
-  // @ts-expect-error TS(2339): Property 'iPhone' does not exist on type '{}[]'.
   if (have.iPhone && have.iPhone.length > 0) {
     df.push(1);
   }
-  // @ts-expect-error TS(2339): Property 'iPad' does not exist on type '{}[]'.
   if (have.iPad && have.iPad.length > 0) {
     df.push(2);
   }
@@ -71,7 +77,6 @@ function performForceFamily(data: any, emit: any) {
     delete data.UISupportedDevices;
     changes = true;
   }
-  // @ts-expect-error TS(2339): Property 'AppleWatch' does not exist on type '{}[]... Remove this comment to see the full error message
   if (
     (have.AppleWatch && have.AppleWatch.length > 0) ||
     (have.AppleTV && have.AppleTV.length > 0)
@@ -99,12 +104,9 @@ function supportedDevices(data: any) {
     sd.forEach((model) => {
       for (const type of appleDevices) {
         if (model.indexOf(type) !== -1) {
-          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           if (!have[type]) {
-            // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
             have[type] = [];
           }
-          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           have[type].push(model);
           break;
         }
@@ -119,12 +121,9 @@ function supportedDevices(data: any) {
       const families = ["Any", ...appleDevices];
       const fam = families[family];
       if (fam) {
-        // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
         if (have[fam] === undefined) {
-          // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
           have[fam] = [];
         }
-        // @ts-expect-error TS(7015): Element implicitly has an 'any' type because index... Remove this comment to see the full error message
         have[fam].push(fam);
       }
     });

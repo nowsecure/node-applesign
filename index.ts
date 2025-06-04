@@ -1,15 +1,15 @@
 import * as tools from "./lib/tools.js";
 import * as config from "./lib/config.js";
 import idprov from "./lib/idprov.js";
-import { EventEmitter } from "events";
-import path from "path";
-import { execSync } from "child_process";
+import { EventEmitter } from "node:events";
+import path from "node:path";
+import { execSync } from "node:child_process";
 import * as uuid from "uuid";
 import fs from "fs-extra";
 import walk from "fs-walk";
 import plist from "simple-plist";
 import fchk from "./lib/fchk.js";
-import { homedir, tmpdir } from "os";
+import { homedir, tmpdir } from "node:os";
 import { AppDirectory } from "./lib/appdir.js";
 import depSolver from "./lib/depsolver.js";
 import adjustInfoPlist from "./lib/info-plist.js";
@@ -862,7 +862,7 @@ class Applesign {
     }
   }
 
-  async unzipIPA(file: any, outdir: any) {
+  async unzipIPA(file: any, outdir: any) : Promise<any> {
     fchk(arguments, ["string", "string"]);
     if (!file || !outdir) {
       throw new Error("No output specified");

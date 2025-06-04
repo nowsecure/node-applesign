@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import fs from "fs";
+import fs from "node:fs";
 import pkgVersion from "../lib/version.js";
-import { join } from "path";
+import { join } from "node:path";
 import * as tools from "../lib/tools.js";
 import * as config from "../lib/config.js";
 import colors from "colors";
