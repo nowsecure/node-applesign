@@ -14,7 +14,7 @@
     "semi": "semistandard",
     "indent": "semistandard --fix bin/*.js lib/*.js *.js",
     "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
-    "test": "chmod +x dist/bin/applesign.js &&  node --loader ts-node/esm node_modules/.bin/mocha test/test.ts",
+    "test": "npm run build && chmod +x dist/bin/applesign.js &&  node --loader ts-node/esm node_modules/.bin/mocha test/test.ts",
     "dist": "./scripts/dist.sh",
     "dist-all": "./scripts/dist.sh macos linux freebsd alpine win",
     "prebuild": "node scripts/update-version.cjs",
