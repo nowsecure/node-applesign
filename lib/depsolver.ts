@@ -1,9 +1,13 @@
 import fs from "fs";
 import * as bin from "./bin.js";
 
-function resolveRpath(libs: any, file: any, lib: any): string | null {
+function resolveRpath(
+  libs: string[],
+  file: string,
+  lib: string,
+): string | null {
   const libName = lib.substring(6); /* chop @rpath */
-  const rpaths = libs.filter((x: any) => {
+  const rpaths = libs.filter((x: string) => {
     return x.indexOf(libName) !== -1;
   });
   if (rpaths.length > 0) {
@@ -20,7 +24,7 @@ function resolvePathDirective(
   directive: string,
 ): string {
   const slash = file.lastIndexOf("/");
-  const rpath = (slash !== -1) ? file.substring(0, slash) : "";
+  const rpath = slash !== -1 ? file.substring(0, slash) : "";
   return lib.replace(directive, rpath);
 }
 
@@ -84,7 +88,7 @@ function layerize(state: any) {
   return result;
 }
 
-function flattenize(layers: any): string[] {
+function flattenize(layers: any[]): string[] {
   const list: string[] = [];
   for (const layer of layers) {
     for (const lib of layer) {
@@ -121,8 +125,7 @@ export default function depSolver(
               fs.statSync(realPath);
               // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
               state[target].deps.push(realPath);
-            } catch (e) {
-            }
+            } catch (e) {}
           }
         }
       }
@@ -134,8 +137,8 @@ export default function depSolver(
         const finalLibs = flattenize(layers);
         if (libs.length !== finalLibs.length) {
           console.log("Orphaned libraries found");
-          const orphaned = libs.filter((lib: any) =>
-            finalLibs.indexOf(lib) === -1
+          const orphaned = libs.filter(
+            (lib: string) => finalLibs.indexOf(lib) === -1,
           );
           orphaned.forEach((lib: any) => {
             console.log(" *", lib);

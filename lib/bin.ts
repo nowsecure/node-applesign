@@ -10,7 +10,7 @@ const MH_DYLIB = 6;
 const MH_BUNDLE = 8;
 const CSSLOT_CODEDIRECTORY = 0;
 
-function isMacho(filePath: string) {
+function isMacho(filePath: string): boolean {
   if (typeof filePath !== "string") {
     throw new Error("Expected a string");
   }
@@ -168,9 +168,9 @@ function enumerateLibraries(data: any) {
     data = fs.readFileSync(data);
   }
   const exec = parseMacho(data);
-  return exec.cmds.filter((x: any) =>
-    x.type === "load_dylib" || x.type === "load_weak_dylib"
-  ).map((x: any) => x.name);
+  return exec.cmds
+    .filter((x: any) => x.type === "load_dylib" || x.type === "load_weak_dylib")
+    .map((x: any) => x.name);
 }
 
 function entitlements(file: any) {
