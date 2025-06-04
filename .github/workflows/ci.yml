@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ["16", "18", "20"]
+        node-version: ["18", "20"]
 
     steps:
       - uses: actions/checkout@v3
@@ -21,6 +21,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - run: npm install
+#      - run: npm run indent-check
       - run: npm test
-#      - run: npm run semi
       - run: npm run dist
