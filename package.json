@@ -18,7 +18,7 @@
     "dist": "./scripts/dist.sh",
     "dist-all": "./scripts/dist.sh macos linux freebsd alpine win",
     "prebuild": "node scripts/update-version.cjs",
-    "build": "rm -rf dist && tsc"
+    "build": "tsc"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

@@ -1,4 +1,4 @@
-import Applesign from ".";
+import Applesign from "./index.js";
 
 const as = new Applesign({
   /* bin/applesign -L to list all available identities in your system */
