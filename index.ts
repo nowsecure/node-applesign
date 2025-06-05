@@ -89,10 +89,14 @@ class Applesign {
       use7zip: this.config.use7zip,
       useOpenSSL: this.config.useOpenSSL,
     });
+    // unsure, but this.config.file shouldnt be undefined
+    if (!this.config.file) {
+      this.config.file = file;
+    }
     await this._pullMobileProvision();
     this.emit("message", "File: " + this.config.file);
     this.emit("message", "Outdir: " + this.config.outdir);
-    if (tools.isDirectory(this.config.file)) {
+    if (tools.isDirectory(this.config.file as string)) {
       throw new Error("This is a directory");
     }
     try {

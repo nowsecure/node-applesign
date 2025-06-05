@@ -8,7 +8,8 @@ import path from "node:path";
 import which from "which";
 import rimraf from "rimraf";
 import * as bin from "./bin.js";
-import { ConfigOptions } from "../dist/lib/config.js";
+// import { ConfigOptions } from "../dist/lib/config.js";
+import { ConfigOptions } from "./config.js";
 
 // TODO: remove globals
 let use7zip = false;
@@ -358,7 +359,12 @@ function isDirectory(filePath: string): boolean {
   }
 }
 
-function setGlobalOptions(obj: ConfigOptions): void {
+export interface GlobalOptions {
+use7zip: boolean;
+useOpenSSL: boolean;
+}
+
+function setGlobalOptions(obj: GlobalOptions): void {
   if (typeof obj.use7zip === "boolean") {
     use7zip = obj.use7zip;
   }

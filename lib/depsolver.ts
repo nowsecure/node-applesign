@@ -124,7 +124,7 @@ export default function depSolver(
         if (parallel) {
           return resolve(layers);
         }
-        const finalLibs = layers.flatMap((layer) => layer);
+        const finalLibs : string[] = layers.flatMap((layer) => layer);
 
         if (libs.length !== finalLibs.length) {
           console.log("Orphaned libraries found");
