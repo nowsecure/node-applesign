@@ -488,8 +488,8 @@ class Applesign {
       plist.writeFileSync(infoPlist, plistData);
     }
     if (additionalKeychainGroups.length > 0) {
-      const newGroups = additionalKeychainGroups.map((group) =>
-        `${teamId}.${group}`
+      const newGroups = additionalKeychainGroups.map(
+        (group) => `${teamId}.${group}`,
       );
       const groups = entMacho["keychain-access-groups"];
       if (typeof groups === "undefined") {
@@ -501,9 +501,9 @@ class Applesign {
     }
     if (changed || this.config.entry) {
       const newEntitlementsFile = file + ".entitlements";
-      let newEntitlements = (appId && teamId && this.config.entry)
+      let newEntitlements = appId && teamId && this.config.entry
         ? defaultEntitlements(appId, teamId)
-        : (this.config.entitlement)
+        : this.config.entitlement
         ? fs.readFileSync(this.config.entitlement).toString()
         : plistBuild(entMacho).toString();
       const ent = plist.parse(newEntitlements.trim());
@@ -585,17 +585,17 @@ class Applesign {
     }
     const custom = customOptions(config, file);
     function getKeychain() {
-      return (custom !== false && custom.keychain !== undefined)
+      return custom !== false && custom.keychain !== undefined
         ? custom.keychain
         : config.keychain;
     }
     function getIdentity() {
-      return (custom !== false && custom.identity !== undefined)
+      return custom !== false && custom.identity !== undefined
         ? custom.identity
         : config.identity;
     }
     function getEntitlements() {
-      return (custom !== false && custom.entitlements !== undefined)
+      return custom !== false && custom.entitlements !== undefined
         ? custom.entitlements
         : config.entitlement;
     }
@@ -605,15 +605,16 @@ class Applesign {
       this.emit("message", "[lipo] " + this.config.lipoArch + " " + file);
       try {
         await tools.lipoFile(file, this.config.lipoArch);
-      } catch (ignored) {
-      }
+      } catch (ignored) {}
     }
     function codesignHasFailed(config: any, error: any, errmsg: any) {
       if (error && errmsg.indexOf("Error:") !== -1) {
         throw error;
       }
-      return ((errmsg && errmsg.indexOf("no identity found") !== -1) ||
-        !config.ignoreCodesignErrors);
+      return (
+        (errmsg && errmsg.indexOf("no identity found") !== -1) ||
+        !config.ignoreCodesignErrors
+      );
     }
     const identity = getIdentity();
     let entitlements = "";
@@ -652,7 +653,7 @@ class Applesign {
       this.emit("message", "Verify " + file);
       const res: any = await tools.verifyCodesign(file, config.keychain);
       if (res.code !== 0) {
-        const type = (config.ignoreVerificationErrors) ? "warning" : "error";
+        const type = config.ignoreVerificationErrors ? "warning" : "error";
         return this.emit(type, res.stderr);
       }
     }
@@ -809,12 +810,12 @@ class Applesign {
       }
       this.debugInfo("analysis", "orphan", ls.orphanedLibraries());
       // const libraries = ls.diskLibraries ();
-      libs = libraries.filter((library: any) => !(ls.appexs.includes(library))); // remove already-signed appexs
+      libs = libraries.filter((library: any) => !ls.appexs.includes(library)); // remove already-signed appexs
     }
     if (libs.length === 0) {
       libs.push(bpath);
     }
-    return (typeof libs[0] === "object")
+    return typeof libs[0] === "object"
       ? layeredSigning(libs)
       : serialSigning(libs);
   }
@@ -896,7 +897,7 @@ function getResignedFilename(input: any): string | null {
   if (pos !== -1) {
     const tmp = input.substring(pos + 1);
     const dot = tmp.lastIndexOf(".");
-    input = (dot !== -1) ? tmp.substring(0, dot) : tmp;
+    input = dot !== -1 ? tmp.substring(0, dot) : tmp;
   } else {
     const dot = input.lastIndexOf(".");
     if (dot !== -1) {
@@ -922,7 +923,7 @@ function getExecutable(appdir: any) {
   }
   const exename = path.basename(appdir);
   const dotap = exename.indexOf(".app");
-  return (dotap === -1) ? exename : exename.substring(0, dotap);
+  return dotap === -1 ? exename : exename.substring(0, dotap);
 }
 
 async function injectLibrary(config: any) {
@@ -931,8 +932,7 @@ async function injectLibrary(config: any) {
   const libraryName = path.basename(targetLib);
   try {
     fs.mkdirSync(path.join(appDir, "Frameworks"));
-  } catch (_) {
-  }
+  } catch (_) {}
   const outputLib = path.join(appDir, "Frameworks", libraryName);
   await insertLibraryLL(outputLib, targetLib, config);
 }
@@ -942,18 +942,19 @@ function insertLibraryLL(outputLib: any, targetLib: any, config: any) {
     try {
       const writeStream = fs.createWriteStream(outputLib);
       writeStream.on("finish", () => {
-        fs.chmodSync(outputLib, 0x1ed); // 0755
         /* XXX: if binary doesnt contains an LC_RPATH load command this will not work */
         const insertedLibraryName = "@rpath/" + path.basename(targetLib);
+        fs.chmodSync(outputLib, 0x1ed); // 0755
         /* Just copy the library via USB on the DCIM directory */
         // const insertedLibraryName = '/var/mobile/Media/DCIM/' + path.basename(targetLib);
         /* useful on jailbroken devices where we can write in /usr/lib */
         // const insertedLibraryName = '/usr/lib/' + path.basename(targetLib);
         /* forbidden in iOS */
         // const insertedLibraryName = '@executable_path/Frameworks/' + path.basename(targetLib);
-        tools.insertLibrary(insertedLibraryName, config.appbin, outputLib).then(
-          resolve,
-        ).catch(reject);
+        tools
+          .insertLibrary(insertedLibraryName, config.appbin, outputLib)
+          .then(resolve)
+          .catch(reject);
       });
       fs.createReadStream(targetLib).pipe(writeStream);
     } catch (e) {

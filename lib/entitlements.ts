@@ -1,5 +1,3 @@
-"use strict";
-
 import plist from "simple-plist";
 import plistPkg from "plist";
 const { build: plistBuild } = plistPkg;

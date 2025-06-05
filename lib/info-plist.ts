@@ -1,5 +1,3 @@
-"use strict";
-
 import plist from "simple-plist";
 
 const appleDevices = ["iPhone", "iPad", "AppleTV", "AppleWatch"];
@@ -26,7 +24,7 @@ export default function fix(file: any, options: any, emit: any): void {
     emit("message", "Adding NSAllowArbitraryLoads");
     if (
       !data.NSAppTransportSecurity ||
-      (data.NSAppTransportSecurity.constructor !== Object)
+      data.NSAppTransportSecurity.constructor !== Object
     ) {
       data.NSAppTransportSecurity = {};
     }
@@ -62,8 +60,10 @@ function setBundleId(data: any, bundleid: any) {
   }
 }
 
-function performForceFamily(data: any, emit: any) {
-  if (!emit) emit = console.error;
+function performForceFamily(data: any, emit: Function | undefined) {
+  if (emit === undefined) {
+    emit = console.error;
+  }
   const have = supportedDevices(data);
   const df = [];
   if (have.iPhone && have.iPhone.length > 0) {

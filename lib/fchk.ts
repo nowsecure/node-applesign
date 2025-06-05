@@ -1,3 +1,4 @@
+// TODO: remove this runtime function check helper function when the typescript port is complete
 export default function fchk(args: any, types: any): void {
   if (args.length !== types.length) {
     throw new Error("Incorrect arguments count");

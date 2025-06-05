@@ -1,14 +1,16 @@
-import fs from "fs";
-import { promisify } from "util";
-import { execSync, spawn } from "child_process";
+import fs from "node:fs";
+import { promisify } from "node:util";
+import { execSync, spawn } from "node:child_process";
 const unlinkAsync = promisify(fs.unlink);
 const renameAsync = promisify(fs.rename);
 import plist from "simple-plist";
-import path from "path";
+import path from "node:path";
 import which from "which";
 import rimraf from "rimraf";
 import * as bin from "./bin.js";
+import { ConfigOptions } from "../dist/lib/config.js";
 
+// TODO: remove globals
 let use7zip = false;
 let useOpenSSL = false;
 
@@ -94,17 +96,6 @@ async function execProgram(
 }
 
 /* public */
-
-function isDramatic(msg: any) {
-  if (msg.indexOf("insert_dylib") !== -1) {
-    return false;
-  }
-  if (msg.indexOf("7z") !== -1) {
-    return false;
-  }
-  return true;
-}
-
 function findInPath() {
   if (cmdInited) {
     return;
@@ -135,7 +126,8 @@ function getTool(tool: string): string {
 async function ideviceprovision(action: any, optarg?: any) {
   if (action === "list") {
     const res = await execProgram(getTool("ideviceprovision")!, ["list"]);
-    return res.stdout.split("\n")
+    return res.stdout
+      .split("\n")
       .filter((line: any) => line.indexOf("-") !== -1)
       .map((line: any) => line.split(" ")[0]);
   } else {
@@ -144,16 +136,17 @@ async function ideviceprovision(action: any, optarg?: any) {
 }
 
 async function codesign(
-  identity: any,
-  entitlement: any,
-  keychain: any,
-  file: any,
+  identity: string,
+  entitlement: string | undefined,
+  keychain: string | undefined,
+  file: string,
 ) {
-  /* use the --no-strict to avoid the "resource envelope is obsolete" error */
-  const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
   if (identity === undefined) {
+    // XXX: typescript can ensure this at compile time
     throw new Error("--identity is required to sign");
   }
+  /* use the --no-strict to avoid the "resource envelope is obsolete" error */
+  const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
   args.push("-fs", identity);
   // args.push('-v');
   // args.push('--deep');
@@ -195,7 +188,7 @@ async function verifyCodesign(
   return execProgram(getTool("codesign")!, args);
 }
 
-async function getMobileProvisionPlist(file: any) {
+async function getMobileProvisionPlist(file: string) {
   let res;
   if (file === undefined) {
     throw new Error("No mobile provisioning file available.");
@@ -212,16 +205,18 @@ async function getMobileProvisionPlist(file: any) {
   return plist.parse(res.stdout);
 }
 
-async function getEntitlementsFromMobileProvision(file: any, cb?: any) {
+async function getEntitlementsFromMobileProvision(
+  file: string,
+  cb?: any,
+): Promise<any> {
   const res = await getMobileProvisionPlist(file);
   return res.Entitlements;
 }
 
-async function zip(cwd: any, ofile: any, src: any) {
+async function zip(cwd: string, ofile: string, src: string) {
   try {
     await unlinkAsync(ofile);
-  } catch (ignored) {
-  }
+  } catch (ignored) {}
   const ofilePath = path.dirname(ofile);
   fs.mkdirSync(ofilePath, { recursive: true });
   if (use7zip) {
@@ -235,7 +230,7 @@ async function zip(cwd: any, ofile: any, src: any) {
   }
 }
 
-async function unzip(ifile: any, odir: any) {
+async function unzip(ifile: string, odir: string) {
   if (use7zip) {
     const args = ["x", "-y", "-o" + odir, ifile];
     return execProgram(getTool("7z")!, args);
@@ -248,7 +243,7 @@ async function unzip(ifile: any, odir: any) {
   return execProgram(getTool("unzip")!, args);
 }
 
-async function xcaToIpa(ifile: any, odir: any) {
+async function xcaToIpa(ifile: string, odir: string) {
   const args = [
     "-exportArchive",
     "-exportFormat",
@@ -261,7 +256,8 @@ async function xcaToIpa(ifile: any, odir: any) {
   return execProgram(getTool("xcodebuild")!, args);
 }
 
-async function insertLibrary(lib: any, bin: any, out: any) {
+// XXX: the out parameter is never used. therfor the caller doesnt works well
+async function insertLibrary(lib: string, bin: string, out: string) {
   let error = null;
   try {
     const machoMangle = require("macho-mangle");
@@ -300,29 +296,39 @@ async function insertLibrary(lib: any, bin: any, out: any) {
   }
 }
 
-function getIdentitiesFromString(stdout: any) {
+export interface Identity {
+  hash: string;
+  name: string;
+}
+
+function getIdentitiesFromString(stdout: any): Identity[] {
   const lines = stdout.split("\n");
   lines.pop(); // remove last line
-  const ids: any = [];
-  lines.filter((entry: any) => {
-    return entry.indexOf("CSSMERR_TP_CERT_REVOKED") === -1;
-  }).forEach((line: any) => {
-    const tok = line.indexOf(") ");
-    if (tok !== -1) {
-      const msg = line.substring(tok + 2).trim();
-      const tok2 = msg.indexOf(" ");
-      if (tok2 !== -1) {
-        ids.push({
-          hash: msg.substring(0, tok2),
-          name: msg.substring(tok2 + 1).replace(/^"/, "").replace(/"$/, ""),
-        });
+  const ids: Identity[] = [];
+  lines
+    .filter((entry: string) => {
+      return entry.indexOf("CSSMERR_TP_CERT_REVOKED") === -1;
+    })
+    .forEach((line: string) => {
+      const tok = line.indexOf(") ");
+      if (tok !== -1) {
+        const msg = line.substring(tok + 2).trim();
+        const tok2 = msg.indexOf(" ");
+        if (tok2 !== -1) {
+          ids.push({
+            hash: msg.substring(0, tok2),
+            name: msg
+              .substring(tok2 + 1)
+              .replace(/^"/, "")
+              .replace(/"$/, ""),
+          });
+        }
       }
-    }
-  });
+    });
   return ids;
 }
 
-function getIdentitiesSync() {
+function getIdentitiesSync(): Identity[] {
   const command = [
     getTool("security"),
     "find-identity",
@@ -333,7 +339,7 @@ function getIdentitiesSync() {
   return getIdentitiesFromString(execSync(command.join(" ")).toString());
 }
 
-async function getIdentities() {
+async function getIdentities(): Promise<Identity[]> {
   const args = ["find-identity", "-v", "-p", "codesigning"];
   const res = await execProgram(getTool("security")!, args);
   return getIdentitiesFromString(res.stdout);
@@ -344,15 +350,15 @@ async function lipoFile(file: string, arch: string): Promise<ExecResult> {
   return execProgram(getTool("lipo")!, args);
 }
 
-function isDirectory(pathString: any) {
+function isDirectory(filePath: string): boolean {
   try {
-    return fs.lstatSync(pathString).isDirectory();
-  } catch (e) {
+    return fs.lstatSync(filePath).isDirectory();
+  } catch (error) {
     return false;
   }
 }
 
-function setOptions(obj: any) {
+function setGlobalOptions(obj: ConfigOptions): void {
   if (typeof obj.use7zip === "boolean") {
     use7zip = obj.use7zip;
   }
@@ -384,7 +390,7 @@ export {
   isDirectory,
   lipoFile,
   pseudoSign,
-  setOptions,
+  setGlobalOptions as setOptions,
   unzip,
   verifyCodesign,
   xcaToIpa,

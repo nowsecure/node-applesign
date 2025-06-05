@@ -21,6 +21,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - run: npm install
-#      - run: npm run indent-check
+      #      - run: npm run indent-check
       - run: npm test
       - run: npm run dist

@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 import * as bin from "./bin.js";
 
 function resolveRpath(
@@ -88,16 +88,6 @@ function layerize(state: any) {
   return result;
 }
 
-function flattenize(layers: any[]): string[] {
-  const list: string[] = [];
-  for (const layer of layers) {
-    for (const lib of layer) {
-      list.push(lib);
-    }
-  }
-  return list;
-}
-
 export default function depSolver(
   executable: string,
   libs: string[],
@@ -134,7 +124,8 @@ export default function depSolver(
         if (parallel) {
           return resolve(layers);
         }
-        const finalLibs = flattenize(layers);
+        const finalLibs = layers.flatMap((layer) => layer);
+
         if (libs.length !== finalLibs.length) {
           console.log("Orphaned libraries found");
           const orphaned = libs.filter(

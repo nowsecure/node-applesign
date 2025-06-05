@@ -8,19 +8,19 @@ import { resolvePath } from "./depsolver.js";
 export class AppDirectory {
   appbin: string = "";
   appdir: string = "";
-  appexs: any;
-  applibs: any;
-  disklibs: any;
-  exebin: any;
-  nested: any;
-  notlibs: any;
-  orphan: any;
-  syslibs: any;
+  appexs: string[] = [];
+  applibs: string[] = [];
+  disklibs: string[] = [];
+  exebin: string | null = null;
+  nested: string[] = [];
+  notlibs: string[] = [];
+  orphan: string[] = [];
+  syslibs: string[] = [];
   constructor() {
     this.nested = [];
   }
 
-  async loadFromDirectory(appdir: any) {
+  async loadFromDirectory(appdir: string) {
     this.exebin = _getAppExecutable(appdir);
     this.appdir = appdir;
     this.appbin = path.join(this.appdir, this.exebin);
@@ -33,57 +33,56 @@ export class AppDirectory {
       this.appexs,
       this.disklibs,
     );
-    // @ts-expect-error TS(7006): Parameter 'l' implicitly has an 'any' type.
     this.notlibs = applibs.filter((l) => l[0] === "@");
-    // @ts-expect-error TS(7006): Parameter 'l' implicitly has an 'any' type.
     this.applibs = applibs.filter((l) => l[0] !== "@");
     this.syslibs = _findSystemLibraries(this.applibs);
     this.orphan = orphanedLibraries(this.applibs, this.disklibs);
   }
 
-  appLibraries() {
+  appLibraries(): string[] {
     return this.applibs;
   }
 
-  diskLibraries() {
+  diskLibraries(): string[] {
     return this.disklibs;
   }
 
-  systemLibraries() {
+  systemLibraries(): string[] {
     return this.syslibs;
   }
 
-  unavailableLibraries() {
+  unavailableLibraries(): string[] {
     return this.notlibs;
   }
 
-  orphanedLibraries() {
+  orphanedLibraries(): string[] {
     return this.orphan;
   }
 
-  nestedApplications() {
+  nestedApplications(): string[] {
     return this.nested;
   }
 
-  appExtensions() {
+  appExtensions(): string[] {
     return this.appexs;
   }
 }
 
 // internal functions //
-function orphanedLibraries(src: any, dst: any) {
-  // list all the libs that are not referenced from the main binary and their dependencies
-  const orphan = [];
-  for (const lib of dst) {
-    if (src.indexOf(lib) === -1) {
-      orphan.push(lib);
-    }
-  }
-  return orphan;
+/**
+ * Finds libraries that are present in the application bundle but not
+ * referenced by the main binary or any of its dependencies.
+ *
+ * @param src - Array of libraries that are referenced by the main binary and its dependencies
+ * @param dst - Array of all libraries found in the application bundle
+ * @returns Array of library paths that exist in the application but aren't referenced
+ */
+function orphanedLibraries(src: string[], dst: string[]): string[] {
+  return dst.filter((lib) => !src.includes(lib));
 }
 
-function _findSystemLibraries(applibs: any) {
-  const syslibs: any = [];
+function _findSystemLibraries(applibs: string[]): string[] {
+  const syslibs: string[] = [];
   for (const lib of applibs) {
     const res = binSysLibs(lib).filter((l: any) => syslibs.indexOf(l) === -1);
     syslibs.push(...res);
@@ -91,7 +90,7 @@ function _findSystemLibraries(applibs: any) {
   return syslibs;
 }
 
-function _getAppExecutable(appdir: string): string | null {
+function _getAppExecutable(appdir: string): string {
   if (!appdir) {
     throw new Error("No application directory is provided");
   }
@@ -168,9 +167,17 @@ function _findBinaries(appdir: string): string[] {
   return libraries;
 }
 
+/**
+ * Finds all libraries with absolute paths that the file depends on
+ *
+ * @param file - The macho file to be analyzed
+ * @returns Array of absolute paths to the discovered binary files
+ */
 function binSysLibs(file: string): string[] {
   try {
-    return bin.enumerateLibraries(file).filter((l: any) => l.startsWith("/"));
+    return bin
+      .enumerateLibraries(file)
+      .filter((l: string) => l.startsWith("/"));
   } catch (e) {
     console.error("Warning: missing file:", file);
     return [];
@@ -178,42 +185,47 @@ function binSysLibs(file: string): string[] {
 }
 
 // return a list of the libs that must be inside the app
-function binAbsLibs(file: any, o: any) {
+function binAbsLibs(sourceFile: string, targetPaths: any): string[] {
   try {
     return bin
-      .enumerateLibraries(file)
-      .filter((l: any) => {
-        return !l.startsWith("/");
+      .enumerateLibraries(sourceFile)
+      .filter((libraryPath: string) => {
+        return !libraryPath.startsWith("/");
       })
-      .map((l: any) => {
-        if (l[0] === "@") {
-          const ll = resolvePath(o.exe, file, l, o.libs);
-          if (ll) {
-            l = ll;
+      .map((libraryPath: string) => {
+        if (libraryPath.startsWith("@")) {
+          const resolvedPath = resolvePath(
+            targetPaths.exe,
+            sourceFile,
+            libraryPath,
+            targetPaths.libs,
+          );
+          if (resolvedPath) {
+            libraryPath = resolvedPath;
           } else {
             console.error(
-              "Warning: Cannot resolve dependency library: " + file,
+              "Warning: Cannot resolve dependency library: " + sourceFile,
             );
           }
         }
-        return l;
+        return libraryPath;
       });
-  } catch (e) {
-    console.error("Warning: missing file:", file);
+  } catch (error) {
+    console.error("Warning: missing file:", sourceFile);
     return [];
   }
 }
 
 // get all dependencies from appbin recursively
 function _findLibraries(
-  appdir: any,
-  appbin: any,
-  appexs: any,
+  appdir: string,
+  appbin: string,
+  appexs: string[],
   disklibs: string[],
-) {
+): string[] {
   const exe = path.join(appdir, appbin);
 
-  const o = {
+  const targets = {
     exe,
     lib: exe,
     libs: disklibs,
@@ -221,13 +233,15 @@ function _findLibraries(
   const libraries: any = [];
   const pending = [exe, ...appexs];
   while (pending.length > 0) {
-    const target = pending.shift();
+    const target = pending.shift() as string;
     if (libraries.indexOf(target) === -1) {
       libraries.push(target);
     }
-    const res = binAbsLibs(target, o);
-    const unexplored = res.filter((l: any) => libraries.indexOf(l) === -1);
-    pending.push(...unexplored.filter((l: any) => pending.indexOf(l) === -1));
+    const res = binAbsLibs(target, targets);
+    const unexplored = res.filter((l: string) => libraries.indexOf(l) === -1);
+    pending.push(
+      ...unexplored.filter((l: string) => pending.indexOf(l) === -1),
+    );
     libraries.push(...unexplored);
   }
   return libraries;
