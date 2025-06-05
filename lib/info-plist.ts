@@ -1,26 +1,32 @@
 import plist from "simple-plist";
+import { ConfigOptions } from "./config";
 
-const appleDevices = ["iPhone", "iPad", "AppleTV", "AppleWatch"];
+interface AppleDevices {
+  iPhone: string[];
+  iPad: string[];
+  AppleTV: string[];
+  AppleWatch: string[];
+}
+const appleDeviceNames = ["iPhone", "iPad", "AppleTV", "AppleWatch"];
 /**
  * Creates an object with keys from the input array, each mapping to an empty array.
  */
-const objectFromEntries = (keys: string[]): Record<string, any[]> => {
-  const result: Record<string, any[]> = {};
-  keys.forEach((k) => {
-    result[k] = [];
-  });
-  return result;
-};
+function createEmptyArraysObject(keys: string[]): Record<string, any[]> {
+  return Object.fromEntries(keys.map((key) => [key, []]));
+}
 
-export default function fix(file: any, options: any, emit: any): void {
-  const { appdir, bundleid, forceFamily, allowHttp } = options;
-  if (!file || !appdir) {
+export default function fix(
+  file: string,
+  options: ConfigOptions,
+  emit: any,
+): void {
+  if (!options.appdir) {
     throw new Error("Invalid parameters for fixPlist");
   }
   let changed = false;
   const data = plist.readFileSync(file);
   delete data[""];
-  if (allowHttp) {
+  if (options.allowHttp) {
     emit("message", "Adding NSAllowArbitraryLoads");
     if (
       !data.NSAppTransportSecurity ||
@@ -31,13 +37,13 @@ export default function fix(file: any, options: any, emit: any): void {
     data.NSAppTransportSecurity.NSAllowsArbitraryLoads = true;
     changed = true;
   }
-  if (forceFamily) {
+  if (options.forceFamily) {
     if (performForceFamily(data, emit)) {
       changed = true;
     }
   }
-  if (bundleid) {
-    setBundleId(data, bundleid);
+  if (options.bundleid) {
+    setBundleId(data, options.bundleid);
     changed = true;
   }
   if (changed) {
@@ -98,11 +104,11 @@ function performForceFamily(data: any, emit: Function | undefined) {
 }
 
 function supportedDevices(data: any) {
-  const have = objectFromEntries(appleDevices);
+  const have = createEmptyArraysObject(appleDeviceNames);
   const sd = data.UISupportedDevices;
   if (Array.isArray(sd)) {
     sd.forEach((model) => {
-      for (const type of appleDevices) {
+      for (const type of appleDeviceNames) {
         if (model.indexOf(type) !== -1) {
           if (!have[type]) {
             have[type] = [];
@@ -118,7 +124,7 @@ function supportedDevices(data: any) {
   const df = data.UIDeviceFamily;
   if (Array.isArray(df)) {
     df.forEach((family) => {
-      const families = ["Any", ...appleDevices];
+      const families = ["Any", ...appleDeviceNames];
       const fam = families[family];
       if (fam) {
         if (have[fam] === undefined) {
