@@ -360,8 +360,8 @@ function isDirectory(filePath: string): boolean {
 }
 
 export interface GlobalOptions {
-use7zip: boolean;
-useOpenSSL: boolean;
+  use7zip: boolean;
+  useOpenSSL: boolean;
 }
 
 function setGlobalOptions(obj: GlobalOptions): void {

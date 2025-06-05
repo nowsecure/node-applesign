@@ -27,7 +27,8 @@
     "npm": "^10.0.0",
     "pkg": "5.6.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "deno": "^2.3.5"
   },
   "dependencies": {
     "colors": "1.4.0",
