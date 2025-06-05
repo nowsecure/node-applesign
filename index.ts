@@ -22,10 +22,10 @@ const { build: plistBuild } = pkg;
 
 class Applesign {
   config: config.ConfigOptions;
-  debugObject: any;
-  events: any;
-  nested: any;
-  tmpDir: any;
+  debugObject: Record<string, any>;
+  events: EventEmitter;
+  nested: any[];
+  tmpDir: string;
   constructor(options: any) {
     this.config = config.fromOptions(options || {});
     this.events = new EventEmitter();
@@ -42,7 +42,7 @@ class Applesign {
     return result;
   }
 
-  _fullPathInTmp(filePath: any) {
+  _fullPathInTmp(filePath: string) {
     const dirname = path.dirname(filePath);
     const dirnameInTmp = path.join(this.tmpDir, dirname);
     fs.mkdirpSync(dirnameInTmp);
@@ -68,7 +68,7 @@ class Applesign {
     );
   }
 
-  async signXCarchive(file: any) {
+  async signXCarchive(file: string) {
     fchk(arguments, ["string"]);
     const ipaFile = file + ".ipa";
     await tools.xcaToIpa(file, ipaFile);
@@ -80,7 +80,7 @@ class Applesign {
     return tools.getIdentities();
   }
 
-  async signIPA(file: any) {
+  async signIPA(file: string) {
     fchk(arguments, ["string"]);
     if (typeof file === "string") {
       this.setFile(file);
@@ -143,7 +143,7 @@ class Applesign {
     }
   }
 
-  async signAppDirectoryInternal(ipadir: any, skipNested: any) {
+  async signAppDirectoryInternal(ipadir: string, skipNested: boolean) {
     fchk(arguments, ["string", "boolean"]);
     await this._pullMobileProvision();
     if (this.config.run) {
@@ -199,7 +199,7 @@ class Applesign {
     }
   }
 
-  async signAppDirectory(ipadir: any) {
+  async signAppDirectory(ipadir: string) {
     fchk(arguments, ["string"]);
     return this.signAppDirectoryInternal(ipadir, false);
   }
@@ -222,7 +222,7 @@ class Applesign {
   async removeXCTests() {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir: any, filename: any, stat: any) => {
+    walk.walkSync(dir, (basedir: string, filename: string, stat: any) => {
       const target = path.join(basedir, filename);
       //  if (target.toLowerCase().indexOf('/xct') !== -1)
       if (target.toLowerCase().indexOf("xctest") !== -1) {
@@ -235,7 +235,7 @@ class Applesign {
   async removeSigningFiles() {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir: any, filename: any, stat: any) => {
+    walk.walkSync(dir, (basedir: string, filename: string, stat: any) => {
       if (
         filename.endsWith(".entitlements") ||
         filename.endsWith(".mobileprovision")
@@ -269,10 +269,10 @@ class Applesign {
 
   findProvisioningsSync() {
     fchk(arguments, []);
-    const files: any = [];
+    const files: string[] = [];
     walk.walkSync(
       this.config.appdir,
-      (basedir: any, filename: any, stat: any) => {
+      (basedir: string, filename: string, stat: any) => {
         const file = path.join(basedir, filename);
         // only walk on files. Symlinks and other special files are forbidden
         if (!fs.lstatSync(file).isFile()) {
@@ -294,7 +294,7 @@ class Applesign {
     const identifierInProvisioning = 'x'
     Read the one in Info.plist and compare with bundleid
   */
-  async checkProvision(appdir: any, file: any) {
+  async checkProvision(appdir: string, file: string) {
     fchk(arguments, ["string", "string"]);
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
@@ -333,7 +333,7 @@ class Applesign {
     }
   }
 
-  debugInfo(path: any, key: any, val: any) {
+  debugInfo(path: string, key: any, val: any) {
     if (!val) {
       return;
     }
@@ -357,7 +357,7 @@ class Applesign {
     return Object.assign(orig, addEnt);
   }
 
-  adjustEntitlementsSync(file: any, entMobProv: any) {
+  adjustEntitlementsSync(file: string, entMobProv: any) {
     if (this.config.pseudoSign) {
       const ent = bin.entitlements(file);
       if (ent === null) {
@@ -554,7 +554,7 @@ class Applesign {
     }
   }
 
-  async adjustEntitlements(file: any) {
+  async adjustEntitlements(file: string) {
     fchk(arguments, ["string"]);
     let newEntitlements = null;
     if (!this.config.pseudoSign) {
@@ -567,9 +567,9 @@ class Applesign {
     this.adjustEntitlementsSync(file, newEntitlements);
   }
 
-  async signFile(file: any) {
+  async signFile(file: string) {
     const config = this.config;
-    function customOptions(config: any, file: any) {
+    function customOptions(config: any, file: string) {
       if (
         typeof config.json === "object" &&
         typeof config.json.custom === "object"
@@ -611,7 +611,7 @@ class Applesign {
         await tools.lipoFile(file, this.config.lipoArch);
       } catch (ignored) {}
     }
-    function codesignHasFailed(config: any, error: any, errmsg: any) {
+    function codesignHasFailed(config: any, error: any, errmsg: string) {
       if (error && errmsg.indexOf("Error:") !== -1) {
         throw error;
       }
@@ -655,7 +655,7 @@ class Applesign {
     this.emit("message", "Signed " + file);
     if (config.verifyTwice) {
       this.emit("message", "Verify " + file);
-      const res: any = await tools.verifyCodesign(file, config.keychain);
+      const res = await tools.verifyCodesign(file, config.keychain);
       if (res.code !== 0) {
         const type = config.ignoreVerificationErrors ? "warning" : "error";
         return this.emit(type, res.stderr);
@@ -730,7 +730,7 @@ class Applesign {
     return libraries;
   }
 
-  async signLibraries(bpath: any, appdir: any) {
+  async signLibraries(bpath: string, appdir: string) {
     fchk(arguments, ["string", "string"]);
     this.emit("message", "Signing libraries and frameworks");
 
@@ -843,7 +843,7 @@ class Applesign {
   async zipIPA() {
     fchk(arguments, []);
     const ipaIn = this.config.file;
-    const ipaOut = getOutputPath(this.config.outdir, this.config.outfile);
+    const ipaOut = getOutputPath(this.config.outdir, this.config.outfile!);
     try {
       fs.unlinkSync(ipaOut); // await for it
     } catch (e) {
@@ -893,7 +893,7 @@ class Applesign {
 
 // helper functions
 
-function getResignedFilename(input: any): string | null {
+function getResignedFilename(input: string): string | null {
   if (!input) {
     return null;
   }
@@ -911,7 +911,7 @@ function getResignedFilename(input: any): string | null {
   return input + "-resigned.ipa";
 }
 
-function getExecutable(appdir: any) {
+function getExecutable(appdir: string) {
   if (!appdir) {
     throw new Error("No application directory is provided");
   }
@@ -941,7 +941,7 @@ async function injectLibrary(config: any) {
   await insertLibraryLL(outputLib, targetLib, config);
 }
 
-function insertLibraryLL(outputLib: any, targetLib: any, config: any) {
+function insertLibraryLL(outputLib: any, targetLib: string, config: any) {
   return new Promise((resolve, reject) => {
     try {
       const writeStream = fs.createWriteStream(outputLib);
@@ -967,17 +967,17 @@ function insertLibraryLL(outputLib: any, targetLib: any, config: any) {
   });
 }
 
-function parentDirectory(root: any) {
+function parentDirectory(root: string) {
   return path.normalize(path.join(root, ".."));
 }
 
-function getOutputPath(cwd: any, ofile: any) {
+function getOutputPath(cwd: string, ofile: string) {
   return ofile.startsWith(path.sep)
     ? ofile
     : path.join(parentDirectory(cwd), ofile);
 }
 
-function runScriptSync(script: any, session: any) {
+function runScriptSync(script: string, session: any) {
   if (script.endsWith(".js")) {
     try {
       const s = require(script);
@@ -1003,7 +1003,7 @@ function runScriptSync(script: any, session: any) {
   return true;
 }
 
-function nestedApp(file: any) {
+function nestedApp(file: string) {
   const dotApp = file.indexOf(".app/");
   if (dotApp !== -1) {
     const subApp = file.substring(dotApp + 4).indexOf(".app/");
@@ -1014,7 +1014,7 @@ function nestedApp(file: any) {
   return false;
 }
 
-function getAppDirectory(this: any, ipadir: any) {
+function getAppDirectory(this: any, ipadir: string) {
   if (!ipadir) {
     ipadir = path.join(this.config.outdir, "Payload");
   }
@@ -1024,7 +1024,7 @@ function getAppDirectory(this: any, ipadir: any) {
   if (ipadir.endsWith(".app")) {
     this.config.appdir = ipadir;
   } else {
-    const files = fs.readdirSync(ipadir).filter((x: any) => {
+    const files = fs.readdirSync(ipadir).filter((x: string) => {
       return x.endsWith(".app");
     });
     if (files.length !== 1) {
@@ -1038,17 +1038,17 @@ function getAppDirectory(this: any, ipadir: any) {
   return ipadir;
 }
 
-async function enumerateTestFiles(dir: any) {
+async function enumerateTestFiles(dir: string) {
   let tests = [];
   if (fs.existsSync(dir)) {
-    tests = (await fs.readdir(dir)).filter((x: any) => {
+    tests = (await fs.readdir(dir)).filter((x: string) => {
       return x.indexOf(".xctest") !== -1;
     });
   }
   return tests;
 }
 
-async function moveFiles(files: any, sourceDir: any, destDir: any) {
+async function moveFiles(files: string[], sourceDir: string, destDir: string) {
   await fs.mkdir(destDir, { recursive: true });
   for (const f of files) {
     const oldName = path.join(sourceDir, f);
