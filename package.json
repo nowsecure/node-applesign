@@ -49,30 +49,6 @@
   "overrides": {
     "plist": "github:TooTallNate/plist.js#e17373ef96510a606b62553bd28845842133ba12"
   },
-  "files": [
-    "LICENSE",
-    "lib/appdir.ts",
-    "bin/applesign.ts",
-    "lib/bin.ts",
-    "lib/config.ts",
-    "lib/depsolver.ts",
-    "lib/entitlements.ts",
-    "example.ts",
-    "lib/fchk.ts",
-    "lib/idprov.ts",
-    "index.ts",
-    "lib/info-plist.ts",
-    "test/test.ts",
-    "lib/tools.ts",
-    "lib/types.d.ts",
-    "lib/macho-entitlements.d.ts",
-    "lib/version.ts",
-    "package.json",
-    "README.md",
-    "tsconfig.json",
-    "scripts/update-version.sh",
-    "scripts/dist.sh"
-  ],
   "description": "API to resign IPA files",
   "homepage": "https://www.nowsecure.com",
   "repository": {
@@ -87,7 +63,12 @@
     "osx"
   ],
   "license": "MIT",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "/dist/**/*.js",
+    "/dist/index.d.ts"
+  ],
   "maintainers": [
     {
       "name": "Sergi Alvarez",
