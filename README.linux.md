@@ -11,7 +11,7 @@ $ cargo install apple-codesign
 
 You can read more about rcodesign and certificates in:
 
-* https://pyoxidizer.readthedocs.io/en/latest/apple_codesign_certificate_management.html#apple-codesign-certificate-management
+- https://pyoxidizer.readthedocs.io/en/latest/apple_codesign_certificate_management.html#apple-codesign-certificate-management
 
 ```sh
 $ rcodesign generate-self-signed-certificate --person-name pancake > a.pem
@@ -26,7 +26,7 @@ $ rcodesign sign --pem-source a.pem --code-signature-flags runtime /path/to/bina
 
 ## Codesign Requirements
 
-Apple requires a csreq to be signed inside the binary. this is an evaluated expression that defines
-the conditions that must 
+Apple requires a csreq to be signed inside the binary. this is an evaluated
+expression that defines the conditions that must
 
-* https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html
+- https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html

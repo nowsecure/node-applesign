@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "declaration": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "moduleDetection": "force",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "ts-node": {
+    "esm": true
+  },
+  "include": [
+    // include both JS and TS sources for migration
+    "lib/**/*",
+    "bin/**/*",
+    "index.*",
+    "example.*"
+  ],
+  "exclude": ["node_modules", "dist", "test"]
+}

@@ -1,7 +1,6 @@
-'use strict';
-
-const plist = require('simple-plist');
-const plistBuild = require('plist').build;
+import plist from "simple-plist";
+import plistPkg from "plist";
+const { build: plistBuild } = plistPkg;
 
 const entitlementTemplate = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -22,15 +21,13 @@ const entitlementTemplate = `
 </plist>
 `;
 
-function defaultEntitlements (appid, devid) {
+export default function defaultEntitlements(appid: any, devid: any): string {
   const ent = plist.parse(entitlementTemplate.trim());
-  ent['application-identifier'] = appid;
-  ent['com.apple.developer.team-identifier'] = devid;
-  ent['keychain-access-groups'] = [appid];
-  ent['com.apple.developer.ubiquity-kvstore-identifier'] = appid;
-  delete ent['aps-environment'];
-  ent['com.apple.developer.icloud-container-identifiers'] = 'iCloud.' + devid;
+  ent["application-identifier"] = appid;
+  ent["com.apple.developer.team-identifier"] = devid;
+  ent["keychain-access-groups"] = [appid];
+  ent["com.apple.developer.ubiquity-kvstore-identifier"] = appid;
+  delete ent["aps-environment"];
+  ent["com.apple.developer.icloud-container-identifiers"] = "iCloud." + devid;
   return plistBuild(ent, { pretty: true, allowEmpty: false }).toString();
 }
-
-module.exports = defaultEntitlements;
