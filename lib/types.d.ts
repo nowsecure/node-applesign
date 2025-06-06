@@ -5,8 +5,5 @@ declare module "plist";
 declare module "macho-is-encrypted";
 declare module "fatmacho";
 declare module "macho";
-declare module "uuid";
-declare module "fs-extra";
 declare module "which";
 declare module "rimraf";
-declare module "minimist";

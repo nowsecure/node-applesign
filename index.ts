@@ -252,7 +252,7 @@ class Applesign {
     const plugdir = path.join(this.config.appdir, "PlugIns");
     const tmpdir = path.join(this.config.appdir, "applesign_xctest_tmp");
     this.emit("message", "Stripping out the PlugIns at " + plugdir);
-    let tests = [];
+    let tests : string[] = [];
     if (!this.config.withoutXCTests) {
       tests = await enumerateTestFiles(plugdir);
       if (tests.length > 0) {
@@ -842,7 +842,11 @@ class Applesign {
 
   async zipIPA() {
     fchk(arguments, []);
-    const ipaIn = this.config.file;
+    if (!this.config.file) {
+      console.error("Missing input file to zip");
+      return;
+    } 
+    const ipaIn = this.config.file as string;
     const ipaOut = getOutputPath(this.config.outdir, this.config.outfile!);
     try {
       fs.unlinkSync(ipaOut); // await for it
@@ -1038,8 +1042,8 @@ function getAppDirectory(this: any, ipadir: string) {
   return ipadir;
 }
 
-async function enumerateTestFiles(dir: string) {
-  let tests = [];
+async function enumerateTestFiles(dir: string) : Promise<string[]> {
+  let tests : string[] = [];
   if (fs.existsSync(dir)) {
     tests = (await fs.readdir(dir)).filter((x: string) => {
       return x.indexOf(".xctest") !== -1;
