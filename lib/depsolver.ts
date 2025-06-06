@@ -51,7 +51,7 @@ export function resolvePath(
 
 function layerize(state: any) {
   let currentLayer = 0;
-  const result = [];
+  const result: string[][] = [];
   let processing = false;
   do {
     result[currentLayer] = [];
@@ -59,7 +59,6 @@ function layerize(state: any) {
       const deps = state[lib].deps;
       if (deps.length === 0) {
         if (state[lib].layer === -1) {
-          // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
           result[currentLayer].push(lib);
           state[lib].layer = 0;
         }
@@ -75,7 +74,6 @@ function layerize(state: any) {
       processing = true;
       if (allDepsSolved) {
         if (state[lib].layer === -1) {
-          // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
           result[currentLayer].push(lib);
           state[lib].layer = currentLayer;
         }
@@ -97,12 +95,11 @@ export default function depSolver(
     if (libs.length === 0) {
       return resolve([]);
     }
-    const state = {};
+    const state: Record<string, any> = {};
     const peekableLibs = libs.slice(0);
     const peek = () => {
-      const target = peekableLibs.pop();
+      const target = peekableLibs.pop() as string;
       const macholibs = bin.enumerateLibraries(target);
-      // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
       state[target] = {
         layer: -1,
         deps: [],
@@ -113,7 +110,6 @@ export default function depSolver(
           if (realPath !== null) {
             try {
               fs.statSync(realPath);
-              // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
               state[target].deps.push(realPath);
             } catch (e) {}
           }
