@@ -21,8 +21,7 @@
     "lib/**/*",
     "bin/**/*",
     "index.*",
-    "example.*",
-    "*.json"
+    "example.*"
   ],
   "exclude": ["node_modules", "dist", "test"]
 }
