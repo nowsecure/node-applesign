@@ -141,10 +141,61 @@ async function codesign(
   entitlement: string | undefined,
   keychain: string | undefined,
   file: string,
+  tool?: string,
 ) {
   if (identity === undefined) {
     // XXX: typescript can ensure this at compile time
     throw new Error("--identity is required to sign");
+  }
+  if (tool === 'rcodesign') {
+    console.error('WARNING: Signing with the experimental rcodesign tool');
+    const args = [];
+    args.push('sign'); // action
+
+    args.push('-v');
+    args.push('--pem-source'); // action
+    const pemFile = '/Users/pancake/iphone.pem';
+    args.push(pemFile);
+
+    args.push('--code-resources-path');
+    args.push('/tmp/csreq.bin');
+    // rcodesign bug makes this flag to not sign the binary at all
+    args.push('--extra-digest');
+    args.push('sha256');
+    args.push('--extra-digest');
+    args.push('sha384');
+    // args.push('--binary-identifier');
+    // args.push('com.tacobellspain.app');
+    /*
+    args.push('--code-signature-flags');
+    args.push('runtime');
+    */
+    // --p12-file developer-id.p12
+    // --p12-password-file ~/.certificate-password
+    // --code-signature-flags runtime
+    // path/to/executable
+    /*
+    if (typeof entitlement === 'string' && entitlement !== '') {
+      args.push('-e');
+      args.push(entitlement);
+    }
+    args.push('--binary-identifier');
+    args.push(identity);
+    */
+    if (typeof keychain === 'string') {
+      args.push('--keychain-fingerprint');
+      args.push(keychain);
+    }
+    args.push(file); // input
+    args.push(file + '.signed'); // output
+    console.error('rcodesign ' + args.join(' '));
+    const a = await execProgram('rcodesign', args, undefined);
+    if (a.code === 0) {
+      await execProgram('rm', ['-rf', file], undefined);
+      await execProgram('mv', [file + '.signed', file], undefined);
+    }
+    console.log(a.stderr);
+    return execProgram('cp', [file, '/tmp/newsigned'], undefined);
   }
   /* use the --no-strict to avoid the "resource envelope is obsolete" error */
   const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
@@ -181,6 +232,12 @@ async function verifyCodesign(
   file: string,
   keychain?: string,
 ): Promise<ExecResult> {
+  /*
+  if (tool === 'rcodesign') {
+    const args = ['verify', file];
+    return execProgram(getTool('rcodesign'), args, null, cb);
+  }
+  */
   const args = ["-v", "--no-strict"];
   if (typeof keychain === "string") {
     args.push("--keychain=" + keychain);

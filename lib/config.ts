@@ -61,6 +61,7 @@ const helpMessage = `Usage:
   -k, --keychain [KEYCHAIN]     Specify custom keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
   -L, --identities              List local codesign identities
+  --codesign-tool=rcodesign     Use rcodesign instead of codesign (EXPERIMENTAL)
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -s, --single                  Sign a single file instead of an IPA
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
@@ -127,6 +128,7 @@ export interface ConfigOptions {
   bundleIdKeychainGroup: string | false;
   bundleid: string | undefined;
   cloneEntitlements: boolean;
+  codeSign: string | undefined;
   customKeychainGroup: string | undefined;
   debug: any; // opt.d || opt.debug || ""
   deviceProvision: any; // opt.D || opt.deviceProvision || false
@@ -206,6 +208,7 @@ const fromOptions = function (opt: any): ConfigOptions {
     bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
     bundleid: opt.bundleid || undefined,
     cloneEntitlements: opt.cloneEntitlements || false,
+    codeSign: opt.codeSign || undefined,
     customKeychainGroup: opt.customKeychainGroup || undefined,
     debug: opt.d || opt.debug || "",
     deviceProvision: opt.D || opt.deviceProvision || false,
@@ -338,6 +341,7 @@ function compile(conf: any) {
     bundleIdKeychainGroup: conf.B || conf["bundleid-access-group"],
     bundleid: conf.bundleid || conf.b,
     cloneEntitlements: conf.c || conf["clone-entitlements"],
+    codeSign: conf["codesign-tool"],
     customKeychainGroup: conf.K || conf["add-access-group"],
     debug: conf.debug || conf.d || "",
     deviceProvision: conf.D || conf.deviceProvision || false,
