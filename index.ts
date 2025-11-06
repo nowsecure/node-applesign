@@ -647,15 +647,25 @@ class Applesign {
       res = await tools.pseudoSign(entitlements, file);
     } else {
       const keychain = getKeychain();
-      res = await tools.codesign(identity, entitlements, keychain, file, this.config.codeSign);
+      res = await tools.codesign(
+        identity,
+        entitlements,
+        keychain,
+        file,
+        this.config.codeSign,
+      );
       if (res.code !== 0 && codesignHasFailed(config, res.code, res.stderr)) {
-        return this.emit('end', res.stderr);
+        return this.emit("end", res.stderr);
       }
     }
     this.emit("message", "Signed " + file);
     if (config.verifyTwice) {
       this.emit("message", "Verify " + file);
-      const res = await tools.verifyCodesign(file, config.keychain);
+      const res = await tools.verifyCodesign(
+        file,
+        this.config.keychain,
+        this.config.codeSign,
+      );
       if (res.code !== 0) {
         const type = config.ignoreVerificationErrors ? "warning" : "error";
         return this.emit(type, res.stderr);
@@ -760,7 +770,7 @@ class Applesign {
         await this.signFile(lib);
         if (this.config.verify) {
           this.emit("message", "Verifying " + lib);
-          await tools.verifyCodesign(lib);
+          await tools.verifyCodesign(lib, undefined, this.config.codeSign);
         }
       }
     };
