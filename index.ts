@@ -95,13 +95,16 @@ class Applesign {
     }
     await this._pullMobileProvision();
     this.emit("message", "File: " + this.config.file);
-    this.emit("message", "Outdir: " + this.config.outdir);
+    this.emit("message", "Tempdir: " + this.config.tempdir);
     if (tools.isDirectory(this.config.file as string)) {
       throw new Error("This is a directory");
     }
     try {
-      await this.unzipIPA(this.config.file, this.config.outdir);
-      const appDirectory = path.join(this.config.outdir, "/Payload");
+      if (!this.config.tempdir) {
+        throw new Error("No tempdir specified");
+      }
+      await this.unzipIPA(this.config.file, this.config.tempdir);
+      const appDirectory = path.join(this.config.tempdir, "/Payload");
       this.config.appdir = getAppDirectory(appDirectory);
       if (this.config.debug) {
         this.debugObject = {};
@@ -337,7 +340,7 @@ class Applesign {
     if (!val) {
       return;
     }
-    const f = path.replace(this.config.outdir + "/", "");
+    const f = path.replace(this.config.tempdir + "/", "");
     if (!this.debugObject) {
       this.debugObject = {};
     }
@@ -829,10 +832,9 @@ class Applesign {
     if (this.config.noclean) {
       return;
     }
-    const outdir = this.config.outdir;
-    this.emit("message", "Cleaning up " + outdir);
-    //  await tools.asyncRimraf(this.config.outfile);
-    return tools.asyncRimraf(outdir);
+    const tempdir = this.config.tempdir;
+    this.emit("message", "Cleaning up " + tempdir);
+    return tools.asyncRimraf(tempdir);
   }
 
   async cleanupTmp() {
@@ -847,7 +849,10 @@ class Applesign {
       return;
     }
     const ipaIn = this.config.file as string;
-    const ipaOut = getOutputPath(this.config.outdir, this.config.outfile!);
+    if (!this.config.tempdir) {
+      throw new Error("No tempdir specified");
+    }
+    const ipaOut = getOutputPath(this.config.tempdir, this.config.outfile!);
     try {
       fs.unlinkSync(ipaOut); // await for it
     } catch (e) {
@@ -855,7 +860,7 @@ class Applesign {
     }
     this.events.emit("message", "Zipifying into " + ipaOut + " ...");
     const rootFolder = this.config.payloadOnly ? "Payload" : ".";
-    await tools.zip(this.config.outdir, ipaOut, rootFolder);
+    await tools.zip(this.config.tempdir, ipaOut, rootFolder);
     if (this.config.replaceipa) {
       this.events.emit("message", "mv into " + ipaIn);
       fs.rename(ipaOut, ipaIn);
@@ -865,23 +870,23 @@ class Applesign {
   setFile(name: any) {
     fchk(arguments, ["string"]);
     this.config.file = path.resolve(name);
-    this.config.outdir = this.config.file + "." + uuid.v4();
+    this.config.tempdir ??= this.config.file + "." + uuid.v4();
     if (!this.config.outfile) {
       this.config.outfile = getResignedFilename(this.config.file);
     }
   }
 
-  async unzipIPA(file: any, outdir: any): Promise<any> {
+  async unzipIPA(file: any, workdir: any): Promise<any> {
     fchk(arguments, ["string", "string"]);
-    if (!file || !outdir) {
+    if (!file || !workdir) {
       throw new Error("No output specified");
     }
-    if (!outdir) {
+    if (!workdir) {
       throw new Error("Invalid output directory");
     }
     await this.cleanup();
     this.events.emit("message", "Unzipping " + file);
-    return tools.unzip(file, outdir);
+    return tools.unzip(file, workdir);
   }
 
   /* Event Wrapper API with cb support */
@@ -994,7 +999,7 @@ function runScriptSync(script: string, session: any) {
     process.env.APPLESIGN_DIRECTORY = session.config.appdir;
     process.env.APPLESIGN_MAINBIN = session.config.appbin;
     process.env.APPLESIGN_OUTFILE = session.config.outfile;
-    process.env.APPLESIGN_OUTDIR = session.config.outdir;
+    process.env.APPLESIGN_TEMPDIR = session.config.tempdir || "";
     process.env.APPLESIGN_FILE = session.config.file;
     try {
       const res = execSync(script);
@@ -1020,7 +1025,7 @@ function nestedApp(file: string) {
 
 function getAppDirectory(this: any, ipadir: string) {
   if (!ipadir) {
-    ipadir = path.join(this.config.outdir, "Payload");
+    ipadir = path.join(this.config.tempdir, "Payload");
   }
   if (!tools.isDirectory(ipadir)) {
     throw new Error("Not a directory " + ipadir);

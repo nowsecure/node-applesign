@@ -20,6 +20,7 @@ const shortHelpMessage = `Usage:
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
   -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
+  -T, --tempdir [DIR]           Path to the output directory for temporary files
   -p, --without-plugins         Remove plugins (excluding XCTests) from the resigned IPA
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   -x, --without-xctests         Remove the XCTests from the resigned IPA
@@ -42,6 +43,7 @@ const helpMessage = `Usage:
   -o, --output [APP.IPA]        Path to the output IPA filename
   -P, --parallel                Run layered signing dependencies in parallel (EXPERIMENTAL)
   -r, --replace                 Replace the input IPA file with the resigned one
+  -T, --tempdir [DIR]           Path to the output directory for temporary files
   -u, --unfair                  Resign encrypted applications
   -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
 
@@ -149,7 +151,7 @@ export interface ConfigOptions {
   payloadOnly: boolean;
   noclean: boolean;
   osversion: any; // opt.osversion || undefined,
-  outdir: any;
+  tempdir: string | undefined;
   outfile: string | null;
   parallel: boolean;
   pseudoSign: boolean;
@@ -229,7 +231,7 @@ const fromOptions = function (opt: any): ConfigOptions {
     osversion: opt.osversion || undefined,
     appbin: undefined,
     appdir: undefined,
-    outdir: undefined,
+    tempdir: opt.tempdir ? path.resolve(opt.tempdir) : undefined,
     payloadOnly: false,
     outfile: opt.outfile,
     parallel: opt.parallel || false,
@@ -267,6 +269,8 @@ function parse(argv: any) {
       "osversion",
       "R",
       "run",
+      "T",
+      "tempdir",
     ],
     boolean: [
       "7",
@@ -357,6 +361,7 @@ function compile(conf: any) {
       conf.noEntitlementsFile,
     noclean: conf.n || conf.noclean,
     osversion: conf.osversion || conf.O,
+    tempdir: conf.tempdir ? path.resolve(conf.tempdir) : undefined,
     outfile: (conf.output || conf.o) ? path.resolve(conf.output || conf.o) : "",
     parallel: conf.parallel || conf.P,
     pseudoSign: conf.Z || conf["pseudo-sign"],
