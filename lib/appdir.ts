@@ -1,8 +1,8 @@
-import path from "path";
+import path from "node:path";
 import walk from "fs-walk";
 import plist from "simple-plist";
 import * as bin from "./bin.js";
-import fs from "fs";
+import fs from "node:fs";
 import { resolvePath } from "./depsolver.js";
 
 export class AppDirectory {

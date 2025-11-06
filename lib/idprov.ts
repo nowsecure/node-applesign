@@ -1,6 +1,6 @@
 "use strict";
 
-import fs from "fs";
+import fs from "node:fs";
 import plist from "plist";
 import * as tools from "./tools.js";
 

@@ -1,7 +1,7 @@
 import isEncryptedSync from "macho-is-encrypted";
 import fatmacho from "fatmacho";
 import macho from "macho";
-import fs from "fs";
+import fs from "node:fs";
 import machoEntitlements from "macho-entitlements";
 
 const MACH0_MIN_SIZE = 1024 * 4;

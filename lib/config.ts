@@ -1,6 +1,6 @@
 // Converted to ES module
 
-import path from "path";
+import path from "node:path";
 import idprov from "./idprov.js";
 import minimist from "minimist";
 
