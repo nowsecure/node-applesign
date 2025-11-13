@@ -22,6 +22,7 @@ const cmdSpec = {
   lipo: "/usr/bin/lipo",
   /* only when useOpenSSL is true */
   openssl: "/usr/local/bin/openssl",
+  rcodesign: "rcodesign",
   security: "/usr/bin/security",
   unzip: "/usr/bin/unzip",
   xcodebuild: "/usr/bin/xcodebuild",
@@ -141,10 +142,70 @@ async function codesign(
   entitlement: string | undefined,
   keychain: string | undefined,
   file: string,
+  tool?: string,
 ) {
   if (identity === undefined) {
     // XXX: typescript can ensure this at compile time
     throw new Error("--identity is required to sign");
+  }
+  if (tool === "rcodesign") {
+    console.error("Signing with rcodesign tool");
+    const args = ["sign"];
+
+    // Handle certificate source - try multiple formats
+    if (identity.endsWith(".p12")) {
+      args.push("--p12-file", identity);
+    } else if (identity.endsWith(".pem")) {
+      args.push("--pem-file", identity);
+    } else if (fs.existsSync(identity + ".p12")) {
+      args.push("--p12-file", identity + ".p12");
+    } else if (fs.existsSync(identity + ".pem")) {
+      args.push("--pem-file", identity + ".pem");
+    } else {
+      // Assume identity is a certificate fingerprint or common name
+      args.push("--certificate-fingerprint", identity);
+    }
+
+    // Handle entitlements
+    if (
+      typeof entitlement === "string" && entitlement !== "" &&
+      fs.existsSync(entitlement)
+    ) {
+      args.push("--entitlements-xml-path", entitlement);
+    }
+
+    // Handle keychain (rcodesign uses different approach)
+    if (typeof keychain === "string") {
+      // rcodesign doesn't use keychains directly, but we can log this for compatibility
+      console.error(
+        "Note: rcodesign does not use keychains like Apple codesign",
+      );
+    }
+
+    // Add timestamp server for notarization compatibility
+    args.push("--timestamp-url", "http://timestamp.apple.com/ts01");
+
+    // Add output file (rcodesign writes to a separate file)
+    const outputFile = file + ".rcodesigned";
+    args.push("--output", outputFile);
+
+    // Add input file as last argument
+    args.push(file);
+
+    console.error("rcodesign " + args.join(" "));
+    const result = await execProgram(getTool("rcodesign")!, args);
+
+    // If successful, replace original with signed file
+    if (result.code === 0) {
+      await fs.promises.rename(outputFile, file);
+    } else {
+      // Clean up partial output on failure
+      try {
+        await fs.promises.unlink(outputFile);
+      } catch {}
+    }
+
+    return result;
   }
   /* use the --no-strict to avoid the "resource envelope is obsolete" error */
   const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
@@ -180,7 +241,12 @@ async function pseudoSign(entitlement: any, file: string): Promise<ExecResult> {
 async function verifyCodesign(
   file: string,
   keychain?: string,
+  tool?: string,
 ): Promise<ExecResult> {
+  if (tool === "rcodesign") {
+    const args = ["verify", "--verbose", file];
+    return execProgram(getTool("rcodesign")!, args);
+  }
   const args = ["-v", "--no-strict"];
   if (typeof keychain === "string") {
     args.push("--keychain=" + keychain);
