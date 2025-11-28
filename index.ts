@@ -221,9 +221,9 @@ class Applesign {
     await tools.asyncRimraf(placeholderdir);
   }
 
-  // XXX some directory leftovers
   async removeXCTests() {
     fchk(arguments, []);
+    let dirsToCheck: Set<string> = new Set<string>();
     const dir = this.config.appdir;
     walk.walkSync(dir, (basedir: string, filename: string, stat: any) => {
       const target = path.join(basedir, filename);
@@ -231,8 +231,21 @@ class Applesign {
       if (target.toLowerCase().indexOf("xctest") !== -1) {
         this.emit("message", "Deleting " + target);
         fs.unlinkSync(target);
+        dirsToCheck.add(basedir);
       }
     });
+    let removedDirs: Set<string> = new Set<string>();
+    do {
+      removedDirs = new Set<string>();
+      for (const d of dirsToCheck) {
+        if (fs.readdirSync(d).length === 0) {
+          this.emit('message', 'Deleting ' + d);
+          fs.rmdirSync(d);
+          removedDirs.add(d);
+        }
+      }
+      dirsToCheck = new Set([...dirsToCheck].filter((d) => !removedDirs.has(d)));
+    } while (removedDirs.size > 0);
   }
 
   async removeSigningFiles() {
