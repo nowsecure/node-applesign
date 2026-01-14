@@ -146,6 +146,20 @@ class Applesign {
     }
   }
 
+  async adjustAllInfoPlists() {
+    const infoPlistPath = path.join(this.config.appdir, "Info.plist");
+    adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
+    const ls = new AppDirectory();
+    const res = await ls.loadFromDirectory(this.config.appdir);
+    for (let appex of ls.appexs) {
+      const lidx = appex.lastIndexOf("/");
+      if (lidx !== -1) {
+        const plistPath = path.join(appex.substring(0, lidx), "Info.plist");
+        adjustInfoPlist(plistPath, this.config, this.emit.bind(this));
+      }
+    }
+  }
+
   async signAppDirectoryInternal(ipadir: string, skipNested: boolean) {
     fchk(arguments, ["string", "boolean"]);
     await this._pullMobileProvision();
@@ -177,8 +191,7 @@ class Applesign {
     if (this.config.insertLibrary !== undefined) {
       await injectLibrary(this.config);
     }
-    const infoPlistPath = path.join(this.config.appdir, "Info.plist");
-    adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
+    await this.adjustAllInfoPlists();
     if (!this.config.pseudoSign) {
       if (!this.config.mobileprovision) {
         throw new Error("warning: No mobile provisioning file provided");
