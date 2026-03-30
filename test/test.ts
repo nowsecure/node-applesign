@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { describe, it } from "mocha";
+import Applesign from "../index.js";
 
 const mochaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
@@ -24,6 +25,26 @@ describe("API", () => {
   });
 });
 */
+
+describe("API", () => {
+  describe("unzipIPA", () => {
+    it("should fail when the input file is missing", async () => {
+      const applesign = new Applesign({});
+      await assert.rejects(
+        applesign.unzipIPA("", "tmp"),
+        /No input file specified/,
+      );
+    });
+
+    it("should fail when the output directory is missing", async () => {
+      const applesign = new Applesign({});
+      await assert.rejects(
+        applesign.unzipIPA("test.ipa", ""),
+        /No output directory specified/,
+      );
+    });
+  });
+});
 
 describe("Commandline", () => {
   describe("dist/bin/applesign.js", () => {

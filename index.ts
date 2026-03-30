@@ -876,17 +876,17 @@ class Applesign {
     }
   }
 
-  async unzipIPA(file: any, workdir: any): Promise<any> {
+  async unzipIPA(file: string, workdir: string): Promise<void> {
     fchk(arguments, ["string", "string"]);
-    if (!file || !workdir) {
-      throw new Error("No output specified");
+    if (!file) {
+      throw new Error("No input file specified");
     }
     if (!workdir) {
-      throw new Error("Invalid output directory");
+      throw new Error("No output directory specified");
     }
     await this.cleanup();
     this.events.emit("message", "Unzipping " + file);
-    return tools.unzip(file, workdir);
+    await tools.unzip(file, workdir);
   }
 
   /* Event Wrapper API with cb support */
