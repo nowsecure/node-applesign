@@ -854,16 +854,18 @@ class Applesign {
     }
     const ipaOut = getOutputPath(this.config.tempdir, this.config.outfile!);
     try {
-      fs.unlinkSync(ipaOut); // await for it
-    } catch (e) {
-      /* do nothing */
+      await fs.unlink(ipaOut);
+    } catch (err: any) {
+      if (err?.code !== "ENOENT") {
+        throw err;
+      }
     }
     this.events.emit("message", "Zipifying into " + ipaOut + " ...");
     const rootFolder = this.config.payloadOnly ? "Payload" : ".";
     await tools.zip(this.config.tempdir, ipaOut, rootFolder);
     if (this.config.replaceipa) {
       this.events.emit("message", "mv into " + ipaIn);
-      fs.rename(ipaOut, ipaIn);
+      await fs.rename(ipaOut, ipaIn);
     }
   }
 
