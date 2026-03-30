@@ -104,8 +104,9 @@ class Applesign {
         throw new Error("No tempdir specified");
       }
       await this.unzipIPA(this.config.file, this.config.tempdir);
-      const appDirectory = path.join(this.config.tempdir, "/Payload");
-      this.config.appdir = getAppDirectory(appDirectory);
+      this.config.appdir = getAppDirectory(
+        getPayloadDirectory(this.config.tempdir),
+      );
       if (this.config.debug) {
         this.debugObject = {};
       }
@@ -126,7 +127,7 @@ class Applesign {
       if (tasks.length > 0) {
         await Promise.all(tasks);
       }
-      await this.signAppDirectory(appDirectory);
+      await this.signAppDirectory(this.config.appdir);
       await this.zipIPA();
     } finally {
       await this.cleanup();
@@ -1023,28 +1024,27 @@ function nestedApp(file: string) {
   return false;
 }
 
-function getAppDirectory(this: any, ipadir: string) {
-  if (!ipadir) {
-    ipadir = path.join(this.config.tempdir, "Payload");
+function getPayloadDirectory(tempdir?: string): string {
+  if (!tempdir) {
+    throw new Error("No tempdir specified");
   }
-  if (!tools.isDirectory(ipadir)) {
-    throw new Error("Not a directory " + ipadir);
+  return path.join(tempdir, "Payload");
+}
+
+function getAppDirectory(directory: string): string {
+  if (!tools.isDirectory(directory)) {
+    throw new Error("Not a directory " + directory);
   }
-  if (ipadir.endsWith(".app")) {
-    this.config.appdir = ipadir;
-  } else {
-    const files = fs.readdirSync(ipadir).filter((x: string) => {
-      return x.endsWith(".app");
-    });
-    if (files.length !== 1) {
-      throw new Error("Invalid IPA: " + ipadir);
-    }
-    return path.join(ipadir, files[0]);
+  if (directory.endsWith(".app")) {
+    return directory;
   }
-  if (ipadir.endsWith("/")) {
-    ipadir = ipadir.substring(0, ipadir.length - 1);
+  const files = fs.readdirSync(directory).filter((x: string) => {
+    return x.endsWith(".app");
+  });
+  if (files.length !== 1) {
+    throw new Error("Invalid IPA: " + directory);
   }
-  return ipadir;
+  return path.join(directory, files[0]);
 }
 
 async function enumerateTestFiles(dir: string): Promise<string[]> {
