@@ -20,6 +20,7 @@ const shortHelpMessage = `Usage:
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
   -O, --osversion 9.0           Force specific OSVersion if any in Info.plist
+  -R, --run [SCRIPT]            Run a hook script before signing starts
   -T, --tempdir [DIR]           Path to the output directory for temporary files
   -p, --without-plugins         Remove plugins (excluding XCTests) from the resigned IPA
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
@@ -64,6 +65,7 @@ const helpMessage = `Usage:
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -R, --run [SCRIPT]            Run a hook script before signing starts
   -s, --single                  Sign a single file instead of an IPA
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -v, --verify                  Verify all the signed files at the end
