@@ -351,7 +351,7 @@ class Applesign {
   }
 
   addEntitlementsSync(orig: any) {
-    if (this.config.addEntitlements === undefined) {
+    if (!this.config.addEntitlements) {
       return orig;
     }
     this.emit("message", "Adding entitlements from file");
@@ -480,7 +480,7 @@ class Applesign {
       additionalKeychainGroups.push(this.config.customKeychainGroup);
     }
     const infoPlist = path.join(this.config.appdir, "Info.plist");
-    const plistData = plist.readFileSync(infoPlist);
+    const plistData = plist.readFileSync(infoPlist) as Record<string, any>;
     if (this.config.bundleIdKeychainGroup) {
       if (typeof this.config.bundleid === "string") {
         additionalKeychainGroups.push(this.config.bundleid);
@@ -513,7 +513,7 @@ class Applesign {
         : this.config.entitlement
         ? fs.readFileSync(this.config.entitlement).toString()
         : plistBuild(entMacho).toString();
-      const ent = plist.parse(newEntitlements.trim());
+      const ent = plist.parse(newEntitlements.trim()) as Record<string, any>;
       const shouldRenameGroups = !this.config.mobileprovision &&
         !this.config.cloneEntitlements;
       if (shouldRenameGroups && ent["com.apple.security.application-groups"]) {
@@ -926,7 +926,7 @@ function getExecutable(appdir: string) {
   }
   const plistPath = path.join(appdir, "Info.plist");
   try {
-    const plistData = plist.readFileSync(plistPath);
+    const plistData = plist.readFileSync(plistPath) as Record<string, any>;
     const cfBundleExecutable = plistData.CFBundleExecutable;
     if (cfBundleExecutable) {
       return cfBundleExecutable;
