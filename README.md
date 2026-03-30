@@ -78,6 +78,7 @@ Usage:
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
+  -R, --run [SCRIPT]            Run a hook script before signing starts
   -s, --single                  Sign a single file instead of an IPA
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -v, --verify                  Verify all the signed files at the end
@@ -163,6 +164,20 @@ signing. The order of signing the binaries inside an IPA matters, so applesign
 creates a dependency list of all the bins and signs them in order. The parallel
 signing aims to run in parallel as much tasks as possible without breaking the
 dependency list.
+
+## Run hooks
+
+Use `-R, --run` to execute a script before signing starts.
+
+Shell scripts receive the following environment variables:
+
+- `APPLESIGN_DIRECTORY`
+- `APPLESIGN_MAINBIN`
+- `APPLESIGN_OUTFILE`
+- `APPLESIGN_TEMPDIR`
+- `APPLESIGN_FILE`
+
+`APPLESIGN_TEMPDIR` is the temporary working directory.
 
 ## Mangling
 
