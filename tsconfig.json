@@ -16,6 +16,7 @@
   "ts-node": {
     "esm": true
   },
+  "files": ["lib/types.d.ts"],
   "include": [
     // include both JS and TS sources for migration
     "lib/**/*",

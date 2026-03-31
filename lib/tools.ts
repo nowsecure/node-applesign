@@ -203,7 +203,7 @@ async function getMobileProvisionPlist(file: string) {
     const args = ["cms", "-D", "-i", file];
     res = await execProgram(getTool("security")!, args);
   }
-  return plist.parse(res.stdout);
+  return plist.parse(res.stdout) as Record<string, any>;
 }
 
 async function getEntitlementsFromMobileProvision(
