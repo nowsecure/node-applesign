@@ -15,13 +15,17 @@ function createEmptyArraysObject(keys: string[]): Record<string, any[]> {
   return Object.fromEntries(keys.map((key) => [key, []]));
 }
 
-export default function fix(
+export default function adjustInfoPlist(
   file: string,
   options: ConfigOptions,
   emit: any,
 ): void {
-  if (!options.appdir) {
-    throw new Error("Invalid parameters for fixPlist");
+  let { bundleid, forceFamily, allowHttp } = options;
+  if (!file) {
+    throw new Error("Invalid parameters for adjustInfoPlist");
+  }
+  if (file.indexOf(".appex/") != -1) {
+    bundleid += ".share";
   }
   let changed = false;
   const data = plist.readFileSync(file);
