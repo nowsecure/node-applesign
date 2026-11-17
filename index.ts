@@ -4,7 +4,7 @@ import idprov from "./lib/idprov.js";
 import { EventEmitter } from "node:events";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import * as uuid from "uuid";
+import { randomUUID } from "node:crypto";
 import fs from "fs-extra";
 import walk from "fs-walk";
 import plist from "simple-plist";
@@ -37,7 +37,7 @@ class Applesign {
   _makeTmpDir() {
     const tmp = tmpdir();
     const base = path.join(tmp, "applesign");
-    const result = path.join(base, uuid.v4());
+    const result = path.join(base, randomUUID());
     fs.mkdirSync(result, { recursive: true });
     return result;
   }
@@ -873,7 +873,7 @@ class Applesign {
   setFile(name: any) {
     fchk(arguments, ["string"]);
     this.config.file = path.resolve(name);
-    this.config.tempdir ??= this.config.file + "." + uuid.v4();
+    this.config.tempdir ??= this.config.file + "." + randomUUID();
     if (!this.config.outfile) {
       this.config.outfile = getResignedFilename(this.config.file);
     }
