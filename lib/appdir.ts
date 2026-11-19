@@ -68,6 +68,34 @@ export class AppDirectory {
   }
 }
 
+/**
+ * Validate a CFBundleExecutable value taken from an untrusted Info.plist and
+ * return the absolute path of the executable inside bundleDir. The name must
+ * be a plain file name, and if the file exists its real path must stay inside
+ * rootDir (defaults to bundleDir), so an IPA can't point the signer at files
+ * outside of it via "../" or symlinks.
+ */
+export function bundleExecutablePath(
+  bundleDir: string,
+  name: unknown,
+  rootDir: string = bundleDir,
+): string {
+  if (
+    typeof name !== "string" || name === "" || name === "." || name === ".." ||
+    /[/\\\0]/.test(name)
+  ) {
+    throw new Error("Invalid CFBundleExecutable: " + JSON.stringify(name));
+  }
+  const exe = path.join(bundleDir, name);
+  if (fs.existsSync(exe)) {
+    const root = fs.realpathSync(rootDir) + path.sep;
+    if (!fs.realpathSync(exe).startsWith(root)) {
+      throw new Error("CFBundleExecutable escapes the bundle: " + exe);
+    }
+  }
+  return exe;
+}
+
 // internal functions //
 /**
  * Finds libraries that are present in the application bundle but not
@@ -95,15 +123,16 @@ function _getAppExecutable(appdir: string): string {
     throw new Error("No application directory is provided");
   }
   const plistPath = path.join(appdir, "Info.plist");
+  let cfBundleExecutable;
   try {
-    const plistData = plist.readFileSync(plistPath);
-    const cfBundleExecutable = plistData.CFBundleExecutable;
-    if (cfBundleExecutable) {
-      return cfBundleExecutable;
-    }
+    cfBundleExecutable = plist.readFileSync(plistPath).CFBundleExecutable;
   } catch (e) {
     // do nothing
     console.error(e);
+  }
+  if (cfBundleExecutable) {
+    bundleExecutablePath(appdir, cfBundleExecutable);
+    return cfBundleExecutable;
   }
   const exename = path.basename(appdir);
   const dotap = exename.indexOf(".app");
@@ -124,8 +153,18 @@ function _getAppExtensions(appdir: string): string[] {
       if (fs.existsSync(apexPlist)) {
         const apexInfo = plist.readFileSync(apexPlist);
         if (apexInfo.CFBundleExecutable) {
-          const apexBin = path.join(apexDir, apexInfo.CFBundleExecutable);
-          if (fs.existsSync(apexBin)) {
+          let apexBin;
+          try {
+            apexBin = bundleExecutablePath(
+              apexDir,
+              apexInfo.CFBundleExecutable,
+              appdir,
+            );
+          } catch (e) {
+            console.error("Warning: skipping " + file + ": " + e);
+            continue;
+          }
+          if (fs.existsSync(apexBin) && fs.lstatSync(apexBin).isFile()) {
             apexBins.push(apexBin);
           }
         }

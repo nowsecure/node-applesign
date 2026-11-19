@@ -10,7 +10,7 @@ import walk from "fs-walk";
 import plist from "simple-plist";
 import fchk from "./lib/fchk.js";
 import { homedir, tmpdir } from "node:os";
-import { AppDirectory } from "./lib/appdir.js";
+import { AppDirectory, bundleExecutablePath } from "./lib/appdir.js";
 import depSolver from "./lib/depsolver.js";
 import adjustInfoPlist from "./lib/info-plist.js";
 import defaultEntitlements from "./lib/entitlements.js";
@@ -158,7 +158,7 @@ class Applesign {
     }
     const binname = getExecutable(this.config.appdir);
     this.emit("msg", "Main Executable Name: " + binname);
-    this.config.appbin = path.join(this.config.appdir, binname);
+    this.config.appbin = bundleExecutablePath(this.config.appdir, binname);
     if (!fs.lstatSync(this.config.appbin).isFile()) {
       throw new Error("This was supposed to be a file");
     }
