@@ -236,12 +236,8 @@ async function unzip(ifile: string, odir: string) {
     const args = ["x", "-y", "-o" + odir, ifile];
     return execProgram(getTool("7z")!, args);
   }
-  if (process.env.UNZIP !== undefined) {
-    cmd.unzip = process.env.UNZIP;
-    delete process.env.UNZIP;
-  }
   const args = ["-o", ifile, "-d", odir];
-  return execProgram(getTool("unzip")!, args);
+  return execProgram(process.env.UNZIP || getTool("unzip"), args);
 }
 
 async function xcaToIpa(ifile: string, odir: string) {
