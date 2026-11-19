@@ -221,6 +221,23 @@ function binSysLibs(file: string): string[] {
   }
 }
 
+/**
+ * Check that file is an absolute path inside dir, also after resolving
+ * symlinks when it exists.
+ */
+function isInsideDir(dir: string, file: string): boolean {
+  if (!path.isAbsolute(file)) {
+    return false;
+  }
+  if (!path.resolve(file).startsWith(path.resolve(dir) + path.sep)) {
+    return false;
+  }
+  if (!fs.existsSync(file)) {
+    return true;
+  }
+  return fs.realpathSync(file).startsWith(fs.realpathSync(dir) + path.sep);
+}
+
 // return a list of the libs that must be inside the app
 function binAbsLibs(sourceFile: string, targetPaths: any): string[] {
   try {
@@ -246,6 +263,20 @@ function binAbsLibs(sourceFile: string, targetPaths: any): string[] {
           }
         }
         return libraryPath;
+      })
+      .filter((libraryPath: string) => {
+        // load commands are untrusted, never sign anything outside the app
+        if (
+          libraryPath.startsWith("@") ||
+          isInsideDir(targetPaths.appdir, libraryPath)
+        ) {
+          return true;
+        }
+        console.error(
+          "Warning: Ignoring library outside the app: " + libraryPath +
+            " from " + sourceFile,
+        );
+        return false;
       });
   } catch (error) {
     console.error("Warning: missing file:", sourceFile);
@@ -263,6 +294,7 @@ function _findLibraries(
   const exe = path.join(appdir, appbin);
 
   const targets = {
+    appdir,
     exe,
     lib: exe,
     libs: disklibs,
