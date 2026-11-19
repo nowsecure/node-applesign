@@ -1,5 +1,6 @@
 import plist from "simple-plist";
 import { ConfigOptions } from "./config";
+import { assertNotSymlink } from "./tools.js";
 
 interface AppleDevices {
   iPhone: string[];
@@ -24,6 +25,7 @@ export default function fix(
     throw new Error("Invalid parameters for fixPlist");
   }
   let changed = false;
+  assertNotSymlink(file);
   const data = plist.readFileSync(file);
   delete data[""];
   if (options.allowHttp) {

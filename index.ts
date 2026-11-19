@@ -6,7 +6,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "fs-extra";
-import walk from "fs-walk";
+import { walkSync } from "@nodelib/fs.walk";
 import plist from "simple-plist";
 import fchk from "./lib/fchk.js";
 import { homedir, tmpdir } from "node:os";
@@ -226,8 +226,7 @@ class Applesign {
   async removeXCTests() {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir: string, filename: string, stat: any) => {
-      const target = path.join(basedir, filename);
+    walkSync(dir).forEach(({ path: target }) => {
       //  if (target.toLowerCase().indexOf('/xct') !== -1)
       if (target.toLowerCase().indexOf("xctest") !== -1) {
         this.emit("message", "Deleting " + target);
@@ -239,12 +238,11 @@ class Applesign {
   async removeSigningFiles() {
     fchk(arguments, []);
     const dir = this.config.appdir;
-    walk.walkSync(dir, (basedir: string, filename: string, stat: any) => {
+    walkSync(dir).forEach(({ path: target, name: filename }) => {
       if (
         filename.endsWith(".entitlements") ||
         filename.endsWith(".mobileprovision")
       ) {
-        const target = path.join(basedir, filename);
         this.emit("message", "Deleting " + target);
         fs.unlinkSync(target);
       }
@@ -274,19 +272,15 @@ class Applesign {
   findProvisioningsSync() {
     fchk(arguments, []);
     const files: string[] = [];
-    walk.walkSync(
-      this.config.appdir,
-      (basedir: string, filename: string, stat: any) => {
-        const file = path.join(basedir, filename);
-        // only walk on files. Symlinks and other special files are forbidden
-        if (!fs.lstatSync(file).isFile()) {
-          return;
-        }
-        if (filename === "embedded.mobileprovision") {
-          files.push(file);
-        }
-      },
-    );
+    walkSync(this.config.appdir).forEach(({ path: file, name: filename }) => {
+      // only walk on files. Symlinks and other special files are forbidden
+      if (!fs.lstatSync(file).isFile()) {
+        return;
+      }
+      if (filename === "embedded.mobileprovision") {
+        files.push(file);
+      }
+    });
     return files;
   }
 
@@ -330,6 +324,7 @@ class Applesign {
           ent = defaultEntitlements(appId, teamId);
         }
         data.Entitlements = plist.parse(ent.toString().trim());
+        tools.assertNotSymlink(mobileProvision);
         fs.writeFileSync(mobileProvision, plistBuild(data).toString());
         /* TODO: self-sign mobile provisioning */
       }
@@ -400,7 +395,8 @@ class Applesign {
         fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
         this.config.entitlement = tmpEntitlementsFile;
         if (!this.config.noEntitlementsFile) {
-          fs.writeFileSync(newEntitlementsFile, tmpEntitlementsFile);
+          tools.assertNotSymlink(newEntitlementsFile);
+          fs.writeFileSync(newEntitlementsFile, newEntitlements);
         }
         this.debugInfo(file, "newEntitlements", plist.parse(newEntitlements));
         return;
@@ -481,6 +477,7 @@ class Applesign {
       additionalKeychainGroups.push(this.config.customKeychainGroup);
     }
     const infoPlist = path.join(this.config.appdir, "Info.plist");
+    tools.assertNotSymlink(infoPlist);
     const plistData = plist.readFileSync(infoPlist) as Record<string, any>;
     if (this.config.bundleIdKeychainGroup) {
       if (typeof this.config.bundleid === "string") {
@@ -697,33 +694,29 @@ class Applesign {
     const exe2 = path.sep + folders[folders.length - 1];
 
     let found = false;
-    walk.walkSync(
-      this.config.appdir,
-      (basedir: any, filename: any, stat: any) => {
-        const file = path.join(basedir, filename);
-        // only walk on files. Symlinks and other special files are forbidden
-        if (!fs.lstatSync(file).isFile()) {
-          return;
-        }
-        if (file.endsWith(exe) || file.endsWith(exe2)) {
-          this.emit("message", "Executable found at " + file);
-          libraries.push(file);
-          found = true;
-          return;
-        }
+    walkSync(this.config.appdir).forEach(({ path: file }) => {
+      // only walk on files. Symlinks and other special files are forbidden
+      if (!fs.lstatSync(file).isFile()) {
+        return;
+      }
+      if (file.endsWith(exe) || file.endsWith(exe2)) {
+        this.emit("message", "Executable found at " + file);
+        libraries.push(file);
+        found = true;
+        return;
+      }
 
-        const nest = nestedApp(file);
-        if (nest !== false) {
-          if (nested.indexOf(nest) === -1) {
-            nested.push(nest);
-          }
-          return;
+      const nest = nestedApp(file);
+      if (nest !== false) {
+        if (nested.indexOf(nest) === -1) {
+          nested.push(nest);
         }
-        if (bin.isMacho(file)) {
-          libraries.push(file);
-        }
-      },
-    );
+        return;
+      }
+      if (bin.isMacho(file)) {
+        libraries.push(file);
+      }
+    });
     if (!found) {
       throw new Error("Cannot find any MACH0 binary to sign");
     }
@@ -946,10 +939,15 @@ async function injectLibrary(config: any) {
   const appDir = config.appdir;
   const targetLib = config.insertLibrary;
   const libraryName = path.basename(targetLib);
+  const frameworksDir = path.join(appDir, "Frameworks");
   try {
-    fs.mkdirSync(path.join(appDir, "Frameworks"));
+    fs.mkdirSync(frameworksDir);
   } catch (_) {}
-  const outputLib = path.join(appDir, "Frameworks", libraryName);
+  if (!tools.isDirectory(frameworksDir)) {
+    throw new Error("Not a directory: " + frameworksDir);
+  }
+  const outputLib = path.join(frameworksDir, libraryName);
+  tools.assertNotSymlink(outputLib);
   await insertLibraryLL(outputLib, targetLib, config);
 }
 
@@ -1046,7 +1044,11 @@ function getAppDirectory(directory: string): string {
   if (files.length !== 1) {
     throw new Error("Invalid IPA: " + directory);
   }
-  return path.join(directory, files[0]);
+  const appdir = path.join(directory, files[0]);
+  if (!tools.isDirectory(appdir)) {
+    throw new Error("Invalid IPA: " + appdir + " is not a directory");
+  }
+  return appdir;
 }
 
 async function enumerateTestFiles(dir: string): Promise<string[]> {

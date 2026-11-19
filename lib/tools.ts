@@ -359,6 +359,22 @@ function isDirectory(filePath: string): boolean {
   }
 }
 
+/* IPA contents are untrusted: never read or write files through a symlink */
+function assertNotSymlink(file: string): void {
+  let stat;
+  try {
+    stat = fs.lstatSync(file);
+  } catch (e: any) {
+    if (e.code === "ENOENT") {
+      return;
+    }
+    throw e;
+  }
+  if (stat.isSymbolicLink()) {
+    throw new Error("Refusing to follow symlink: " + file);
+  }
+}
+
 export interface GlobalOptions {
   use7zip: boolean;
   useOpenSSL: boolean;
@@ -385,6 +401,7 @@ function asyncRimraf(dir: any) {
 }
 
 export {
+  assertNotSymlink,
   asyncRimraf,
   codesign,
   getEntitlementsFromMobileProvision,

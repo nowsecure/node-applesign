@@ -1,5 +1,5 @@
 import path from "node:path";
-import walk from "fs-walk";
+import { walkSync } from "@nodelib/fs.walk";
 import plist from "simple-plist";
 import * as bin from "./bin.js";
 import fs from "node:fs";
@@ -181,8 +181,7 @@ function _getAppExtensions(appdir: string): string[] {
 /** return an array of strings with the absolute paths of the sub-apps found inside appdir */
 function _findNested(d: string): string[] {
   const nested: string[] = [];
-  walk.walkSync(d, (basedir: any, filename: any, stat: any) => {
-    const file = path.join(basedir, filename);
+  walkSync(d).forEach(({ path: file }) => {
     if (file.indexOf(".app/Info.plist") !== -1) {
       const nest = file.lastIndexOf(".app/");
       nested.push(file.substring(0, nest + 4));
@@ -193,8 +192,7 @@ function _findNested(d: string): string[] {
 
 function _findBinaries(appdir: string): string[] {
   const libraries: string[] = [];
-  walk.walkSync(appdir, (basedir: any, filename: any, stat: any) => {
-    const file = path.join(basedir, filename);
+  walkSync(appdir).forEach(({ path: file }) => {
     // only walk on files. Symlinks and other special files are forbidden
     if (!fs.lstatSync(file).isFile()) {
       return;
