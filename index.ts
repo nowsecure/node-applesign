@@ -311,7 +311,7 @@ class Applesign {
         const data = await tools.getMobileProvisionPlist(
           this.config.mobileprovision,
         );
-        const mainBin = path.join(appdir, getExecutable(appdir));
+        const mainBin = bundleExecutablePath(appdir, getExecutable(appdir));
         let ent = bin.entitlements(mainBin);
         if (ent === null) {
           this.emit(
@@ -921,14 +921,16 @@ function getExecutable(appdir: string) {
     throw new Error("No application directory is provided");
   }
   const plistPath = path.join(appdir, "Info.plist");
+  let cfBundleExecutable;
   try {
     const plistData = plist.readFileSync(plistPath) as Record<string, any>;
-    const cfBundleExecutable = plistData.CFBundleExecutable;
-    if (cfBundleExecutable) {
-      return cfBundleExecutable;
-    }
+    cfBundleExecutable = plistData.CFBundleExecutable;
   } catch (e) {
     // do nothing
+  }
+  if (cfBundleExecutable) {
+    bundleExecutablePath(appdir, cfBundleExecutable);
+    return cfBundleExecutable;
   }
   const exename = path.basename(appdir);
   const dotap = exename.indexOf(".app");
