@@ -35,7 +35,7 @@
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",
     "minimist": "^1.2.8",
-    "plist": "^5.1.2",
+    "plist": "github:trufae/plist.js#a9d3e06148dcee5d89d97e1120b8ea5f35d36666",
     "which": "^7.0.0"
   },
   "description": "API to resign IPA files",
