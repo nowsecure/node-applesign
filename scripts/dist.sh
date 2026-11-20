@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build a single executable application (SEA) for the host platform.
-# Needs a Node.js build with SEA enabled, like the nodejs.org binaries.
+# Needs node >= 25.5 (--build-sea) from nodejs.org, not a shared build.
 set -e
 
 V=$(node -p 'require("./package.json").version')
