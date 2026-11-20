@@ -308,6 +308,7 @@ class Applesign {
     if (appdir && file && !withoutMobileProvision) {
       this.emit("message", "Embedding new mobileprovision");
       const mobileProvision = path.join(appdir, "embedded.mobileprovision");
+      tools.assertNotSymlink(mobileProvision);
       if (this.config.selfSignedProvision) {
         /* update entitlements */
         const data = await tools.getMobileProvisionPlist(
@@ -326,7 +327,6 @@ class Applesign {
           ent = defaultEntitlements(appId, teamId);
         }
         data.Entitlements = plist.parse(ent.toString().trim());
-        tools.assertNotSymlink(mobileProvision);
         fs.writeFileSync(mobileProvision, plistBuild(data).toString());
         /* TODO: self-sign mobile provisioning */
       }
