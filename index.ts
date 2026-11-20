@@ -888,22 +888,13 @@ class Applesign {
 
 // helper functions
 
+// next to the input, not next to the tempdir which -T may move elsewhere
 function getResignedFilename(input: string): string | null {
   if (!input) {
     return null;
   }
-  const pos = input.lastIndexOf(path.sep);
-  if (pos !== -1) {
-    const tmp = input.substring(pos + 1);
-    const dot = tmp.lastIndexOf(".");
-    input = dot !== -1 ? tmp.substring(0, dot) : tmp;
-  } else {
-    const dot = input.lastIndexOf(".");
-    if (dot !== -1) {
-      input = input.substring(0, dot);
-    }
-  }
-  return input + "-resigned.ipa";
+  const { dir, name } = path.parse(input);
+  return path.join(dir, name + "-resigned.ipa");
 }
 
 function getExecutable(appdir: string) {
