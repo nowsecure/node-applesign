@@ -87,7 +87,7 @@ const helpMessage = `Usage:
   -N, --add-entitlements [FILE] Append entitlements from file (EXPERIMENTAL)
   -M, --massage-entitlements    Massage entitlements to remove privileged ones
   -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
-  -C, --no-entitlements-file    Do not create .entitlements file in the IPA
+  -C, --no-entitlements-file    Do not create .entitlements file in the IPA with -S
 
   -h, --help                    Show this help message
       --version                 Show applesign version
@@ -153,7 +153,6 @@ export interface ConfigOptions {
   mobileprovision: any;
   mobileprovisions: any;
   noEntitlementsFile: any;
-  payloadOnly: boolean;
   noclean: boolean;
   osversion: any; // opt.osversion || undefined,
   tempdir: string | undefined;
@@ -201,7 +200,7 @@ const fromOptions = function (opt: any): ConfigOptions {
   }
   return {
     all: opt.all || false,
-    allDirs: opt.allDirs || true,
+    allDirs: opt.allDirs || false,
     allowHttp: opt.allowHttp || false,
     addEntitlements: opt.addEntitlements || undefined,
     bundleIdKeychainGroup: opt.bundleIdKeychainGroup || false,
@@ -234,7 +233,6 @@ const fromOptions = function (opt: any): ConfigOptions {
     tempdir: opt.tempdir
       ? path.join(path.resolve(opt.tempdir), randomUUID())
       : undefined,
-    payloadOnly: false,
     outfile: opt.outfile,
     parallel: opt.parallel || false,
     pseudoSign: opt.pseudoSign || false,

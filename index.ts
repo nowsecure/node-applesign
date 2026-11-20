@@ -144,9 +144,6 @@ class Applesign {
       this.config.identity = idprov(this.config.mobileprovision);
     }
     this.config.mobileprovision = this.config.mobileprovisions[0];
-    if (this.config.mobileprovisions.length > 1) {
-      this.config.mobileprovisions.slice(1);
-    }
   }
 
   async signAppDirectoryInternal(ipadir: string, skipNested: boolean) {
@@ -547,13 +544,10 @@ class Applesign {
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
       this.config.entitlement = tmpEntitlementsFile;
-      if (!this.config.noEntitlementsFile) {
-        fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
-        this.emit(
-          "message",
-          "Updated binary entitlements" + tmpEntitlementsFile,
-        );
-      }
+      this.emit(
+        "message",
+        "Updated binary entitlements " + tmpEntitlementsFile,
+      );
       this.debugInfo(file, "after", newEntitlements);
     } else {
       this.debugInfo(file, "nothing-changed", true);
@@ -845,7 +839,7 @@ class Applesign {
       }
     }
     this.events.emit("message", "Zipifying into " + ipaOut + " ...");
-    const rootFolder = this.config.payloadOnly ? "Payload" : ".";
+    const rootFolder = this.config.allDirs ? "." : "Payload";
     await tools.zip(this.config.tempdir, ipaOut, rootFolder);
     if (this.config.replaceipa) {
       this.events.emit("message", "mv into " + ipaIn);
@@ -872,7 +866,14 @@ class Applesign {
     }
     await this.cleanup();
     this.events.emit("message", "Unzipping " + file);
-    await tools.unzip(file, workdir);
+    try {
+      await tools.unzip(file, workdir);
+    } catch (e) {
+      if (!this.config.ignoreZipErrors) {
+        throw e;
+      }
+      this.emit("warning", "Ignoring unzip errors: " + e);
+    }
   }
 
   /* Event Wrapper API with cb support */

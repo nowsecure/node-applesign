@@ -118,7 +118,7 @@ Usage:
   -E, --entry-entitlement       Use generic entitlement (EXPERIMENTAL)
   -M, --massage-entitlements    Massage entitlements to remove privileged ones
   -t, --without-get-task-allow  Do not set the get-task-allow entitlement (EXPERIMENTAL)
-  -C, --no-entitlements-file    Do not create .entitlements file in the IPA
+  -C, --no-entitlements-file    Do not create .entitlements file in the IPA with -S
 
   -h, --help                    Show this help message
       --version                 Show applesign version
@@ -178,7 +178,7 @@ The default signing method does as follow:
 - Grab entitlements from the provisioning
 - Adjust application-id and team-id of the binary with the provisioning ones
 - Copy the original mobileprovisioning inside the IPA
-- Creates ${AppName}.entitlements and signs all the mach0s
+- Writes the new entitlements to a temporary file and signs all the mach0s
 
 After some testing we will probably go for having -c or -E as default.
 
