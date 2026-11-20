@@ -9,7 +9,6 @@ import { pathToFileURL } from "node:url";
 import fs from "node:fs";
 import { walkSync } from "@nodelib/fs.walk";
 import plist from "./lib/plist.js";
-import fchk from "./lib/fchk.js";
 import { homedir, tmpdir } from "node:os";
 import {
   AppDirectory,
@@ -72,19 +71,16 @@ class Applesign {
   }
 
   async signXCarchive(file: string) {
-    fchk(arguments, ["string"]);
     const ipaFile = file + ".ipa";
     await tools.xcaToIpa(file, ipaFile);
     await this.signIPA(ipaFile);
   }
 
   async getIdentities() {
-    fchk(arguments, []);
     return tools.getIdentities();
   }
 
   async signIPA(file: string) {
-    fchk(arguments, ["string"]);
     if (typeof file === "string") {
       this.setFile(file);
     }
@@ -143,7 +139,6 @@ class Applesign {
   }
 
   async signAppDirectoryInternal(ipadir: string, skipNested: boolean) {
-    fchk(arguments, ["string", "boolean"]);
     await this._pullMobileProvision();
     if (this.config.run) {
       await runScript(this.config.run, this);
@@ -202,12 +197,10 @@ class Applesign {
   }
 
   async signAppDirectory(ipadir: string) {
-    fchk(arguments, ["string"]);
     return this.signAppDirectoryInternal(ipadir, false);
   }
 
   async removeWatchApp() {
-    fchk(arguments, []);
     const watchdir = path.join(this.config.appdir, "Watch");
     this.emit("message", "Stripping out the WatchApp at " + watchdir);
     await tools.asyncRimraf(watchdir);
@@ -221,7 +214,6 @@ class Applesign {
   }
 
   async removeXCTests() {
-    fchk(arguments, []);
     // reversed, children come first so emptied dirs (.framework) go too
     const dir = this.config.appdir;
     for (const { path: p, dirent } of walkSync(dir).reverse()) {
@@ -234,7 +226,6 @@ class Applesign {
   }
 
   async removeSigningFiles() {
-    fchk(arguments, []);
     const ext = /\.(entitlements|mobileprovision)$/;
     // SC_Info holds the FairPlay .sinf/.supp files of the app and its appexs
     walkSync(this.config.appdir).forEach(({ path: target, name, dirent }) => {
@@ -246,7 +237,6 @@ class Applesign {
   }
 
   async removePlugins() {
-    fchk(arguments, []);
     const plugdir = path.join(this.config.appdir, "PlugIns");
     const tmpdir = path.join(this.config.appdir, "applesign_xctest_tmp");
     this.emit("message", "Stripping out the PlugIns at " + plugdir);
@@ -266,7 +256,6 @@ class Applesign {
   }
 
   findProvisioningsSync() {
-    fchk(arguments, []);
     const files: string[] = [];
     walkSync(this.config.appdir).forEach(({ path: file, name: filename }) => {
       // only walk on files. Symlinks and other special files are forbidden
@@ -289,7 +278,6 @@ class Applesign {
     Read the one in Info.plist and compare with bundleid
   */
   async checkProvision(appdir: string, file: string) {
-    fchk(arguments, ["string", "string"]);
     /* Deletes the embedded.mobileprovision from the ipa? */
     const withoutMobileProvision = false;
     if (withoutMobileProvision) {
@@ -389,7 +377,6 @@ class Applesign {
       this.config.entitlement = tmpEntitlementsFile;
       return;
     }
-    fchk(arguments, ["string", "object"]);
     this.debugInfo(file, "before", entMobProv);
     const teamId = entMobProv["com.apple.developer.team-identifier"];
     const appId = entMobProv["application-identifier"];
@@ -572,7 +559,6 @@ class Applesign {
   }
 
   async adjustEntitlements(file: string) {
-    fchk(arguments, ["string"]);
     let newEntitlements = null;
     if (!this.config.pseudoSign) {
       const mp = this.config.mobileprovision
@@ -624,7 +610,6 @@ class Applesign {
         : config.entitlement;
     }
 
-    fchk(arguments, ["string"]);
     if (this.config.lipoArch !== undefined) {
       this.emit("message", "[lipo] " + this.config.lipoArch + " " + file);
       try {
@@ -686,7 +671,6 @@ class Applesign {
   }
 
   findLibrariesSync() {
-    fchk(arguments, []);
     const libraries: any = [];
     const nested: any = [];
     const exe = path.sep + getExecutable(this.config.appdir);
@@ -726,7 +710,6 @@ class Applesign {
   }
 
   async signLibraries(bpath: string, appdir: string) {
-    fchk(arguments, ["string", "string"]);
     this.emit("message", "Signing libraries and frameworks");
 
     const parallelVerify = async (libs: any) => {
@@ -827,7 +810,6 @@ class Applesign {
   }
 
   async cleanup() {
-    fchk(arguments, []);
     if (this.config.noclean) {
       return;
     }
@@ -842,7 +824,6 @@ class Applesign {
   }
 
   async zipIPA() {
-    fchk(arguments, []);
     if (!this.config.file) {
       console.error("Missing input file to zip");
       return;
@@ -873,8 +854,7 @@ class Applesign {
     }
   }
 
-  setFile(name: any) {
-    fchk(arguments, ["string"]);
+  setFile(name: string) {
     this.config.file = path.resolve(name);
     this.config.tempdir ??= this.config.file + "." + randomUUID();
     if (!this.config.outfile) {
@@ -883,7 +863,6 @@ class Applesign {
   }
 
   async unzipIPA(file: string, workdir: string): Promise<void> {
-    fchk(arguments, ["string", "string"]);
     if (!file) {
       throw new Error("No input file specified");
     }
