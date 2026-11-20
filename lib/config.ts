@@ -1,5 +1,3 @@
-// Converted to ES module
-
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import idprov, { checkIdentityInProvision } from "./idprov.js";
