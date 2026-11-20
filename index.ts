@@ -327,8 +327,8 @@ class Applesign {
           ent = defaultEntitlements(appId, teamId);
         }
         data.Entitlements = plist.parse(ent.toString().trim());
-        fs.writeFileSync(mobileProvision, plistBuild(data).toString());
         /* TODO: self-sign mobile provisioning */
+        return fs.writeFileSync(mobileProvision, plistBuild(data).toString());
       }
       return fs.copyFileSync(file, mobileProvision);
     }
