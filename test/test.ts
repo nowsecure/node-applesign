@@ -2,8 +2,10 @@ import * as assert from "node:assert";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { tmpdir } from "node:os";
 import { describe, it } from "mocha";
 import Applesign from "../index.js";
+import { AppDirectory } from "../lib/appdir.js";
 
 const mochaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
@@ -43,6 +45,64 @@ describe("API", () => {
         /No output directory specified/,
       );
     });
+  });
+
+  describe("extension symlinks", () => {
+    function createBundle(directory: string, name: string): string {
+      fs.mkdirSync(directory, { recursive: true });
+      fs.writeFileSync(
+        path.join(directory, "Info.plist"),
+        `<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleExecutable</key><string>${name}</string></dict></plist>`,
+      );
+      const executable = path.join(directory, name);
+      const macho = Buffer.alloc(32);
+      macho.writeUInt32LE(0xfeedfacf, 0); // MH_MAGIC_64
+      macho.writeUInt32LE(0x0100000c, 4); // CPU_TYPE_ARM64
+      macho.writeUInt32LE(2, 12); // MH_EXECUTE
+      fs.writeFileSync(executable, macho);
+      return executable;
+    }
+
+    for (const mode of ["all", "parallel"]) {
+      it(`excludes external extension binaries when signing with --${mode}`, async () => {
+        const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+        const signer = new Applesign({ [mode]: true, pseudoSign: true });
+        try {
+          const appdir = path.join(root, "Main.app");
+          const main = createBundle(appdir, "Main");
+          const internal = createBundle(
+            path.join(appdir, "PlugIns/Internal.appex"),
+            "Internal",
+          );
+          const external = path.join(root, "External.appex");
+          createBundle(external, "External");
+          fs.symlinkSync(
+            external,
+            path.join(appdir, "PlugIns/External.appex"),
+            "dir",
+          );
+
+          const expected = new Set([main, internal]);
+          const directory = new AppDirectory();
+          await directory.loadFromDirectory(appdir);
+          assert.deepStrictEqual(new Set(directory.diskLibraries()), expected);
+          assert.deepStrictEqual(new Set(directory.appLibraries()), expected);
+          assert.deepStrictEqual(directory.appExtensions(), [internal]);
+
+          const signed: string[] = [];
+          signer.signFile = async (file: string) => {
+            signed.push(file);
+            return signer;
+          };
+          signer.adjustEntitlements = async () => {};
+          await signer.signAppDirectory(appdir);
+          assert.deepStrictEqual(new Set(signed), expected);
+        } finally {
+          fs.rmSync(root, { recursive: true, force: true });
+          fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+        }
+      });
+    }
   });
 });
 
