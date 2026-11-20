@@ -22,6 +22,26 @@ import * as bin from "./lib/bin.js";
 
 import { build as plistBuild } from "plist";
 
+/* union arrays and merge dicts instead of replacing them */
+function mergeEntitlements(orig: any, add: any): any {
+  for (const [k, v] of Object.entries(add)) {
+    const o = orig[k];
+    if (Array.isArray(o) && Array.isArray(v)) {
+      orig[k] = [...new Set([...o, ...v])];
+    } else if (isDict(o) && isDict(v)) {
+      mergeEntitlements(o, v);
+    } else {
+      orig[k] = v;
+    }
+  }
+  return orig;
+}
+
+function isDict(v: any): boolean {
+  return typeof v === "object" && v !== null && !Array.isArray(v) &&
+    !(v instanceof Date) && !ArrayBuffer.isView(v);
+}
+
 class Applesign {
   config: config.ConfigOptions;
   debugObject: Record<string, any>;
@@ -357,8 +377,7 @@ class Applesign {
     }
     this.emit("message", "Adding entitlements from file");
     const addEnt = plist.readFileSync(this.config.addEntitlements);
-    // TODO: deepmerge
-    return Object.assign(orig, addEnt);
+    return mergeEntitlements(orig, addEnt);
   }
 
   adjustEntitlementsSync(file: string, entMobProv: any) {
