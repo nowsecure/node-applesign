@@ -1,7 +1,7 @@
 "use strict";
 
 import fs from "node:fs";
-import * as plist from "plist";
+import plist from "./plist.js";
 import * as tools from "./tools.js";
 
 export default function findIdentityFromProvisionSync(file: any): string {

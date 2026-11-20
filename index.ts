@@ -7,7 +7,7 @@ import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import { walkSync } from "@nodelib/fs.walk";
-import plist from "simple-plist";
+import plist from "./lib/plist.js";
 import fchk from "./lib/fchk.js";
 import { homedir, tmpdir } from "node:os";
 import {

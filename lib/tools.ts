@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import { execSync, spawn } from "node:child_process";
 const unlinkAsync = promisify(fs.unlink);
 const renameAsync = promisify(fs.rename);
-import plist from "simple-plist";
+import plist from "./plist.js";
 import path from "node:path";
 import which from "which";
 import * as bin from "./bin.js";

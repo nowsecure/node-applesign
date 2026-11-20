@@ -1,4 +1,4 @@
-import plist from "simple-plist";
+import plist from "./plist.js";
 import { build as plistBuild } from "plist";
 
 const entitlementTemplate = `

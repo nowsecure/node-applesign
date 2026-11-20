@@ -1,4 +1,4 @@
-import plist from "simple-plist";
+import plist from "./plist.js";
 import { ConfigOptions } from "./config";
 import { assertNotSymlink } from "./tools.js";
 

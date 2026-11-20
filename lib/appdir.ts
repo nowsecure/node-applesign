@@ -1,6 +1,6 @@
 import path from "node:path";
 import { walkSync } from "@nodelib/fs.walk";
-import plist from "simple-plist";
+import plist from "./plist.js";
 import * as bin from "./bin.js";
 import fs from "node:fs";
 import { resolvePath } from "./depsolver.js";
