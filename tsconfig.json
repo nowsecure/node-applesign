@@ -3,7 +3,7 @@
     "target": "ES2020",
     "declaration": true,
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "rootDir": ".",
     "moduleDetection": "force",
     "outDir": "dist",
@@ -12,9 +12,6 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
-  },
-  "ts-node": {
-    "esm": true
   },
   "files": ["lib/types.d.ts"],
   "include": [

@@ -4,8 +4,8 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import { describe, it } from "mocha";
-import Applesign from "../index.js";
-import { AppDirectory } from "../lib/appdir.js";
+import Applesign from "../dist/index.js";
+import { AppDirectory } from "../dist/lib/appdir.js";
 
 const mochaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
