@@ -131,13 +131,12 @@ async function ideviceprovision(action: any, optarg?: any) {
 }
 
 async function codesign(
-  identity: string,
+  identity: string | undefined,
   entitlement: string | undefined,
   keychain: string | undefined,
   file: string,
 ) {
   if (identity === undefined) {
-    // XXX: typescript can ensure this at compile time
     throw new Error("--identity is required to sign");
   }
   if (identity.endsWith(".p12")) {
