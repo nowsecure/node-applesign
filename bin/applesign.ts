@@ -47,7 +47,9 @@ async function main(argv: string[]): Promise<void> {
     }
     try {
       await as[target](options.file);
-      const outfile = as.config.outfile || options.file;
+      // with -r the resigned IPA replaces the input file
+      const outfile = (!as.config.replaceipa && as.config.outfile) ||
+        as.config.file;
       console.log(`Target is now signed: ${outfile}`);
     } catch (err) {
       process.exitCode = 1;
