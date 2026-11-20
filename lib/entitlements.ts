@@ -1,5 +1,4 @@
 import plist from "./plist.js";
-import { build as plistBuild } from "plist";
 
 const entitlementTemplate = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -28,5 +27,5 @@ export default function defaultEntitlements(appid: any, devid: any): string {
   ent["com.apple.developer.ubiquity-kvstore-identifier"] = appid;
   delete ent["aps-environment"];
   ent["com.apple.developer.icloud-container-identifiers"] = "iCloud." + devid;
-  return plistBuild(ent, { pretty: true, allowEmpty: false }).toString();
+  return plist.build(ent);
 }

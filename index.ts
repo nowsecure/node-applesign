@@ -20,8 +20,6 @@ import adjustInfoPlist from "./lib/info-plist.js";
 import defaultEntitlements from "./lib/entitlements.js";
 import * as bin from "./lib/bin.js";
 
-import { build as plistBuild } from "plist";
-
 /* union arrays and merge dicts instead of replacing them */
 function mergeEntitlements(orig: any, add: any): any {
   for (const [k, v] of Object.entries(add)) {
@@ -351,7 +349,7 @@ class Applesign {
         }
         data.Entitlements = plist.parse(ent.toString().trim());
         /* TODO: self-sign mobile provisioning */
-        return fs.writeFileSync(mobileProvision, plistBuild(data).toString());
+        return fs.writeFileSync(mobileProvision, plist.build(data));
       }
       return fs.copyFileSync(file, mobileProvision);
     }
@@ -388,7 +386,7 @@ class Applesign {
       }
       let entMacho = plist.parse(ent.toString().trim());
       entMacho = this.addEntitlementsSync(entMacho);
-      const newEntitlements = plistBuild(entMacho).toString();
+      const newEntitlements = plist.build(entMacho);
       const newEntitlementsFile = file + ".entitlements";
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
       fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
@@ -412,7 +410,7 @@ class Applesign {
       if (this.config.selfSignedProvision) {
         this.emit("message", "Using an unsigned provisioning");
         const newEntitlementsFile = file + ".entitlements";
-        const newEntitlements = plistBuild(entMacho).toString();
+        const newEntitlements = plist.build(entMacho);
         const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
         fs.writeFileSync(tmpEntitlementsFile, newEntitlements);
         this.config.entitlement = tmpEntitlementsFile;
@@ -534,7 +532,7 @@ class Applesign {
         ? defaultEntitlements(appId, teamId)
         : this.config.entitlement
         ? fs.readFileSync(this.config.entitlement).toString()
-        : plistBuild(entMacho).toString();
+        : plist.build(entMacho);
       const ent = plist.parse(newEntitlements.trim()) as Record<string, any>;
       const shouldRenameGroups = !this.config.mobileprovision &&
         !this.config.cloneEntitlements;
@@ -559,7 +557,7 @@ class Applesign {
       if (this.config.massageEntitlements === true) {
         delete ent["com.apple.developer.ubiquity-container-identifiers"]; // TODO should be massaged
       }
-      newEntitlements = plistBuild(ent).toString();
+      newEntitlements = plist.build(ent);
 
       this.debugInfo(file, "newEntitlements", ent);
 
@@ -652,10 +650,7 @@ class Applesign {
       );
       const newEntitlementsFile = file + ".entitlements";
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
-      const entstr = plistBuild(mp.Entitlements, {
-        pretty: true,
-        allowEmpty: false,
-      }).toString();
+      const entstr = plist.build(mp.Entitlements);
       fs.writeFileSync(tmpEntitlementsFile, entstr);
       entitlements = tmpEntitlementsFile;
     } else {
