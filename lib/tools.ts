@@ -289,8 +289,7 @@ async function xcaToIpa(ifile: string, odir: string) {
   return execProgram(getTool("xcodebuild")!, args);
 }
 
-// XXX: the out parameter is never used. therfor the caller doesnt works well
-async function insertLibrary(lib: string, bin: string, out: string) {
+async function insertLibrary(lib: string, bin: string) {
   const args = ["--strip-codesig", "--all-yes", lib, bin, bin];
   const res = await execProgram(getTool("insert_dylib"), args);
   console.error(JSON.stringify(res));

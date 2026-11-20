@@ -973,7 +973,7 @@ function insertLibraryLL(outputLib: any, targetLib: string, config: any) {
         /* forbidden in iOS */
         // const insertedLibraryName = '@executable_path/Frameworks/' + path.basename(targetLib);
         tools
-          .insertLibrary(insertedLibraryName, config.appbin, outputLib)
+          .insertLibrary(insertedLibraryName, config.appbin)
           .then(resolve)
           .catch(reject);
       });
