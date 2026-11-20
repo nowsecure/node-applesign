@@ -369,7 +369,6 @@ class Applesign {
       }
       let entMacho = plist.parse(ent.toString().trim());
       entMacho = this.addEntitlementsSync(entMacho);
-      // TODO: merge additional entitlements here
       const newEntitlements = plistBuild(entMacho).toString();
       const newEntitlementsFile = file + ".entitlements";
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
@@ -390,7 +389,7 @@ class Applesign {
       entMacho = plist.parse(ent.toString().trim());
       entMacho = this.addEntitlementsSync(entMacho);
       this.debugInfo(file, "fullPath", file);
-      this.debugInfo(file, "oldEntitlements", entMacho || "TODO");
+      this.debugInfo(file, "oldEntitlements", entMacho);
       if (this.config.selfSignedProvision) {
         this.emit("message", "Using an unsigned provisioning");
         const newEntitlementsFile = file + ".entitlements";
