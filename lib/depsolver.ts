@@ -8,7 +8,7 @@ function resolveRpath(
 ): string | null {
   const libName = lib.substring(6); /* chop @rpath */
   const rpaths = libs.filter((x: string) => {
-    return x.indexOf(libName) !== -1;
+    return x.endsWith(libName);
   });
   if (rpaths.length > 0) {
     return rpaths[0];
@@ -44,7 +44,7 @@ export function resolvePath(
     return resolvePathDirective(executable, lib, "@executable_path");
   }
   if (lib.startsWith("@loader_path")) {
-    return resolvePathDirective(executable, lib, "@loader_path");
+    return resolvePathDirective(file, lib, "@loader_path");
   }
   throw new Error("Cannot resolve: " + file);
 }
