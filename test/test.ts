@@ -151,6 +151,28 @@ describe("API", () => {
         }
       });
     }
+
+    it("signs nested apps with --parallel", async () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const signer = new Applesign({ parallel: true, pseudoSign: true });
+      try {
+        const appdir = path.join(root, "Main.app");
+        const main = createBundle(appdir, "Main");
+        const watch = createBundle(path.join(appdir, "Watch/W.app"), "W");
+        const signed: string[] = [];
+        signer.signFile = async (file: string) => {
+          signed.push(file);
+          return signer;
+        };
+        signer.adjustEntitlements = async () => {};
+        await signer.signAppDirectory(appdir);
+        assert.deepStrictEqual(signed.sort(), [main, watch].sort());
+        assert.strictEqual(signer.config.appdir, appdir);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
   });
 });
 

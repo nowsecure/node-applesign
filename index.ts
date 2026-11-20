@@ -156,9 +156,7 @@ class Applesign {
     if (this.config.run) {
       await runScript(this.config.run, this);
     }
-    if (this.config.appdir === undefined) {
-      this.config.appdir = ipadir;
-    }
+    this.config.appdir = ipadir;
     const binname = getExecutable(this.config.appdir);
     this.emit("msg", "Main Executable Name: " + binname);
     this.config.appbin = bundleExecutablePath(this.config.appdir, binname);
@@ -178,11 +176,14 @@ class Applesign {
     } else {
       this.emit("message", "Main IPA executable is not encrypted");
     }
-    if (this.config.insertLibrary !== undefined) {
+    // nested apps are only signed, like the appexs
+    if (!skipNested && this.config.insertLibrary !== undefined) {
       await injectLibrary(this.config);
     }
-    const infoPlistPath = path.join(this.config.appdir, "Info.plist");
-    adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
+    if (!skipNested) {
+      const infoPlistPath = path.join(this.config.appdir, "Info.plist");
+      adjustInfoPlist(infoPlistPath, this.config, this.emit.bind(this));
+    }
     if (!this.config.pseudoSign) {
       if (!this.config.mobileprovision) {
         throw new Error("warning: No mobile provisioning file provided");
@@ -196,6 +197,7 @@ class Applesign {
     await this.signLibraries(this.config.appbin, this.config.appdir);
 
     if (skipNested !== true) {
+      const { appbin } = this.config;
       for (const nest of this.nested) {
         if (tools.isDirectory(nest)) {
           await this.signAppDirectoryInternal(nest, true);
@@ -203,6 +205,7 @@ class Applesign {
           this.emit("warning", "Cannot find " + nest);
         }
       }
+      Object.assign(this.config, { appdir: ipadir, appbin });
     }
   }
 
