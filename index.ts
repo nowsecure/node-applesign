@@ -491,8 +491,10 @@ class Applesign {
       }
     }
     if (this.config.osversion !== undefined) {
-      // DTPlatformVersion
       plistData.MinimumOSVersion = this.config.osversion;
+      if (plistData.DTPlatformVersion !== undefined) {
+        plistData.DTPlatformVersion = this.config.osversion;
+      }
       plist.writeFileSync(infoPlist, plistData);
     }
     if (additionalKeychainGroups.length > 0) {
