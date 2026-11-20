@@ -5,6 +5,7 @@ import { EventEmitter } from "node:events";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import fs from "node:fs";
 import { walkSync } from "@nodelib/fs.walk";
 import plist from "./lib/plist.js";
@@ -153,7 +154,7 @@ class Applesign {
     fchk(arguments, ["string", "boolean"]);
     await this._pullMobileProvision();
     if (this.config.run) {
-      runScriptSync(this.config.run, this);
+      await runScript(this.config.run, this);
     }
     if (this.config.appdir === undefined) {
       this.config.appdir = ipadir;
@@ -998,11 +999,11 @@ function getOutputPath(cwd: string, ofile: string) {
     : path.join(parentDirectory(cwd), ofile);
 }
 
-function runScriptSync(script: string, session: any) {
+async function runScript(script: string, session: any) {
   if (script.endsWith(".js")) {
     try {
-      const s = require(script);
-      return s(session);
+      const s = await import(pathToFileURL(path.resolve(script)).href);
+      return s.default(session);
     } catch (e: any) {
       console.error(e);
       return false;

@@ -254,42 +254,9 @@ async function xcaToIpa(ifile: string, odir: string) {
 
 // XXX: the out parameter is never used. therfor the caller doesnt works well
 async function insertLibrary(lib: string, bin: string, out: string) {
-  let error = null;
-  try {
-    const machoMangle = require("macho-mangle");
-    try {
-      let src = fs.readFileSync(bin);
-      if (lib.indexOf("@rpath") === 0) {
-        src = machoMangle(src, {
-          type: "rpath",
-          name: "@executable_path/Frameworks",
-        });
-      }
-      const dst = machoMangle(src, {
-        type: "load_dylib",
-        name: lib,
-        version: {
-          current: "1.0.0",
-          compat: "0.0.0",
-        },
-      });
-      fs.writeFileSync(bin, dst);
-      console.log("Library inserted");
-    } catch (e) {
-      error = e;
-    }
-  } catch (e) {
-    if (getTool("insert_dylib") !== null) {
-      const args = ["--strip-codesig", "--all-yes", lib, bin, bin];
-      const res = await execProgram(getTool("insert_dylib")!, args);
-      console.error(JSON.stringify(res));
-    } else {
-      error = new Error("Cannot find insert_dylib or macho-mangle");
-    }
-  }
-  if (error) {
-    throw error;
-  }
+  const args = ["--strip-codesig", "--all-yes", lib, bin, bin];
+  const res = await execProgram(getTool("insert_dylib"), args);
+  console.error(JSON.stringify(res));
 }
 
 export interface Identity {
