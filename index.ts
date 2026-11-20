@@ -1031,7 +1031,8 @@ function getAppDirectory(directory: string): string {
 
 async function enumerateTestFiles(dir: string): Promise<string[]> {
   let tests: string[] = [];
-  if (fs.existsSync(dir)) {
+  // lstat based, never move tests out of a symlinked PlugIns
+  if (tools.isDirectory(dir)) {
     tests = (await fs.promises.readdir(dir)).filter((x: string) => {
       return x.indexOf(".xctest") !== -1;
     });
