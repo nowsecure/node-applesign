@@ -68,7 +68,7 @@ describe("API", () => {
 
   describe("removeXCTests", () => {
     it("deletes the directories left empty", async () => {
-      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-xctest-"));
       const signer = new Applesign({});
       try {
         const appdir = path.join(root, "Main.app");

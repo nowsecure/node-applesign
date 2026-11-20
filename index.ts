@@ -228,9 +228,10 @@ class Applesign {
   async removeXCTests() {
     fchk(arguments, []);
     // reversed, children come first so emptied dirs (.framework) go too
-    for (const { path: p, dirent } of walkSync(this.config.appdir).reverse()) {
+    const dir = this.config.appdir;
+    for (const { path: p, dirent } of walkSync(dir).reverse()) {
       const empty = dirent.isDirectory() && fs.readdirSync(p).length === 0;
-      if (empty || p.toLowerCase().includes("xctest")) {
+      if (empty || path.relative(dir, p).toLowerCase().includes("xctest")) {
         this.emit("message", "Deleting " + p);
         fs.rmSync(p, { recursive: true });
       }
