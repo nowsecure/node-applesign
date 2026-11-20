@@ -96,6 +96,14 @@ export function bundleExecutablePath(
   return exe;
 }
 
+/** Throw if file exists and its real path is outside of the bundleDir. */
+export function assertInsideBundle(bundleDir: string, file: string): void {
+  const root = fs.realpathSync(bundleDir) + path.sep;
+  if (fs.existsSync(file) && !fs.realpathSync(file).startsWith(root)) {
+    throw new Error("Refusing to sign a file outside of the bundle: " + file);
+  }
+}
+
 // internal functions //
 /**
  * Finds libraries that are present in the application bundle but not

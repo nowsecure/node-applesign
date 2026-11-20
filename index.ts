@@ -10,7 +10,11 @@ import { walkSync } from "@nodelib/fs.walk";
 import plist from "simple-plist";
 import fchk from "./lib/fchk.js";
 import { homedir, tmpdir } from "node:os";
-import { AppDirectory, bundleExecutablePath } from "./lib/appdir.js";
+import {
+  AppDirectory,
+  assertInsideBundle,
+  bundleExecutablePath,
+} from "./lib/appdir.js";
 import depSolver from "./lib/depsolver.js";
 import adjustInfoPlist from "./lib/info-plist.js";
 import defaultEntitlements from "./lib/entitlements.js";
@@ -740,11 +744,17 @@ class Applesign {
       return Promise.all(promises);
     };
 
+    // last line of defense: never sign anything outside of the app bundle
+    const signBundleFile = async (file: string) => {
+      assertInsideBundle(appdir, file);
+      return this.signFile(file);
+    };
+
     const layeredSigning = async (libs: any) => {
       const libsCopy = libs.slice(0).reverse();
       for (const deps of libsCopy) {
         const promises = deps.map((dep: any) => {
-          return this.signFile(dep);
+          return signBundleFile(dep);
         });
         await Promise.all(promises);
       }
@@ -754,7 +764,7 @@ class Applesign {
     const serialSigning = async (libs: any) => {
       const libsCopy = libs.slice(0).reverse();
       for (const lib of libsCopy) {
-        await this.signFile(lib);
+        await signBundleFile(lib);
         if (this.config.verify) {
           this.emit("message", "Verifying " + lib);
           await tools.verifyCodesign(lib);
@@ -776,8 +786,9 @@ class Applesign {
       }
     } else {
       for (const appex of ls.appexs) {
+        assertInsideBundle(appdir, appex);
         await this.adjustEntitlements(appex);
-        await this.signFile(appex);
+        await signBundleFile(appex);
       }
 
       this.emit(
