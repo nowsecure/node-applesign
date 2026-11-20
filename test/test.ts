@@ -105,11 +105,14 @@ describe("API", () => {
         fs.mkdirSync(path.join(appdir, "Res.entitlements"), {
           recursive: true,
         });
+        fs.mkdirSync(path.join(appdir, "SC_Info"));
         for (
           const file of [
             "Res.entitlements/keep",
             "Main.entitlements",
             "embedded.mobileprovision",
+            "SC_Info/Main.sinf",
+            "SC_Info/Main.supp",
           ]
         ) {
           fs.writeFileSync(path.join(appdir, file), "");

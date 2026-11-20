@@ -50,7 +50,7 @@ const helpMessage = `Usage:
   -z, --ignore-zip-errors       Ignore unzip/7z uncompressing errors
 
   Stripping:
-  -F, --without-signing-files   Remove signing related files
+  -F, --without-signing-files   Remove signing related files, including SC_Info
   -p, --without-plugins         Remove plugins (excluding XCTests) from the resigned IPA
   -w, --without-watchapp        Remove the WatchApp from the IPA before resigning
   -x, --without-xctests         Remove the XCTests from the resigned IPA

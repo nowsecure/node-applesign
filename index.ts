@@ -243,10 +243,11 @@ class Applesign {
   async removeSigningFiles() {
     fchk(arguments, []);
     const ext = /\.(entitlements|mobileprovision)$/;
+    // SC_Info holds the FairPlay .sinf/.supp files of the app and its appexs
     walkSync(this.config.appdir).forEach(({ path: target, name, dirent }) => {
-      if (!dirent.isDirectory() && ext.test(name)) {
+      if (dirent.isDirectory() ? name === "SC_Info" : ext.test(name)) {
         this.emit("message", "Deleting " + target);
-        fs.unlinkSync(target);
+        fs.rmSync(target, { recursive: true, force: true });
       }
     });
   }
