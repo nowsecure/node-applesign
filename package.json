@@ -35,7 +35,6 @@
   "dependencies": {
     "@nodelib/fs.walk": "^3.0.1",
     "@types/minimist": "^1.2.5",
-    "colors": "1.4.0",
     "fatmacho": "0.1.2",
     "fs-extra": "^11.3.0",
     "macho": "^1.4.0",

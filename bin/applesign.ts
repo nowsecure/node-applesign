@@ -4,14 +4,8 @@ import pkgVersion from "../lib/version.js";
 import { join } from "node:path";
 import * as tools from "../lib/tools.js";
 import * as config from "../lib/config.js";
-import colors from "colors";
+import { styleText } from "node:util";
 import Applesign from "../index.js";
-
-colors.setTheme({
-  error: "red",
-  msg: "yellow",
-  warning: "green",
-});
 
 // Removed unused SpawnOptions import (no longer required)
 /**
@@ -42,12 +36,12 @@ async function main(argv: string[]): Promise<void> {
     }
     // Subscribe to signing events
     as.events
-      .on("message", (msg: string) => console.log(colors.msg(msg)))
+      .on("message", (msg: string) => console.log(styleText("yellow", msg)))
       .on(
         "warning",
-        (msg: string) => console.error(colors.warning("warning"), msg),
+        (msg: string) => console.error(styleText("green", "warning"), msg),
       )
-      .on("error", (msg: string) => console.error(colors.msg(msg)));
+      .on("error", (msg: string) => console.error(styleText("yellow", msg)));
     if (!options.file) {
       throw new Error("No file provided");
     }

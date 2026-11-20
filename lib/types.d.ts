@@ -1,4 +1,3 @@
-declare module "colors";
 declare module "simple-plist";
 declare module "plist";
 declare module "macho-entitlements";
