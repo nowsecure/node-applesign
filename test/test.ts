@@ -8,6 +8,7 @@ import Applesign from "../dist/index.js";
 import { AppDirectory } from "../dist/lib/appdir.js";
 import plist from "../dist/lib/plist.js";
 import adjustInfoPlist from "../dist/lib/info-plist.js";
+import { checkIdentityInProvision } from "../dist/lib/idprov.js";
 
 const ipaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
@@ -46,6 +47,31 @@ describe("API", () => {
       const value = plist.parse(binary);
       assert.strictEqual(value, 1);
       assert.strictEqual(plist.parse(plist.build(value)), 1);
+    });
+  });
+
+  describe("checkIdentityInProvision", () => {
+    it("rejects an identity missing from the provisioning", () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      try {
+        const mp = path.join(root, "embedded.mobileprovision");
+        fs.writeFileSync(
+          mp,
+          "\x30\x82" + plist.build({
+            DeveloperCertificates: [Buffer.from("cert")],
+          }),
+        );
+        // sha1("cert")
+        const hash = "cd1b5069963d9878f92f1cfbe77f8912cdd5b2ed";
+        checkIdentityInProvision(mp, "dev.p12");
+        assert.throws(
+          () => checkIdentityInProvision(mp, "0".repeat(40)),
+          /is not in/,
+        );
+        checkIdentityInProvision(mp, hash);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
     });
   });
 

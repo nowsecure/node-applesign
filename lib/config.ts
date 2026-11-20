@@ -2,7 +2,7 @@
 
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import idprov from "./idprov.js";
+import idprov, { checkIdentityInProvision } from "./idprov.js";
 import { parseArgs } from "node:util";
 
 const shortHelpMessage = `Usage:
@@ -193,6 +193,8 @@ const fromOptions = function (opt: any): ConfigOptions {
     opt.mobileprovisions = [mp];
     if (!opt.identity) {
       opt.identity = idprov(mp);
+    } else {
+      checkIdentityInProvision(mp, opt.identity);
     }
   } else {
     opt.mobileprovision = undefined;
