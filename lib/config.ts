@@ -1,6 +1,7 @@
 // Converted to ES module
 
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import idprov from "./idprov.js";
 import { parseArgs } from "node:util";
 
@@ -227,7 +228,10 @@ const fromOptions = function (opt: any): ConfigOptions {
     osversion: opt.osversion || undefined,
     appbin: undefined,
     appdir: undefined,
-    tempdir: opt.tempdir ? path.resolve(opt.tempdir) : undefined,
+    // never use -T as is, cleanup() removes the whole tempdir
+    tempdir: opt.tempdir
+      ? path.join(path.resolve(opt.tempdir), randomUUID())
+      : undefined,
     payloadOnly: false,
     outfile: opt.outfile,
     parallel: opt.parallel || false,
