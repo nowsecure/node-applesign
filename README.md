@@ -12,8 +12,29 @@ Sergi Alvarez Capilla aka pancake @ nowsecure.com
 - zip - re-create IPA
 - unzip - decompress IPA (see `npm run unzip-lzfse`)
 - codesign - sign and verify binaries (`ldid` on Linux, see README.linux.md)
+- ldid - [Procursus ldid](https://github.com/ProcursusTeam/ldid) only, for
+  `-Z,--pseudo-sign` and `.p12` identities (see below)
 - security - get entitlements from mobileprovision (`openssl` on Linux)
 - insert_dylib - only if you want to use the -I,--insert flag
+
+### ldid
+
+applesign only supports the
+[Procursus ldid](https://github.com/ProcursusTeam/ldid) `2.1.5-procursus7`
+(`procursus8` crashes when signing with a `.p12`). The `ldid` from saurik,
+shipped by distro packages and by Homebrew's `ldid` formula, can't sign with
+real certificates and is not supported.
+
+On macOS install it with Homebrew. It conflicts with the `ldid` formula, so
+unlink that one first if it is installed:
+
+```sh
+brew unlink ldid
+brew install ldid-procursus
+```
+
+On Linux download the release binary, see [README.linux.md](README.linux.md). To
+use an ldid that is not in the `PATH` set `APPLESIGN_LDID=/path/to/ldid`.
 
 ## Usage
 
@@ -31,7 +52,7 @@ Usage:
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -h, --help                    Show verbose help message
   -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file (ldid)
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
@@ -73,7 +94,7 @@ Usage:
   Signing:
       --use-openssl             Use OpenSSL cms instead of Apple's security tool
   -a, --all                     Resign all binaries, even it unrelated to the app
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file (ldid)
   -k, --keychain [KEYCHAIN]     Specify alternative keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
   -L, --identities              List local codesign identities
@@ -114,6 +135,8 @@ Installing in the device:
 
   $ ideviceinstaller -i target-resigned.ipa
   $ ios-deploy -b  target-resigned.ipa
+
+Only the Procursus ldid is supported (brew install ldid-procursus).
 ```
 
 List local codesign identities:

@@ -16,7 +16,7 @@ const shortHelpMessage = `Usage:
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -h, --help                    Show verbose help message
   -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file (ldid)
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
@@ -60,7 +60,7 @@ const helpMessage = `Usage:
   -a, --all                     Resign all binaries, even it unrelated to the app
   -d, --debug [file]            Create debug file with all the signing process
   -D, --device-provision        Automatically find the mobileprovision for the available device
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file (ldid)
   -j, --json '{}'               Set the alternative JSON for signing files with custom entitlements
   -k, --keychain [KEYCHAIN]     Specify custom keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
@@ -71,7 +71,7 @@ const helpMessage = `Usage:
   -S, --self-sign-provision     Self-sign mobile provisioning (EXPERIMENTAL)
   -v, --verify                  Verify all the signed files at the end
   -V, --verify-twice            Verify after signing every file and at the end
-  -Z, --pseudo-sign             Pseudo sign the binaries (EXPERIMENTAL)
+  -Z, --pseudo-sign             Pseudo sign the binaries with ldid (EXPERIMENTAL)
 
   Info.plist
   -b, --bundleid [BUNDLEID]     Change the bundleid when repackaging
@@ -105,6 +105,8 @@ Installing in the device:
 
   $ ideviceinstaller -i target-resigned.ipa
   $ ios-deploy -b  target-resigned.ipa
+
+Only the Procursus ldid is supported (brew install ldid-procursus).
 `;
 
 /*

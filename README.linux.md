@@ -1,8 +1,9 @@
 # Running applesign on Linux
 
 Without `codesign`, applesign signs with a `.p12` identity using the
-[Procursus ldid](https://github.com/ProcursusTeam/ldid), which can sign with
-real certificates (`saurik`'s ldid from distro packages and brew can't). Use
+[Procursus ldid](https://github.com/ProcursusTeam/ldid), the only ldid that
+applesign supports. The `ldid` from saurik, shipped by distro packages and by
+Homebrew's `ldid` formula, can't sign with real certificates. Use
 `v2.1.5-procursus7`: `procursus8` crashes when signing with a p12.
 
 ```sh
