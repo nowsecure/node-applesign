@@ -7,6 +7,7 @@ import { describe, it } from "node:test";
 import Applesign from "../dist/index.js";
 import { AppDirectory } from "../dist/lib/appdir.js";
 import plist from "../dist/lib/plist.js";
+import adjustInfoPlist from "../dist/lib/info-plist.js";
 
 const ipaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
@@ -120,6 +121,48 @@ describe("API", () => {
       } finally {
         fs.rmSync(root, { recursive: true, force: true });
         fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("bundleid", () => {
+    it("keeps the app extension ids under the new bundle id", () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      try {
+        const appdir = path.join(root, "Main.app");
+        const ids: Record<string, string> = {
+          ".": "com.old.app",
+          "PlugIns/Share.appex": "com.old.app.share",
+          "PlugIns/Widget.appex": "com.other.widget",
+          "../External.appex": "com.ext.keep",
+        };
+        for (const [dir, id] of Object.entries(ids)) {
+          fs.mkdirSync(path.join(appdir, dir), { recursive: true });
+          plist.writeFileSync(path.join(appdir, dir, "Info.plist"), {
+            CFBundleIdentifier: id,
+          });
+        }
+        fs.symlinkSync(
+          path.join(root, "External.appex"),
+          path.join(appdir, "PlugIns/External.appex"),
+          "dir",
+        );
+        adjustInfoPlist(
+          path.join(appdir, "Info.plist"),
+          { appdir, bundleid: "com.new.app" } as any,
+          () => {},
+        );
+        const idOf = (dir: string) =>
+          plist.readFileSync(path.join(appdir, dir, "Info.plist"))
+            .CFBundleIdentifier;
+        assert.deepStrictEqual(Object.keys(ids).map(idOf), [
+          "com.new.app",
+          "com.new.app.share",
+          "com.new.app.widget",
+          "com.ext.keep",
+        ]);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
       }
     });
   });

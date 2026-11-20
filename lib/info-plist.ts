@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import plist from "./plist.js";
 import { ConfigOptions } from "./config";
 import { assertNotSymlink } from "./tools.js";
@@ -45,11 +47,43 @@ export default function fix(
     }
   }
   if (options.bundleid) {
+    renameAppExtensions(file, data.CFBundleIdentifier, options.bundleid, emit);
     setBundleId(data, options.bundleid);
     changed = true;
   }
   if (changed) {
     plist.writeFileSync(file, data);
+  }
+}
+
+/** keep the appex ids prefixed by the new main bundle id, iOS requires it */
+function renameAppExtensions(
+  file: string,
+  oldId: any,
+  newId: string,
+  emit: any,
+) {
+  const plugins = path.join(path.dirname(file), "PlugIns");
+  assertNotSymlink(plugins);
+  const appexs = fs.existsSync(plugins) ? fs.readdirSync(plugins) : [];
+  for (const appex of appexs.filter((name) => name.endsWith(".appex"))) {
+    const infoPath = path.join(plugins, appex, "Info.plist");
+    if (fs.lstatSync(path.dirname(infoPath)).isSymbolicLink()) {
+      continue; // never write outside the bundle
+    }
+    assertNotSymlink(infoPath);
+    const info = fs.existsSync(infoPath) ? plist.readFileSync(infoPath) : {};
+    const id = info.CFBundleIdentifier;
+    if (typeof id === "string") {
+      info.CFBundleIdentifier = oldId && id.startsWith(oldId + ".")
+        ? newId + id.slice(oldId.length)
+        : newId + "." + id.split(".").pop();
+      emit(
+        "message",
+        `Renaming ${appex} bundle id to ${info.CFBundleIdentifier}`,
+      );
+      plist.writeFileSync(infoPath, info);
+    }
   }
 }
 
