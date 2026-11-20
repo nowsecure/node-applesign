@@ -73,6 +73,7 @@ async function execProgram(
       _err = Buffer.concat([_err, data]);
     });
     child.stdin.end();
+    child.on("error", reject);
     child.on("close", (code: number) => {
       if (code !== 0) {
         let msg = `stdout: ${_out.toString("utf8")}`;
