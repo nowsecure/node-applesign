@@ -17,19 +17,19 @@ async function main(argv: string[]): Promise<void> {
   const options = config.compile(conf);
   const as = new Applesign(options);
   // initialize
-  if (conf.identities || conf.L) {
+  if (conf.identities) {
     const ids = await as.getIdentities();
     ids.forEach((id: any) => {
       console.log(id.hash, id.name);
     });
   } else if (conf.version) {
     console.log(pkgVersion);
-  } else if (conf.h || conf.help) {
+  } else if (conf.help) {
     console.error(config.helpMessage);
   } else if (conf._.length === 0) {
     console.error(config.shortHelpMessage);
   } else {
-    const singleMode = Boolean(conf.s || conf.single);
+    const singleMode = Boolean(conf.single);
     const target = getTargetMethod(options.file, singleMode);
     if (!target) {
       throw new Error("Cannot open file");
@@ -68,8 +68,8 @@ async function main(argv: string[]): Promise<void> {
 
 // Invoke main with proper typing
 main(process.argv)
-  .catch((err: Error) => {
-    console.error(err);
+  .catch((err: any) => {
+    console.error(err.code?.startsWith("ERR_PARSE_ARGS") ? err.message : err);
     process.exitCode = 1;
   });
 
