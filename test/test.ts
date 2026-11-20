@@ -66,6 +66,35 @@ describe("API", () => {
     });
   });
 
+  describe("removeXCTests", () => {
+    it("deletes the directories left empty", async () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const signer = new Applesign({});
+      try {
+        const appdir = path.join(root, "Main.app");
+        const frameworks = path.join(appdir, "Frameworks");
+        for (
+          const file of [
+            "XCTest.framework/XCTest",
+            "Swift.framework/libXCTestSwiftSupport.dylib",
+            "Keep.framework/Keep",
+          ]
+        ) {
+          fs.mkdirSync(path.dirname(path.join(frameworks, file)), {
+            recursive: true,
+          });
+          fs.writeFileSync(path.join(frameworks, file), "");
+        }
+        signer.config.appdir = appdir;
+        await signer.removeXCTests();
+        assert.deepStrictEqual(fs.readdirSync(frameworks), ["Keep.framework"]);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("extension symlinks", () => {
     function createBundle(directory: string, name: string): string {
       fs.mkdirSync(directory, { recursive: true });
