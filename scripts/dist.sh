@@ -21,5 +21,6 @@ node --build-sea "$SEA/sea.json"
 if [ "$(uname)" = Darwin ]; then
   codesign --sign - -f "$OUT"
 fi
+test "$(./"$OUT" --version)" = "$V"
 rm -f "$OUT.zip"
 zip -9 "$OUT.zip" "$OUT"

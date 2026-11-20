@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { describe, it } from "node:test";
 import Applesign from "../dist/index.js";
 import { AppDirectory } from "../dist/lib/appdir.js";
+import plist from "../dist/lib/plist.js";
 
 const ipaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
@@ -29,6 +30,24 @@ describe("API", () => {
 */
 
 describe("API", () => {
+  describe("plist", () => {
+    it("preserves a binary plist integer stored in 16 bytes", () => {
+      const binary = Buffer.from(
+        "62706c6973743030" + // bplist00
+          "1400000000000000000000000000000001" + // 16-byte integer: 1
+          "08" + // object offset
+          "0000000000000101" + // offset and reference sizes
+          "0000000000000001" + // object count
+          "0000000000000000" + // root object index
+          "0000000000000019", // offset table position
+        "hex",
+      );
+      const value = plist.parse(binary);
+      assert.strictEqual(value, 1);
+      assert.strictEqual(plist.parse(plist.build(value)), 1);
+    });
+  });
+
   describe("unzipIPA", () => {
     it("should fail when the input file is missing", async () => {
       const applesign = new Applesign({});

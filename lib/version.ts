@@ -1,2 +1,2 @@
-const version = "7.0.0";
+const version = "7.0.1";
 export default version;
