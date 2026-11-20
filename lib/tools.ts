@@ -113,7 +113,8 @@ function findInPath() {
  */
 function getTool(tool: string): string {
   findInPath();
-  const file = process.env[tool.toUpperCase()] || cmd[tool];
+  // prefixed, unzip and zip already read UNZIP and ZIP as default options
+  const file = process.env["APPLESIGN_" + tool.toUpperCase()] || cmd[tool];
   if (!file) {
     throw new Error(`tools.findInPath: not found: ${tool}`);
   }
