@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { execSync, spawn } from "node:child_process";
 import plist from "./plist.js";
 import path from "node:path";
+import { tmpdir } from "node:os";
 import which from "which";
 import * as bin from "./bin.js";
 import { ConfigOptions } from "./config.js";
@@ -162,11 +163,42 @@ async function codesign(
   return execProgram(getTool("codesign")!, args);
 }
 
+const unlockedP12s: Record<string, Promise<string>> = {};
+
+/*
+ * ldid only takes the p12 password in argv (-U), where any local user can read
+ * it with ps. Re-export the p12 without password into a private tmp dir,
+ * openssl reads the password from the environment. Without the env var ldid
+ * prompts for it.
+ */
+function unlockP12(p12: string): Promise<string> {
+  if (!process.env.APPLESIGN_P12_PASSWORD) {
+    return Promise.resolve(p12);
+  }
+  return unlockedP12s[p12] ??= (async () => {
+    const dir = fs.mkdtempSync(path.join(tmpdir(), "applesign-p12-")); // 0700
+    process.on("exit", () => fs.rmSync(dir, { recursive: true, force: true }));
+    const pem = path.join(dir, "key.pem");
+    const out = path.join(dir, "key.p12");
+    const openssl = getTool("openssl");
+    const read = ["pkcs12", "-in", p12, "-nodes", "-out", pem];
+    read.push("-passin", "env:APPLESIGN_P12_PASSWORD");
+    /* Keychain Access exports RC2 p12s, which OpenSSL 3 only reads with -legacy */
+    await execProgram(openssl, read)
+      .catch(() => execProgram(openssl, [...read, "-legacy"]));
+    const write = ["pkcs12", "-export", "-in", pem, "-out", out];
+    write.push("-passout", "pass:", "-keypbe", "NONE", "-certpbe", "NONE");
+    await execProgram(openssl, write);
+    fs.rmSync(pem);
+    return out;
+  })();
+}
+
 /* pseudo-sign, or sign for real when a p12 is given */
 async function ldidSign(entitlement: any, file: string, p12?: string) {
   const args = ["-S" + (entitlement || "")];
   if (p12 !== undefined) {
-    args.push("-K" + p12, "-U" + (process.env.APPLESIGN_P12_PASSWORD || ""));
+    args.push("-K" + await unlockP12(p12));
     /* sign a main executable as its bundle to seal resources like codesign */
     const dir = path.dirname(file);
     const info = path.join(dir, "Info.plist");
