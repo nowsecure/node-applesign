@@ -22,7 +22,6 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.15.29",
     "deno": "^2.3.5",
@@ -36,7 +35,6 @@
     "@nodelib/fs.walk": "^3.0.1",
     "@types/minimist": "^1.2.5",
     "fatmacho": "0.1.2",
-    "fs-extra": "^11.3.0",
     "macho": "^1.4.0",
     "macho-entitlements": "^0.2.3",
     "macho-is-encrypted": "^0.1.2",

@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import fs from "fs-extra";
+import fs from "node:fs";
 import { walkSync } from "@nodelib/fs.walk";
 import plist from "simple-plist";
 import fchk from "./lib/fchk.js";
@@ -49,7 +49,7 @@ class Applesign {
   _fullPathInTmp(filePath: string) {
     const dirname = path.dirname(filePath);
     const dirnameInTmp = path.join(this.tmpDir, dirname);
-    fs.mkdirpSync(dirnameInTmp);
+    fs.mkdirSync(dirnameInTmp, { recursive: true });
     return path.join(this.tmpDir, filePath);
   }
 
@@ -269,7 +269,7 @@ class Applesign {
     await tools.asyncRimraf(plugdir);
     if (tests.length > 0) {
       await moveFiles(tests, tmpdir, plugdir);
-      await fs.rmdir(tmpdir);
+      await fs.promises.rmdir(tmpdir);
     }
   }
 
@@ -332,7 +332,7 @@ class Applesign {
         fs.writeFileSync(mobileProvision, plistBuild(data).toString());
         /* TODO: self-sign mobile provisioning */
       }
-      return fs.copySync(file, mobileProvision);
+      return fs.copyFileSync(file, mobileProvision);
     }
   }
 
@@ -859,7 +859,7 @@ class Applesign {
     }
     const ipaOut = getOutputPath(this.config.tempdir, this.config.outfile!);
     try {
-      await fs.unlink(ipaOut);
+      await fs.promises.unlink(ipaOut);
     } catch (err: any) {
       if (err?.code !== "ENOENT") {
         throw err;
@@ -870,7 +870,7 @@ class Applesign {
     await tools.zip(this.config.tempdir, ipaOut, rootFolder);
     if (this.config.replaceipa) {
       this.events.emit("message", "mv into " + ipaIn);
-      await fs.rename(ipaOut, ipaIn);
+      await fs.promises.rename(ipaOut, ipaIn);
     }
   }
 
@@ -1067,7 +1067,7 @@ function getAppDirectory(directory: string): string {
 async function enumerateTestFiles(dir: string): Promise<string[]> {
   let tests: string[] = [];
   if (fs.existsSync(dir)) {
-    tests = (await fs.readdir(dir)).filter((x: string) => {
+    tests = (await fs.promises.readdir(dir)).filter((x: string) => {
       return x.indexOf(".xctest") !== -1;
     });
   }
@@ -1075,11 +1075,11 @@ async function enumerateTestFiles(dir: string): Promise<string[]> {
 }
 
 async function moveFiles(files: string[], sourceDir: string, destDir: string) {
-  await fs.mkdir(destDir, { recursive: true });
+  await fs.promises.mkdir(destDir, { recursive: true });
   for (const f of files) {
     const oldName = path.join(sourceDir, f);
     const newName = path.join(destDir, f);
-    await fs.rename(oldName, newName);
+    await fs.promises.rename(oldName, newName);
   }
 }
 export default Applesign;
