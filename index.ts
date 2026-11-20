@@ -88,10 +88,6 @@ class Applesign {
     if (typeof file === "string") {
       this.setFile(file);
     }
-    tools.setOptions({
-      use7zip: this.config.use7zip,
-      useOpenSSL: this.config.useOpenSSL,
-    });
     // unsure, but this.config.file shouldnt be undefined
     if (!this.config.file) {
       this.config.file = file;
@@ -304,7 +300,10 @@ class Applesign {
       });
     }
     // iOS refuses to install when the bundle id doesn't match the app-id glob
-    const { Entitlements } = await tools.getMobileProvisionPlist(file);
+    const { Entitlements } = await tools.getMobileProvisionPlist(
+      file,
+      this.config.useOpenSSL,
+    );
     const glob = String(Entitlements?.["application-identifier"])
       .replace(/^[^.]*\./, "");
     const { CFBundleIdentifier } = plist.readFileSync(
@@ -328,6 +327,7 @@ class Applesign {
         /* update entitlements */
         const data = await tools.getMobileProvisionPlist(
           this.config.mobileprovision,
+          this.config.useOpenSSL,
         );
         const mainBin = bundleExecutablePath(appdir, getExecutable(appdir));
         let ent = bin.entitlements(mainBin);
@@ -578,7 +578,10 @@ class Applesign {
       const mp = this.config.mobileprovision
         ? this.config.mobileprovision
         : path.join(this.config.appdir, "embedded.mobileprovision");
-      newEntitlements = await tools.getEntitlementsFromMobileProvision(mp);
+      newEntitlements = await tools.getEntitlementsFromMobileProvision(
+        mp,
+        this.config.useOpenSSL,
+      );
       this.emit("message", JSON.stringify(newEntitlements));
     }
     this.adjustEntitlementsSync(file, newEntitlements);
@@ -642,6 +645,7 @@ class Applesign {
     if (this.config.cloneEntitlements) {
       const mp = await tools.getMobileProvisionPlist(
         this.config.mobileprovision,
+        this.config.useOpenSSL,
       );
       const newEntitlementsFile = file + ".entitlements";
       const tmpEntitlementsFile = this._fullPathInTmp(newEntitlementsFile);
@@ -857,7 +861,12 @@ class Applesign {
     }
     this.events.emit("message", "Zipifying into " + ipaOut + " ...");
     const rootFolder = this.config.allDirs ? "." : "Payload";
-    await tools.zip(this.config.tempdir, ipaOut, rootFolder);
+    await tools.zip(
+      this.config.tempdir,
+      ipaOut,
+      rootFolder,
+      this.config.use7zip,
+    );
     if (this.config.replaceipa) {
       this.events.emit("message", "mv into " + ipaIn);
       await fs.promises.rename(ipaOut, ipaIn);
@@ -884,7 +893,7 @@ class Applesign {
     await this.cleanup();
     this.events.emit("message", "Unzipping " + file);
     try {
-      await tools.unzip(file, workdir);
+      await tools.unzip(file, workdir, this.config.use7zip);
     } catch (e) {
       if (!this.config.ignoreZipErrors) {
         throw e;

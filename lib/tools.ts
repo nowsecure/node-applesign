@@ -7,10 +7,6 @@ import which from "which";
 import * as bin from "./bin.js";
 import { ConfigOptions } from "./config.js";
 
-// TODO: remove globals
-let use7zip = false;
-let useOpenSSL = false;
-
 const cmdSpec = {
   "7z": "/usr/local/bin/7z",
   codesign: "/usr/bin/codesign",
@@ -229,7 +225,7 @@ async function verifyCodesign(
   return execProgram(getTool("codesign")!, args);
 }
 
-async function getMobileProvisionPlist(file: string) {
+async function getMobileProvisionPlist(file: string, useOpenSSL = false) {
   let res;
   if (file === undefined) {
     throw new Error("No mobile provisioning file available.");
@@ -248,13 +244,13 @@ async function getMobileProvisionPlist(file: string) {
 
 async function getEntitlementsFromMobileProvision(
   file: string,
-  cb?: any,
+  useOpenSSL = false,
 ): Promise<any> {
-  const res = await getMobileProvisionPlist(file);
+  const res = await getMobileProvisionPlist(file, useOpenSSL);
   return res.Entitlements;
 }
 
-async function zip(cwd: string, ofile: string, src: string) {
+async function zip(cwd: string, ofile: string, src: string, use7zip = false) {
   try {
     await fs.promises.unlink(ofile);
   } catch (ignored) {}
@@ -271,7 +267,7 @@ async function zip(cwd: string, ofile: string, src: string) {
   }
 }
 
-async function unzip(ifile: string, odir: string) {
+async function unzip(ifile: string, odir: string, use7zip = false) {
   if (use7zip) {
     const args = ["x", "-y", "-o" + odir, ifile];
     return execProgram(getTool("7z")!, args);
@@ -378,20 +374,6 @@ function assertNotSymlink(file: string): void {
   }
 }
 
-export interface GlobalOptions {
-  use7zip: boolean;
-  useOpenSSL: boolean;
-}
-
-function setGlobalOptions(obj: GlobalOptions): void {
-  if (typeof obj.use7zip === "boolean") {
-    use7zip = obj.use7zip;
-  }
-  if (typeof obj.useOpenSSL === "boolean") {
-    useOpenSSL = obj.useOpenSSL;
-  }
-}
-
 async function asyncRimraf(dir: any) {
   if (dir !== undefined) {
     await fs.promises.rm(dir, { recursive: true, force: true });
@@ -411,7 +393,6 @@ export {
   isDirectory,
   ldidSign,
   lipoFile,
-  setGlobalOptions as setOptions,
   unzip,
   verifyCodesign,
   xcaToIpa,
