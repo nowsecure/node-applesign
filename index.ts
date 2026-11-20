@@ -303,6 +303,23 @@ class Applesign {
         fs.unlinkSync(file);
       });
     }
+    // iOS refuses to install when the bundle id doesn't match the app-id glob
+    const { Entitlements } = await tools.getMobileProvisionPlist(file);
+    const glob = String(Entitlements?.["application-identifier"])
+      .replace(/^[^.]*\./, "");
+    const { CFBundleIdentifier } = plist.readFileSync(
+      path.join(appdir, "Info.plist"),
+    );
+    if (
+      glob.endsWith("*")
+        ? !String(CFBundleIdentifier).startsWith(glob.slice(0, -1))
+        : glob !== CFBundleIdentifier
+    ) {
+      this.emit(
+        "warning",
+        `Bundle id ${CFBundleIdentifier} does not match the provisioning ${glob}`,
+      );
+    }
     if (appdir && file && !withoutMobileProvision) {
       this.emit("message", "Embedding new mobileprovision");
       const mobileProvision = path.join(appdir, "embedded.mobileprovision");
