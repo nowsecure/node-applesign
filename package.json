@@ -14,7 +14,7 @@
     "indent-check": "deno fmt --check",
     "indent": "deno fmt",
     "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
-    "test": "npm run build && chmod +x dist/bin/applesign.js && mocha test/test.ts",
+    "test": "npm run build && chmod +x dist/bin/applesign.js && node --test test/test.ts",
     "dist": "./scripts/dist.sh",
     "dist-all": "./scripts/dist.sh macos linux freebsd alpine win",
     "prepack": "npm run build",
@@ -23,10 +23,8 @@
   },
   "devDependencies": {
     "@types/minimist": "^1.2.5",
-    "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.5",
     "deno": "^2.9.6",
-    "mocha": "^12.0.3",
     "pkg": "5.8.1",
     "typescript": "^7.0.2"
   },

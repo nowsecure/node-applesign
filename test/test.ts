@@ -3,11 +3,11 @@ import { spawn } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, it } from "mocha";
+import { describe, it } from "node:test";
 import Applesign from "../dist/index.js";
 import { AppDirectory } from "../dist/lib/appdir.js";
 
-const mochaTimeout = 15000;
+const ipaTimeout = 15000;
 const developerCertificate = process.env.DEVCERT;
 const ipaDir = "test/ipa";
 
@@ -108,7 +108,7 @@ describe("API", () => {
 
 describe("Commandline", () => {
   describe("dist/bin/applesign.js", () => {
-    it("should fail when applesign cannot be executed", (done) => {
+    it("should fail when applesign cannot be executed", (_t, done) => {
       let data = "";
       const ipaResign = spawn("dist/bin/applesign.js");
       ipaResign.stdout.on("data", (text) => {
@@ -123,7 +123,7 @@ describe("Commandline", () => {
   });
 
   describe("dist/bin/applesign.js missing.ipa", () => {
-    it("should fail when passing a nonexistent IPA", (done) => {
+    it("should fail when passing a nonexistent IPA", (_t, done) => {
       const ipaResign = spawn("dist/bin/applesign.js", ["missing.ipa"]);
       ipaResign.on("close", (code) => {
         assert.strictEqual(code, 1);
@@ -158,9 +158,8 @@ function grabIPAs(file: string): boolean {
 }
 
 function processIPA(file: string, parallel: boolean) {
-  describe(`${parallel ? "Parallel" : "Serial"} signing`, function () {
-    this.timeout(mochaTimeout);
-    it(file, (done) => {
+  describe(`${parallel ? "Parallel" : "Serial"} signing`, () => {
+    it(file, { timeout: ipaTimeout }, (_t, done) => {
       let hasData = false;
       const ipaFile = path.resolve(path.join(ipaDir, file));
       const args = parallel
@@ -186,9 +185,8 @@ function processIPA(file: string, parallel: boolean) {
 }
 
 function deployIPA(file: string) {
-  describe(`Deploy ${file}`, function () {
-    this.timeout(mochaTimeout);
-    it("deploying", (done) => {
+  describe(`Deploy ${file}`, () => {
+    it("deploying", { timeout: ipaTimeout }, (_t, done) => {
       let hasData = false;
       const ipaResign = spawn("ios-deploy", ["-b", path.join(ipaDir, file)]);
       ipaResign.stdout.on("data", () => {
@@ -208,8 +206,7 @@ function deployIPA(file: string) {
   });
 }
 
-describe("Commandline IPA signing", function () {
-  this.timeout(30000); // in case reading directory is slow
+describe("Commandline IPA signing", () => {
   const files = fs.readdirSync(ipaDir);
   describe("Processing", () => {
     files.filter(grabIPAs).forEach((file) => {
