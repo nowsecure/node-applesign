@@ -117,7 +117,6 @@ class Applesign {
       if (this.config.withoutWatchapp) {
         tasks.push(this.removeWatchApp());
       }
-      // TODO: this .withoutSigningFiles option doesnt exist yet
       if (this.config.withoutSigningFiles) {
         tasks.push(this.removeSigningFiles());
       }
@@ -243,12 +242,9 @@ class Applesign {
 
   async removeSigningFiles() {
     fchk(arguments, []);
-    const dir = this.config.appdir;
-    walkSync(dir).forEach(({ path: target, name: filename }) => {
-      if (
-        filename.endsWith(".entitlements") ||
-        filename.endsWith(".mobileprovision")
-      ) {
+    const ext = /\.(entitlements|mobileprovision)$/;
+    walkSync(this.config.appdir).forEach(({ path: target, name, dirent }) => {
+      if (!dirent.isDirectory() && ext.test(name)) {
         this.emit("message", "Deleting " + target);
         fs.unlinkSync(target);
       }

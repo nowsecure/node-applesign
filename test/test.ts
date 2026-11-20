@@ -95,6 +95,35 @@ describe("API", () => {
     });
   });
 
+  describe("removeSigningFiles", () => {
+    it("skips directories named like signing files", async () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const signer = new Applesign({});
+      try {
+        const appdir = path.join(root, "Main.app");
+        fs.mkdirSync(path.join(appdir, "Res.entitlements"), {
+          recursive: true,
+        });
+        for (
+          const file of [
+            "Res.entitlements/keep",
+            "Main.entitlements",
+            "embedded.mobileprovision",
+          ]
+        ) {
+          fs.writeFileSync(path.join(appdir, file), "");
+        }
+        signer.config.appdir = appdir;
+        await signer.removeSigningFiles();
+        assert.deepStrictEqual(fs.readdirSync(appdir), ["Res.entitlements"]);
+        assert.ok(fs.existsSync(path.join(appdir, "Res.entitlements/keep")));
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("extension symlinks", () => {
     function createBundle(directory: string, name: string): string {
       fs.mkdirSync(directory, { recursive: true });
