@@ -6,7 +6,6 @@ const renameAsync = promisify(fs.rename);
 import plist from "simple-plist";
 import path from "node:path";
 import which from "which";
-import rimraf from "rimraf";
 import * as bin from "./bin.js";
 // import { ConfigOptions } from "../dist/lib/config.js";
 import { ConfigOptions } from "./config.js";
@@ -385,15 +384,10 @@ function setGlobalOptions(obj: GlobalOptions): void {
   }
 }
 
-function asyncRimraf(dir: any) {
-  return new Promise<any>((resolve, reject) => {
-    if (dir === undefined) {
-      resolve(undefined);
-    }
-    rimraf(dir, (err: any, res: any) => {
-      return err ? reject(err) : resolve(res);
-    });
-  });
+async function asyncRimraf(dir: any) {
+  if (dir !== undefined) {
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
 }
 
 export {
