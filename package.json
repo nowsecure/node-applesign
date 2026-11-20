@@ -16,7 +16,6 @@
     "unzip-lzfse": "git clone https://github.com/sskaje/unzip-lzfse ; cd unzip-lzfse ; chmod +x unix/configure ; LZFSE_PATH=/usr/local make -f unix/Makefile CF='-DUSE_LZFSE=1 -c -O3 -Wall -DBSD -I. -Ibzip2 -DUNIX' LF2=-llzfse all",
     "test": "npm run build && chmod +x dist/bin/applesign.js && node --test test/test.ts",
     "dist": "./scripts/dist.sh",
-    "dist-all": "./scripts/dist.sh macos linux freebsd alpine win",
     "prepack": "npm run build",
     "prebuild": "node scripts/update-version.cjs",
     "build": "tsc"
@@ -25,7 +24,7 @@
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.20.5",
     "deno": "^2.9.6",
-    "pkg": "5.8.1",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {
