@@ -667,26 +667,6 @@ class Applesign {
     return this;
   }
 
-  filterLibraries(libraries: any) {
-    fchk(arguments, ["object"]);
-    return libraries.filter((library: any) => {
-      // Resign all frameworks. even if not referenced :?
-      if (library.indexOf("Frameworks/") !== -1) {
-        return true;
-      }
-      if (this.config.all) {
-        return true;
-      }
-      // check if there's a Plist to inform us which is the right executable
-      const exe = getExecutable(path.dirname(library));
-      if (path.basename(library) !== exe) {
-        this.emit("warning", "Not signing " + library);
-        return false;
-      }
-      return true;
-    });
-  }
-
   findLibrariesSync() {
     fchk(arguments, []);
     const libraries: any = [];
@@ -724,8 +704,6 @@ class Applesign {
     }
     console.error("Found nested", nested);
     this.nested = nested;
-    // return this.filterLibraries(libraries);
-
     return libraries;
   }
 
