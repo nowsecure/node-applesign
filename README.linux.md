@@ -1,32 +1,23 @@
 # Running applesign on Linux
 
-It is possible to use applesign outside the Apple ecosystem, but this requires
-the `rcodesign` tool to be installed:
-
-```
-$ cargo install apple-codesign
-```
-
-## Self Signed certificates
-
-You can read more about rcodesign and certificates in:
-
-- https://pyoxidizer.readthedocs.io/en/latest/apple_codesign_certificate_management.html#apple-codesign-certificate-management
+Without `codesign`, applesign signs with a `.p12` identity using the
+[Procursus ldid](https://github.com/ProcursusTeam/ldid), which can sign with
+real certificates (`saurik`'s ldid from distro packages and brew can't). Use
+`v2.1.5-procursus7`: `procursus8` crashes when signing with a p12.
 
 ```sh
-$ rcodesign generate-self-signed-certificate --person-name pancake > a.pem
-$ rcodesign analyze-certificate --pem-source a.pem
+curl -Lo ldid https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_linux_x86_64
+chmod +x ldid && sudo mv ldid /usr/local/bin/ # or set LDID=/path/to/ldid
 ```
 
-With this `a.pem` file you can now sign a binary like this:
+Export the identity and its private key from Keychain Access as a `.p12`, pass
+it with `-i`, and its password in `APPLESIGN_P12_PASSWORD`:
 
 ```sh
-$ rcodesign sign --pem-source a.pem --code-signature-flags runtime /path/to/binary
+APPLESIGN_P12_PASSWORD=secret applesign -i dev.p12 -m embedded.mobileprovision app.ipa
 ```
 
-## Codesign Requirements
-
-Apple requires a csreq to be signed inside the binary. this is an evaluated
-expression that defines the conditions that must
-
-- https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html
+Any tool path can be overridden with an environment variable named after it
+(`LDID`, `UNZIP`, `OPENSSL`..). The mobileprovision is decoded with `openssl`.
+These flags need macOS tools: `-L`, `-k`, `-v`, `-V`, `--lipo`, `-I` (unless
+`insert_dylib` is built) and `.xcarchive` inputs.

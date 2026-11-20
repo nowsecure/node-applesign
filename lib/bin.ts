@@ -60,7 +60,7 @@ function isValidMacho(machoMagic: any, machoType: any): boolean {
   ];
   for (const a of magics) {
     if (!machoMagic.slice(0, 4).compare(Buffer.from(a))) {
-      // ensure the macho type is supported by ldid2
+      // ensure the macho type is supported by ldid
       const fileType = machoType[0];
       switch (fileType) {
         case MH_EXECUTE:

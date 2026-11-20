@@ -648,7 +648,7 @@ class Applesign {
       const entitlements = fs.existsSync(tmpEntitlementsFile)
         ? tmpEntitlementsFile
         : null;
-      res = await tools.pseudoSign(entitlements, file);
+      res = await tools.ldidSign(entitlements, file);
     } else {
       const keychain = getKeychain();
       res = await tools.codesign(identity, entitlements, keychain, file);

@@ -1,13 +1,9 @@
 import fs from "node:fs";
-import { promisify } from "node:util";
 import { execSync, spawn } from "node:child_process";
-const unlinkAsync = promisify(fs.unlink);
-const renameAsync = promisify(fs.rename);
 import plist from "./plist.js";
 import path from "node:path";
 import which from "which";
 import * as bin from "./bin.js";
-// import { ConfigOptions } from "../dist/lib/config.js";
 import { ConfigOptions } from "./config.js";
 
 // TODO: remove globals
@@ -19,14 +15,13 @@ const cmdSpec = {
   codesign: "/usr/bin/codesign",
   insert_dylib: "insert_dylib",
   lipo: "/usr/bin/lipo",
-  /* only when useOpenSSL is true */
   openssl: "/usr/local/bin/openssl",
   security: "/usr/bin/security",
   unzip: "/usr/bin/unzip",
   xcodebuild: "/usr/bin/xcodebuild",
   ideviceprovision: "/usr/local/bin/ideviceprovision",
   zip: "/usr/bin/zip",
-  ldid2: "ldid2",
+  ldid: "ldid",
 };
 
 const cmd: Record<string, string> = {};
@@ -117,10 +112,11 @@ function findInPath() {
  */
 function getTool(tool: string): string {
   findInPath();
-  if (!(tool in cmd)) {
+  const file = process.env[tool.toUpperCase()] || cmd[tool];
+  if (!file) {
     throw new Error(`tools.findInPath: not found: ${tool}`);
   }
-  return cmd[tool];
+  return file;
 }
 
 async function ideviceprovision(action: any, optarg?: any) {
@@ -145,6 +141,9 @@ async function codesign(
     // XXX: typescript can ensure this at compile time
     throw new Error("--identity is required to sign");
   }
+  if (identity.endsWith(".p12")) {
+    return ldidSign(entitlement, file, identity);
+  }
   /* use the --no-strict to avoid the "resource envelope is obsolete" error */
   const args = ["--no-strict"]; // http://stackoverflow.com/a/26204757
   args.push("-fs", identity);
@@ -161,19 +160,27 @@ async function codesign(
   return execProgram(getTool("codesign")!, args);
 }
 
-async function pseudoSign(entitlement: any, file: string): Promise<ExecResult> {
-  const args = [];
-  if (typeof entitlement === "string") {
-    args.push("-S" + entitlement);
-  } else {
-    args.push("-S");
+/* pseudo-sign, or sign for real when a p12 is given */
+async function ldidSign(entitlement: any, file: string, p12?: string) {
+  const args = ["-S" + (entitlement || "")];
+  if (p12 !== undefined) {
+    args.push("-K" + p12, "-U" + (process.env.APPLESIGN_P12_PASSWORD || ""));
+    /* sign a main executable as its bundle to seal resources like codesign */
+    const dir = path.dirname(file);
+    const info = path.join(dir, "Info.plist");
+    if (
+      fs.existsSync(info) &&
+      plist.readFileSync(info).CFBundleExecutable === path.basename(file)
+    ) {
+      return execProgram(getTool("ldid"), [...args, "-w", dir]);
+    }
   }
   const identifier = bin.getIdentifier(file);
   if (identifier !== null && identifier !== "") {
     args.push("-I" + identifier);
   }
   args.push(file);
-  return execProgram(getTool("ldid2")!, args);
+  return execProgram(getTool("ldid")!, args);
 }
 
 async function verifyCodesign(
@@ -195,7 +202,7 @@ async function getMobileProvisionPlist(file: string) {
   }
   if (useOpenSSL === true) {
     /* portable using openssl */
-    const args = ["cms", "-in", file, "-inform", "der", "-verify"];
+    const args = ["cms", "-verify", "-noverify", "-inform", "der", "-in", file];
     res = await execProgram(getTool("openssl")!, args);
   } else {
     /* OSX specific using security */
@@ -215,7 +222,7 @@ async function getEntitlementsFromMobileProvision(
 
 async function zip(cwd: string, ofile: string, src: string) {
   try {
-    await unlinkAsync(ofile);
+    await fs.promises.unlink(ofile);
   } catch (ignored) {}
   const ofilePath = path.dirname(ofile);
   fs.mkdirSync(ofilePath, { recursive: true });
@@ -223,7 +230,7 @@ async function zip(cwd: string, ofile: string, src: string) {
     const zipFile = ofile + ".zip";
     const args = ["a", zipFile, src];
     await execProgram(getTool("7z")!, args, { cwd });
-    await renameAsync(zipFile, ofile);
+    await fs.promises.rename(zipFile, ofile);
   } else {
     const args = ["-qry", ofile, src];
     await execProgram(getTool("zip")!, args, { cwd });
@@ -236,7 +243,7 @@ async function unzip(ifile: string, odir: string) {
     return execProgram(getTool("7z")!, args);
   }
   const args = ["-o", ifile, "-d", odir];
-  return execProgram(process.env.UNZIP || getTool("unzip"), args);
+  return execProgram(getTool("unzip"), args);
 }
 
 async function xcaToIpa(ifile: string, odir: string) {
@@ -368,8 +375,8 @@ export {
   ideviceprovision,
   insertLibrary,
   isDirectory,
+  ldidSign,
   lipoFile,
-  pseudoSign,
   setGlobalOptions as setOptions,
   unzip,
   verifyCodesign,

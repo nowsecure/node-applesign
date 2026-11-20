@@ -15,7 +15,7 @@ const shortHelpMessage = `Usage:
   -f, --force-family            Force UIDeviceFamily in Info.plist to be iPhone
   -h, --help                    Show verbose help message
   -H, --allow-http              Add NSAppTransportSecurity.NSAllowsArbitraryLoads in plist
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
   -L, --identities              List local codesign identities
   -m, --mobileprovision [FILE]  Specify the mobileprovision file to use
   -o, --output [APP.IPA]        Path to the output IPA filename
@@ -59,7 +59,7 @@ const helpMessage = `Usage:
   -a, --all                     Resign all binaries, even it unrelated to the app
   -d, --debug [file]            Create debug file with all the signing process
   -D, --device-provision        Automatically find the mobileprovision for the available device
-  -i, --identity [1C4D1A..]     Specify hash-id of the identity to use
+  -i, --identity [1C4D1A..]     Specify hash-id of the identity or a .p12 file
   -j, --json '{}'               Set the alternative JSON for signing files with custom entitlements
   -k, --keychain [KEYCHAIN]     Specify custom keychain file
   -K, --add-access-group [NAME] Add $(TeamIdentifier).NAME to keychain-access-groups
@@ -189,13 +189,7 @@ const fromOptions = function (opt: any): ConfigOptions {
     }
     const mp = opt.mobileprovision;
     opt.mobileprovisions = [mp];
-    if (opt.identity) {
-      const id0 = idprov(mp);
-      const id1 = opt.identity;
-      if (id0 !== id1) {
-        // throw new Error('MobileProvisioningVersion doesn\'t match the given identity (' + id0 + ' vs ' + id1 + ')');
-      }
-    } else {
+    if (!opt.identity) {
       opt.identity = idprov(mp);
     }
   } else {
@@ -243,7 +237,7 @@ const fromOptions = function (opt: any): ConfigOptions {
     selfSignedProvision: opt.selfSignedProvision || false,
     unfairPlay: opt.unfairPlay || false,
     use7zip: opt.use7zip === true,
-    useOpenSSL: opt.useOpenSSL === true,
+    useOpenSSL: opt.useOpenSSL === true || process.platform !== "darwin",
     verify: opt.verify || false,
     verifyTwice: opt.verifyTwice || false,
     withGetTaskAllow: opt.withGetTaskAllow,
