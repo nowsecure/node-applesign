@@ -126,21 +126,33 @@ describe("API", () => {
   });
 
   describe("bundleid", () => {
-    it("keeps the app extension ids under the new bundle id", () => {
+    it("keeps the nested bundle ids under the new bundle id", () => {
       const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const watch = "Watch/W.app";
+      const watchExt = watch + "/PlugIns/WE.appex";
+      const wkExt = (id: string, app: string) => ({
+        CFBundleIdentifier: id,
+        NSExtension: { NSExtensionAttributes: { WKAppBundleIdentifier: app } },
+      });
       try {
         const appdir = path.join(root, "Main.app");
-        const ids: Record<string, string> = {
-          ".": "com.old.app",
-          "PlugIns/Share.appex": "com.old.app.share",
-          "PlugIns/Widget.appex": "com.other.widget",
-          "../External.appex": "com.ext.keep",
+        const before: Record<string, any> = {
+          ".": { CFBundleIdentifier: "com.old.app" },
+          "PlugIns/Share.appex": { CFBundleIdentifier: "com.old.app.share" },
+          "PlugIns/Widget.appex": { CFBundleIdentifier: "com.other.widget" },
+          "../External.appex": { CFBundleIdentifier: "com.ext.keep" },
+          [watch]: {
+            CFBundleIdentifier: "com.old.app.watchkitapp",
+            WKCompanionAppBundleIdentifier: "com.old.app",
+          },
+          [watchExt]: wkExt(
+            "com.old.app.watchkitapp.ext",
+            "com.old.app.watchkitapp",
+          ),
         };
-        for (const [dir, id] of Object.entries(ids)) {
+        for (const [dir, info] of Object.entries(before)) {
           fs.mkdirSync(path.join(appdir, dir), { recursive: true });
-          plist.writeFileSync(path.join(appdir, dir, "Info.plist"), {
-            CFBundleIdentifier: id,
-          });
+          plist.writeFileSync(path.join(appdir, dir, "Info.plist"), info);
         }
         fs.symlinkSync(
           path.join(root, "External.appex"),
@@ -152,14 +164,18 @@ describe("API", () => {
           { appdir, bundleid: "com.new.app" } as any,
           () => {},
         );
-        const idOf = (dir: string) =>
-          plist.readFileSync(path.join(appdir, dir, "Info.plist"))
-            .CFBundleIdentifier;
-        assert.deepStrictEqual(Object.keys(ids).map(idOf), [
-          "com.new.app",
-          "com.new.app.share",
-          "com.new.app.widget",
-          "com.ext.keep",
+        const infoOf = (dir: string) =>
+          plist.readFileSync(path.join(appdir, dir, "Info.plist"));
+        assert.deepStrictEqual(Object.keys(before).map(infoOf), [
+          { CFBundleIdentifier: "com.new.app" },
+          { CFBundleIdentifier: "com.new.app.share" },
+          { CFBundleIdentifier: "com.new.app.widget" },
+          { CFBundleIdentifier: "com.ext.keep" },
+          {
+            CFBundleIdentifier: "com.new.app.watchkitapp",
+            WKCompanionAppBundleIdentifier: "com.new.app",
+          },
+          wkExt("com.new.app.watchkitapp.ext", "com.new.app.watchkitapp"),
         ]);
       } finally {
         fs.rmSync(root, { recursive: true, force: true });

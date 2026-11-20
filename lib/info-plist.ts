@@ -47,7 +47,8 @@ export default function fix(
     }
   }
   if (options.bundleid) {
-    renameAppExtensions(file, data.CFBundleIdentifier, options.bundleid, emit);
+    const oldId = data.CFBundleIdentifier;
+    renameNestedBundles(path.dirname(file), oldId, options.bundleid, emit);
     setBundleId(data, options.bundleid);
     changed = true;
   }
@@ -56,33 +57,46 @@ export default function fix(
   }
 }
 
-/** keep the appex ids prefixed by the new main bundle id, iOS requires it */
-function renameAppExtensions(
-  file: string,
+/** keep the appex and watch app ids prefixed by their parent, iOS requires it */
+function renameNestedBundles(
+  dir: string,
   oldId: any,
   newId: string,
   emit: any,
 ) {
-  const plugins = path.join(path.dirname(file), "PlugIns");
-  assertNotSymlink(plugins);
-  const appexs = fs.existsSync(plugins) ? fs.readdirSync(plugins) : [];
-  for (const appex of appexs.filter((name) => name.endsWith(".appex"))) {
-    const infoPath = path.join(plugins, appex, "Info.plist");
-    if (fs.lstatSync(path.dirname(infoPath)).isSymbolicLink()) {
-      continue; // never write outside the bundle
-    }
-    assertNotSymlink(infoPath);
-    const info = fs.existsSync(infoPath) ? plist.readFileSync(infoPath) : {};
-    const id = info.CFBundleIdentifier;
-    if (typeof id === "string") {
+  for (const sub of ["PlugIns", "Watch"]) {
+    const subdir = path.join(dir, sub);
+    assertNotSymlink(subdir);
+    const names = fs.existsSync(subdir) ? fs.readdirSync(subdir) : [];
+    for (const name of names.filter((n) => /\.(appex|app)$/.test(n))) {
+      const bundle = path.join(subdir, name);
+      const infoPath = path.join(bundle, "Info.plist");
+      if (fs.lstatSync(bundle).isSymbolicLink() || !fs.existsSync(infoPath)) {
+        continue; // never write outside the bundle
+      }
+      assertNotSymlink(infoPath);
+      const info = plist.readFileSync(infoPath);
+      const id = info.CFBundleIdentifier;
+      if (typeof id !== "string") {
+        continue;
+      }
       info.CFBundleIdentifier = oldId && id.startsWith(oldId + ".")
         ? newId + id.slice(oldId.length)
         : newId + "." + id.split(".").pop();
+      // references back to the parent: watch app -> app, extension -> watch app
+      if (info.WKCompanionAppBundleIdentifier === oldId) {
+        info.WKCompanionAppBundleIdentifier = newId;
+      }
+      const attrs = info.NSExtension?.NSExtensionAttributes;
+      if (attrs?.WKAppBundleIdentifier === oldId) {
+        attrs.WKAppBundleIdentifier = newId;
+      }
       emit(
         "message",
-        `Renaming ${appex} bundle id to ${info.CFBundleIdentifier}`,
+        `Renaming ${name} bundle id to ${info.CFBundleIdentifier}`,
       );
       plist.writeFileSync(infoPath, info);
+      renameNestedBundles(bundle, id, info.CFBundleIdentifier, emit);
     }
   }
 }
