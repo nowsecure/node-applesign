@@ -18,11 +18,9 @@ import {
 import depSolver from "./lib/depsolver.js";
 import adjustInfoPlist from "./lib/info-plist.js";
 import defaultEntitlements from "./lib/entitlements.js";
-// import { build as plistBuild } from 'plist';
 import * as bin from "./lib/bin.js";
 
-import pkg from "plist";
-const { build: plistBuild } = pkg;
+import { build as plistBuild } from "plist";
 
 class Applesign {
   config: config.ConfigOptions;

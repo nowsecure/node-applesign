@@ -1,6 +1,5 @@
 import plist from "simple-plist";
-import plistPkg from "plist";
-const { build: plistBuild } = plistPkg;
+import { build as plistBuild } from "plist";
 
 const entitlementTemplate = `
 <?xml version="1.0" encoding="UTF-8"?>
