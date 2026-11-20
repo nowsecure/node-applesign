@@ -742,7 +742,7 @@ class Applesign {
         return;
       }
       this.emit("message", "Verifying " + libs);
-      const promises = libs.map((lib: any) => tools.verifyCodesign);
+      const promises = libs.flat().map((l: string) => tools.verifyCodesign(l));
       return Promise.all(promises);
     };
 

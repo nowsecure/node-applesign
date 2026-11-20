@@ -197,6 +197,27 @@ describe("API", () => {
         fs.rmSync(signer.tmpDir, { recursive: true, force: true });
       }
     });
+
+    it("verifies the signed binaries with --parallel", async () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const signer = new Applesign({
+        parallel: true,
+        pseudoSign: true,
+        verify: true,
+      });
+      process.env.CODESIGN = "false"; // every verification fails
+      try {
+        const appdir = path.join(root, "Main.app");
+        createBundle(appdir, "Main");
+        signer.signFile = async () => signer;
+        signer.adjustEntitlements = async () => {};
+        await assert.rejects(signer.signAppDirectory(appdir), /-v --no-strict/);
+      } finally {
+        delete process.env.CODESIGN;
+        fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
   });
 });
 
