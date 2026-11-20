@@ -173,6 +173,30 @@ describe("API", () => {
         fs.rmSync(signer.tmpDir, { recursive: true, force: true });
       }
     });
+
+    it("signs frameworks of an app inside an .app directory with --parallel", async () => {
+      const root = fs.mkdtempSync(path.join(tmpdir(), "applesign-test-"));
+      const signer = new Applesign({ parallel: true, pseudoSign: true });
+      try {
+        const appdir = path.join(root, "Old.app/Main.app");
+        const main = createBundle(appdir, "Main");
+        const fw = createBundle(
+          path.join(appdir, "Frameworks/F.framework"),
+          "F",
+        );
+        const signed: string[] = [];
+        signer.signFile = async (file: string) => {
+          signed.push(file);
+          return signer;
+        };
+        signer.adjustEntitlements = async () => {};
+        await signer.signAppDirectory(appdir);
+        assert.deepStrictEqual(signed.sort(), [fw, main].sort());
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(signer.tmpDir, { recursive: true, force: true });
+      }
+    });
   });
 });
 

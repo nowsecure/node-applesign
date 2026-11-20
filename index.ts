@@ -712,7 +712,7 @@ class Applesign {
         return;
       }
 
-      const nest = nestedApp(file);
+      const nest = nestedApp(this.config.appdir, file);
       if (nest !== false) {
         if (nested.indexOf(nest) === -1) {
           nested.push(nest);
@@ -1028,15 +1028,10 @@ async function runScript(script: string, session: any) {
   return true;
 }
 
-function nestedApp(file: string) {
-  const dotApp = file.indexOf(".app/");
-  if (dotApp !== -1) {
-    const subApp = file.substring(dotApp + 4).indexOf(".app/");
-    if (subApp !== -1) {
-      return file.substring(0, dotApp + 4 + subApp + 4);
-    }
-  }
-  return false;
+function nestedApp(appdir: string, file: string) {
+  const rel = path.relative(appdir, file);
+  const dotApp = rel.indexOf(".app/");
+  return dotApp !== -1 && path.join(appdir, rel.substring(0, dotApp + 4));
 }
 
 function getPayloadDirectory(tempdir?: string): string {

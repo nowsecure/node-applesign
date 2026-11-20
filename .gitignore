@@ -1,4 +1,5 @@
 node_modules
+embedded.mobileprovision
 npm-debug.log
 dist
 applesign-*
